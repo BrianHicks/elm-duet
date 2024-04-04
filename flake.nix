@@ -12,12 +12,12 @@
 
         devShell = pkgs.mkShell {
           packages = [
-            pkgs.rustc
-            pkgs.rustfmt
             pkgs.cargo
             pkgs.clippy
-            pkgs.rust-analyzer
             pkgs.libiconv
+            pkgs.rust-analyzer
+            pkgs.rustc
+            pkgs.rustfmt
           ];
         };
       }
