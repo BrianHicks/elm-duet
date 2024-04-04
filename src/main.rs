@@ -18,6 +18,9 @@ impl Cli {
         let schema = schema::Schema::from_fs(&self.source).wrap_err("could not read schema")?;
         println!("{schema:#?}");
 
+        let nicer_schema = jtd::Schema::from_serde_schema(schema.flags);
+        println!("{nicer_schema:#?}");
+
         Ok(())
     }
 }

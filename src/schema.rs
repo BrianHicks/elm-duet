@@ -4,7 +4,9 @@ use serde::Deserialize;
 use std::path::Path;
 
 #[derive(Debug, Deserialize)]
-pub struct Schema {}
+pub struct Schema {
+    pub flags: jtd::SerdeSchema,
+}
 
 impl Schema {
     pub fn from_fs(path: &Path) -> Result<Schema> {
