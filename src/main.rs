@@ -23,6 +23,8 @@ impl Cli {
 }
 
 fn main() {
+    color_eyre::install().unwrap();
+
     let cli = Cli::parse();
 
     if let Err(problem) = cli.run() {
