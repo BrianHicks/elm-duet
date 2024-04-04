@@ -1,3 +1,4 @@
+use crate::typescript;
 use color_eyre::Result;
 use eyre::WrapErr;
 use serde::Deserialize;
@@ -15,5 +16,17 @@ impl Schema {
         let bytes = std::fs::read(path).wrap_err_with(|| format!("could not read {path:?}"))?;
         serde_json::from_slice(&bytes)
             .wrap_err_with(|| format!("could not read schema from {path:?}"))
+    }
+
+    pub fn flags_to_ts(&self) -> Result<Option<String>> {
+        match &self.flags {
+            None => Ok(None),
+            Some(flags_serde) => {
+                let flags = jtd::Schema::from_serde_schema(flags_serde.clone())
+                    .wrap_err("could not interpret JTD schema for flags")?;
+
+                Ok(Some(typescript::TSType::from_schema(flags).to_source()))
+            }
+        }
     }
 }

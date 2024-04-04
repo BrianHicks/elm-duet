@@ -1,4 +1,5 @@
 mod schema;
+mod typescript;
 
 use clap::Parser;
 use color_eyre::Result;
@@ -16,10 +17,8 @@ impl Cli {
         println!("{self:#?}");
 
         let schema = schema::Schema::from_fs(&self.source).wrap_err("could not read schema")?;
-        println!("{schema:#?}");
 
-        let nicer_schema = jtd::Schema::from_serde_schema(schema.flags.unwrap());
-        println!("{nicer_schema:#?}");
+        println!("{}", schema.flags_to_ts().unwrap().unwrap());
 
         Ok(())
     }
