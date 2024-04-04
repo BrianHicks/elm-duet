@@ -220,6 +220,8 @@ dependencies = [
  "color-eyre",
  "eyre",
  "jtd",
+ "serde",
+ "serde_json",
  "tracing",
 ]
 

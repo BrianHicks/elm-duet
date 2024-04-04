@@ -1,5 +1,8 @@
+mod schema;
+
 use clap::Parser;
-use eyre::Result;
+use color_eyre::Result;
+use eyre::WrapErr;
 use std::path::PathBuf;
 
 #[derive(Debug, Parser)]
@@ -11,6 +14,10 @@ struct Cli {
 impl Cli {
     fn run(&self) -> Result<()> {
         println!("{self:#?}");
+
+        let schema = schema::Schema::from_fs(&self.source).wrap_err("could not read schema")?;
+        println!("{schema:#?}");
+
         Ok(())
     }
 }
