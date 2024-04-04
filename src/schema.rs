@@ -1,11 +1,13 @@
 use color_eyre::Result;
 use eyre::WrapErr;
 use serde::Deserialize;
+use std::collections::BTreeMap;
 use std::path::Path;
 
 #[derive(Debug, Deserialize)]
 pub struct Schema {
-    pub flags: jtd::SerdeSchema,
+    pub definitions: Option<BTreeMap<String, jtd::SerdeSchema>>,
+    pub flags: Option<jtd::SerdeSchema>,
 }
 
 impl Schema {
