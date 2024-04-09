@@ -1,0 +1,12 @@
+{
+  "flags": {
+    "properties": {
+      "currentTimeMillis": {
+	"type": "float32"
+      },
+      "notificationPermission": {
+	"enum": ["default", "granted", "denied"]
+      }
+    }
+  }
+}

@@ -16,3 +16,6 @@ tracing = "0.1.40"
 
 [profile.dev.package.backtrace]
 opt-level = 3
+
+[dev-dependencies]
+trycmd = { version = "0.15.1", features = ["color"] }
