@@ -2,6 +2,7 @@
 name = "elm-duet"
 version = "0.1.0"
 edition = "2021"
+description = "Generate Elm and TypeScript types from a single shared definition."
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

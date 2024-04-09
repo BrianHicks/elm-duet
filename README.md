@@ -54,6 +54,8 @@ Here are more things you can do with the tool:
 
 ```console
 $ elm-duet --help
+Generate Elm and TypeScript types from a single shared definition.
+
 Usage: elm-duet <SOURCE>
 
 Arguments:
