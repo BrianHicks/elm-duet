@@ -50,6 +50,8 @@ $ elm-duet examples/jwt_schema.json
 
 ```
 
+Here are more things you can do with the tool:
+
 ```console
 $ elm-duet --help
 Usage: elm-duet <SOURCE>
