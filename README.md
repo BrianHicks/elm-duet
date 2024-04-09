@@ -60,6 +60,7 @@ Arguments:
   <SOURCE>  Location of the definition file
 
 Options:
-  -h, --help  Print help
+  -h, --help     Print help
+  -V, --version  Print version
 
 ```

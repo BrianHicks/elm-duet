@@ -7,6 +7,7 @@ use eyre::WrapErr;
 use std::path::PathBuf;
 
 #[derive(Debug, Parser)]
+#[clap(version)]
 struct Cli {
     /// Location of the definition file
     source: PathBuf,
