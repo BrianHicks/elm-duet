@@ -20,6 +20,7 @@ impl TSType {
             ),
             Schema::Type { type_, .. } => Self::Scalar(match type_ {
                 Type::Float32 => "number",
+                Type::String => "string",
                 _ => todo!("scalar: {type_:#?}"),
             }),
             Schema::Enum { enum_, .. } => Self::Union(
@@ -84,6 +85,15 @@ mod tests {
         let type_ = TSType::from_schema(schema);
 
         assert_eq!(type_.to_source(), "number".to_string())
+    }
+
+    #[test]
+    fn interprets_string() {
+        let schema = from_json(json!({"type": "string"}));
+
+        let type_ = TSType::from_schema(schema);
+
+        assert_eq!(type_.to_source(), "string".to_string())
     }
 
     #[test]

@@ -1,0 +1,23 @@
+{
+  "flags": {
+    "properties": {
+      "currentJwt": {
+        "type": "string",
+        "nullable": true
+      }
+    }
+  },
+  "ports": {
+    "newJwt": {
+      "metadata": {
+        "direction": "elmToJs"
+      },
+      "type": "string"
+    },
+    "logout": {
+      "metadata": {
+        "direction": "elmToJs"
+      }
+    }
+  }
+}
