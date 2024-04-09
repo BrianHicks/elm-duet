@@ -66,3 +66,45 @@ impl TSType {
         out
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::{json, Value};
+
+    fn from_json(value: Value) -> jtd::Schema {
+        let json = serde_json::from_value(value).unwrap();
+        jtd::Schema::from_serde_schema(json).unwrap()
+    }
+
+    #[test]
+    fn interprets_float32() {
+        let schema = from_json(json!({"type": "float32"}));
+
+        let type_ = TSType::from_schema(schema);
+
+        assert_eq!(type_.to_source(), "number".to_string())
+    }
+
+    #[test]
+    fn interprets_object() {
+        let schema = from_json(json!({
+            "properties": {
+                "a": { "type": "float32" }
+            }
+        }));
+
+        let type_ = TSType::from_schema(schema);
+
+        assert_eq!(type_.to_source(), "{\n  a: number;\n}".to_string())
+    }
+
+    #[test]
+    fn interprets_enum() {
+        let schema = from_json(json!({"enum": ["a", "b"]}));
+
+        let type_ = TSType::from_schema(schema);
+
+        assert_eq!(type_.to_source(), "\"a\" | \"b\"".to_string())
+    }
+}
