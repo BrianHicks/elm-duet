@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  push:
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+
+    runs-on: "${{ matrix.os }}"
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Rust and Cargo
+        uses: moonrepo/setup-rust@v1.1.0
+      - name: Test
+        run: cargo test
+
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Rust and Cargo
+        uses: moonrepo/setup-rust@v1.1.0
+      - name: Format
+        run: cargo fmt --check
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Rust and Cargo
+        uses: moonrepo/setup-rust@v1.1.0
+      - name: Lint
+        run: cargo clippy -- --deny warnings
