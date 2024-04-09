@@ -26,7 +26,7 @@ impl TSType {
             Schema::Enum { enum_, .. } => Self::Union(
                 enum_
                     .into_iter()
-                    .map(|value| Self::StringScalar(value))
+                    .map(Self::StringScalar)
                     .collect(),
             ),
             _ => todo!("{:#?}", schema),
