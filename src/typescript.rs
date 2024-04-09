@@ -23,12 +23,9 @@ impl TSType {
                 Type::String => "string",
                 _ => todo!("scalar: {type_:#?}"),
             }),
-            Schema::Enum { enum_, .. } => Self::Union(
-                enum_
-                    .into_iter()
-                    .map(Self::StringScalar)
-                    .collect(),
-            ),
+            Schema::Enum { enum_, .. } => {
+                Self::Union(enum_.into_iter().map(Self::StringScalar).collect())
+            }
             _ => todo!("{:#?}", schema),
         }
     }
