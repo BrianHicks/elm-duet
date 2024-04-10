@@ -81,6 +81,20 @@ impl TSType {
     fn new_function(args: BTreeMap<String, TSType>) -> Self {
         Self::FunctionReturningVoid(args)
     }
+
+    fn new_init(flags: TSType) -> Self {
+        Self::new_function(BTreeMap::from([(
+            "config".to_string(),
+            Self::Object(BTreeMap::from([
+                ("node".to_string(), Self::Scalar("HTMLElement")),
+                ("flags".to_string(), flags),
+            ])),
+        )]))
+    }
+
+    pub fn to_init(self) -> Self {
+        Self::new_init(self)
+    }
 }
 
 #[cfg(test)]
