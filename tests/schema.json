@@ -1,4 +1,5 @@
 {
+  "mainModule": "Foo.Bar.Main",
   "flags": {
     "properties": {
       "currentTimeMillis": {

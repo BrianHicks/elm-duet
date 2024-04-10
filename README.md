@@ -16,6 +16,7 @@ Here's an example for an app that stores a [jwt](https://jwt.io/) in `localStora
 
 ```json
 {
+  "mainModule": "Main",
   "flags": {
     "properties": {
       "currentJwt": {

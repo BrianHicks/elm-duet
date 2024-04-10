@@ -6,9 +6,11 @@ use std::collections::BTreeMap;
 use std::path::Path;
 
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Schema {
     #[serde(default)]
     pub definitions: BTreeMap<String, jtd::SerdeSchema>,
+    pub main_module: String,
     pub flags: Option<jtd::SerdeSchema>,
 }
 
