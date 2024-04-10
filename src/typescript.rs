@@ -7,8 +7,10 @@ pub enum TSType {
     Scalar(&'static str),
     StringScalar(String),
     Union(Vec<TSType>),
-    /// We never need return values in interop, so everything can be void!
-    FunctionReturningVoid(BTreeMap<String, TSType>),
+    Function {
+        args: BTreeMap<String, TSType>,
+        returning: Box<TSType>,
+    },
 }
 
 impl TSType {
@@ -61,7 +63,7 @@ impl TSType {
                     out.push_str(&type_.to_source())
                 }
             }
-            Self::FunctionReturningVoid(args) => {
+            Self::Function { args, returning } => {
                 out.push('(');
                 for (i, (name, type_)) in args.iter().enumerate() {
                     if i != 0 {
@@ -71,25 +73,32 @@ impl TSType {
                     out.push_str(": ");
                     out.push_str(&type_.to_source());
                 }
-                out.push_str("): void");
+                out.push_str("): ");
+                out.push_str(&returning.to_source());
             }
         }
 
         out
     }
 
-    fn new_function(args: BTreeMap<String, TSType>) -> Self {
-        Self::FunctionReturningVoid(args)
+    fn new_function(args: BTreeMap<String, TSType>, returning: TSType) -> Self {
+        Self::Function {
+            args,
+            returning: Box::new(returning),
+        }
     }
 
     fn new_init(flags: TSType) -> Self {
-        Self::new_function(BTreeMap::from([(
-            "config".to_string(),
-            Self::Object(BTreeMap::from([
-                ("node".to_string(), Self::Scalar("HTMLElement")),
-                ("flags".to_string(), flags),
-            ])),
-        )]))
+        Self::new_function(
+            BTreeMap::from([(
+                "config".to_string(),
+                Self::Object(BTreeMap::from([
+                    ("node".to_string(), Self::Scalar("HTMLElement")),
+                    ("flags".to_string(), flags),
+                ])),
+            )]),
+            Self::Scalar("void"),
+        )
     }
 
     pub fn to_init(self) -> Self {
@@ -149,14 +158,17 @@ mod tests {
 
     #[test]
     fn new_function() {
-        let type_ = TSType::new_function(BTreeMap::from([
-            ("one".to_string(), TSType::Scalar("number")),
-            ("two".to_string(), TSType::Scalar("string")),
-        ]));
+        let type_ = TSType::new_function(
+            BTreeMap::from([
+                ("one".to_string(), TSType::Scalar("number")),
+                ("two".to_string(), TSType::Scalar("string")),
+            ]),
+            TSType::Scalar("string"),
+        );
 
         assert_eq!(
             type_.to_source(),
-            "(one: number, two: string): void".to_string()
+            "(one: number, two: string): string".to_string()
         )
     }
 }
