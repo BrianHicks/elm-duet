@@ -18,6 +18,10 @@
             pkgs.rust-analyzer
             pkgs.rustc
             pkgs.rustfmt
+
+            # formatters
+            pkgs.elmPackages.elm-format
+            pkgs.nodePackages.prettier
           ];
         };
       }
