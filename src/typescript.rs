@@ -7,6 +7,8 @@ pub enum TSType {
     Scalar(&'static str),
     StringScalar(String),
     Union(Vec<TSType>),
+    /// We never need return values in interop, so everything can be void!
+    FunctionReturningVoid(BTreeMap<String, TSType>),
 }
 
 impl TSType {
@@ -59,9 +61,25 @@ impl TSType {
                     out.push_str(&type_.to_source())
                 }
             }
+            Self::FunctionReturningVoid(args) => {
+                out.push('(');
+                for (i, (name, type_)) in args.iter().enumerate() {
+                    if i != 0 {
+                        out.push_str(", ");
+                    }
+                    out.push_str(name);
+                    out.push_str(": ");
+                    out.push_str(&type_.to_source());
+                }
+                out.push_str("): void");
+            }
         }
 
         out
+    }
+
+    fn new_function(args: BTreeMap<String, TSType>) -> Self {
+        Self::FunctionReturningVoid(args)
     }
 }
 
@@ -113,5 +131,18 @@ mod tests {
         let type_ = TSType::from_schema(schema);
 
         assert_eq!(type_.to_source(), "\"a\" | \"b\"".to_string())
+    }
+
+    #[test]
+    fn new_function() {
+        let type_ = TSType::new_function(BTreeMap::from([
+            ("one".to_string(), TSType::Scalar("number")),
+            ("two".to_string(), TSType::Scalar("string")),
+        ]));
+
+        assert_eq!(
+            type_.to_source(),
+            "(one: number, two: string): void".to_string()
+        )
     }
 }
