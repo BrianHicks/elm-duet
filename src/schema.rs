@@ -7,7 +7,8 @@ use std::path::Path;
 
 #[derive(Debug, Deserialize)]
 pub struct Schema {
-    pub definitions: Option<BTreeMap<String, jtd::SerdeSchema>>,
+    #[serde(default)]
+    pub definitions: BTreeMap<String, jtd::SerdeSchema>,
     pub flags: Option<jtd::SerdeSchema>,
 }
 
