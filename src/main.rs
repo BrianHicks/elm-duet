@@ -17,7 +17,7 @@ impl Cli {
     fn run(&self) -> Result<()> {
         let schema = schema::Schema::from_fs(&self.source).wrap_err("could not read schema")?;
 
-        println!("{}", schema.flags_to_ts().unwrap().unwrap());
+        println!("{}", schema.flags_to_ts()?);
 
         Ok(())
     }
