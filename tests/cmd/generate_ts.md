@@ -11,9 +11,13 @@ type Flags = {
   notificationPermission: "default" | "denied" | "granted";
 }
 
-(config: {
-  flags: Flags;
-  node: HTMLElement;
-}): void
+declare namespace Elm {
+  class App {
+    static init(config: {
+      flags: Flags;
+      node: HTMLElement;
+    }): void
+  }
+}
 
 ```

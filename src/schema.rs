@@ -1,4 +1,4 @@
-use crate::typescript;
+use crate::typescript::TSType;
 use color_eyre::Result;
 use eyre::WrapErr;
 use serde::Deserialize;
@@ -31,17 +31,23 @@ impl Schema {
 
             buffer.push('\n');
             buffer.push_str(
-                &typescript::TSType::from_schema(flags)
+                &TSType::from_schema(flags)
                     .into_typedecl("Flags".to_string())
                     .to_source(),
             );
 
-            buffer.push_str("\n\n");
-            buffer.push_str(
-                &typescript::TSType::new_ref("Flags".to_string())
-                    .into_init()
-                    .to_source(),
+            let init = TSType::new_method(
+                true,
+                "init".to_string(),
+                TSType::new_ref("Flags".to_string()).into_init(),
             );
+
+            let class = TSType::new_class("App".to_string(), Vec::from([init]));
+
+            let namespace = TSType::new_namespace("Elm".to_string(), Vec::from([class]));
+
+            buffer.push_str("\n\n");
+            buffer.push_str(&namespace.to_source());
         }
 
         Ok(buffer)

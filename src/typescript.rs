@@ -142,6 +142,10 @@ impl TSType {
         out
     }
 
+    pub fn new_object(properties: BTreeMap<String, TSType>) -> Self {
+        Self::Object(properties)
+    }
+
     fn new_function(args: BTreeMap<String, TSType>, returning: TSType) -> Self {
         Self::Function {
             args,
@@ -174,16 +178,11 @@ impl TSType {
         Self::ClassDecl { name, members }
     }
 
-    pub fn new_method(
-        is_static: bool,
-        name: String,
-        args: BTreeMap<String, TSType>,
-        returning: TSType,
-    ) -> Self {
+    pub fn new_method(is_static: bool, name: String, function: TSType) -> Self {
         Self::MethodDecl {
             is_static,
             name,
-            function: Box::from(Self::new_function(args, returning)),
+            function: Box::from(function),
         }
     }
 
@@ -282,8 +281,7 @@ mod tests {
         let method = TSType::new_method(
             true,
             "init".to_string(),
-            BTreeMap::new(),
-            TSType::Scalar("void"),
+            TSType::new_function(BTreeMap::new(), TSType::Scalar("void")),
         );
 
         assert_eq!(method.to_source(), "static init(): void".to_string());
@@ -296,8 +294,7 @@ mod tests {
             Vec::from([TSType::new_method(
                 true,
                 "init".to_string(),
-                BTreeMap::new(),
-                TSType::Scalar("void"),
+                TSType::new_function(BTreeMap::new(), TSType::Scalar("void")),
             )]),
         );
 

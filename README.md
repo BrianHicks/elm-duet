@@ -51,10 +51,14 @@ type Flags = {
   currentJwt: string;
 }
 
-(config: {
-  flags: Flags;
-  node: HTMLElement;
-}): void
+declare namespace Elm {
+  class App {
+    static init(config: {
+      flags: Flags;
+      node: HTMLElement;
+    }): void
+  }
+}
 
 ```
 
