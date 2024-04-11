@@ -11,6 +11,10 @@ pub enum TSType {
         args: BTreeMap<String, TSType>,
         returning: Box<TSType>,
     },
+    TypeDecl {
+        name: String,
+        definition: Box<TSType>,
+    },
 }
 
 impl TSType {
@@ -76,6 +80,13 @@ impl TSType {
                 out.push_str("): ");
                 out.push_str(&returning.to_source());
             }
+            Self::TypeDecl { name, definition } => {
+                out.push_str("type ");
+                out.push_str(name); // TODO: escape?
+                out.push_str(" = ");
+                out.push_str(&definition.to_source());
+                out.push('\n');
+            }
         }
 
         out
@@ -103,6 +114,13 @@ impl TSType {
 
     pub fn to_init(self) -> Self {
         Self::new_init(self)
+    }
+
+    pub fn to_typedecl(self, name: String) -> Self {
+        Self::TypeDecl {
+            name,
+            definition: Box::from(self),
+        }
     }
 }
 
@@ -169,6 +187,18 @@ mod tests {
         assert_eq!(
             type_.to_source(),
             "(one: number, two: string): string".to_string()
+        )
+    }
+
+    #[test]
+    fn to_typedecl() {
+        let type_ =
+            TSType::from_schema(from_json(json!({"properties": {"a": {"type": "string"}}})))
+                .to_typedecl("Flags".to_string());
+
+        assert_eq!(
+            type_.to_source(),
+            "type Flags = {\n  a: string;\n}\n".to_string(),
         )
     }
 }
