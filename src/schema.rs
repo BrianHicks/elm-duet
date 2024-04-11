@@ -30,7 +30,18 @@ impl Schema {
                 .wrap_err("could not interpret JTD schema for flags")?;
 
             buffer.push('\n');
-            buffer.push_str(&typescript::TSType::from_schema(flags).to_init().to_source())
+            buffer.push_str(
+                &typescript::TSType::from_schema(flags)
+                    .to_typedecl("Flags".to_string())
+                    .to_source(),
+            );
+
+            buffer.push('\n');
+            buffer.push_str(
+                &typescript::TSType::new_ref("Flags".to_string())
+                    .to_init()
+                    .to_source(),
+            );
         }
 
         Ok(buffer)

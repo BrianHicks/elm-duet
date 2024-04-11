@@ -112,6 +112,10 @@ impl TSType {
         )
     }
 
+    pub fn new_ref(name: String) -> Self {
+        Self::StringScalar(name)
+    }
+
     pub fn to_init(self) -> Self {
         Self::new_init(self)
     }
