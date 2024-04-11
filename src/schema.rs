@@ -36,7 +36,7 @@ impl Schema {
                     .to_source(),
             );
 
-            buffer.push('\n');
+            buffer.push_str("\n\n");
             buffer.push_str(
                 &typescript::TSType::new_ref("Flags".to_string())
                     .into_init()

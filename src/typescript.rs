@@ -87,7 +87,6 @@ impl TSType {
                 out.push_str(name); // TODO: escape?
                 out.push_str(" = ");
                 out.push_str(&definition.to_source());
-                out.push('\n');
             }
         }
 
@@ -204,7 +203,7 @@ mod tests {
 
         assert_eq!(
             type_.to_source(),
-            "type Flags = {\n  a: string;\n}\n".to_string(),
+            "type Flags = {\n  a: string;\n}".to_string(),
         )
     }
 }
