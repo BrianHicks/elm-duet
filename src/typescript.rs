@@ -12,9 +12,25 @@ pub enum TSType {
         args: BTreeMap<String, TSType>,
         returning: Box<TSType>,
     },
+
+    // For the following members, we're making no effort to constrain what's valid where. That's up
+    // to our tests!
     TypeDecl {
         name: String,
         definition: Box<TSType>,
+    },
+    NamespaceDecl {
+        name: String,
+        members: Vec<TSType>,
+    },
+    ClassDecl {
+        name: String,
+        members: Vec<TSType>,
+    },
+    MethodDecl {
+        is_static: bool,
+        name: String,
+        function: Box<TSType>, // in practice, should always be a `Function`
     },
 }
 
@@ -88,6 +104,39 @@ impl TSType {
                 out.push_str(" = ");
                 out.push_str(&definition.to_source());
             }
+            Self::NamespaceDecl { name, members } => {
+                out.push_str("declare namespace ");
+                out.push_str(name); // TODO: escape?
+                out.push_str(" {\n");
+                for member in members {
+                    out.push_str("  ");
+                    out.push_str(&member.to_source().replace('\n', "\n  "));
+                    out.push('\n');
+                }
+                out.push('}');
+            }
+            Self::ClassDecl { name, members } => {
+                out.push_str("class ");
+                out.push_str(name); // TODO: escape?
+                out.push_str(" {\n");
+                for member in members {
+                    out.push_str("  ");
+                    out.push_str(&member.to_source().replace('\n', "\n  "));
+                    out.push('\n');
+                }
+                out.push('}');
+            }
+            Self::MethodDecl {
+                is_static,
+                name,
+                function,
+            } => {
+                if *is_static {
+                    out.push_str("static ");
+                }
+                out.push_str(name); // TODO: escape?
+                out.push_str(&function.to_source());
+            }
         }
 
         out
@@ -115,6 +164,27 @@ impl TSType {
 
     pub fn new_ref(name: String) -> Self {
         Self::TypeRef(name)
+    }
+
+    pub fn new_namespace(name: String, members: Vec<Self>) -> Self {
+        Self::NamespaceDecl { name, members }
+    }
+
+    pub fn new_class(name: String, members: Vec<Self>) -> Self {
+        Self::ClassDecl { name, members }
+    }
+
+    pub fn new_method(
+        is_static: bool,
+        name: String,
+        args: BTreeMap<String, TSType>,
+        returning: TSType,
+    ) -> Self {
+        Self::MethodDecl {
+            is_static,
+            name,
+            function: Box::from(Self::new_function(args, returning)),
+        }
     }
 
     pub fn into_init(self) -> Self {
@@ -180,7 +250,7 @@ mod tests {
     }
 
     #[test]
-    fn new_function() {
+    fn function_to_source() {
         let type_ = TSType::new_function(
             BTreeMap::from([
                 ("one".to_string(), TSType::Scalar("number")),
@@ -196,7 +266,7 @@ mod tests {
     }
 
     #[test]
-    fn to_typedecl() {
+    fn typedecl_to_source() {
         let type_ =
             TSType::from_schema(from_json(json!({"properties": {"a": {"type": "string"}}})))
                 .into_typedecl("Flags".to_string());
@@ -205,5 +275,48 @@ mod tests {
             type_.to_source(),
             "type Flags = {\n  a: string;\n}".to_string(),
         )
+    }
+
+    #[test]
+    fn method_to_source() {
+        let method = TSType::new_method(
+            true,
+            "init".to_string(),
+            BTreeMap::new(),
+            TSType::Scalar("void"),
+        );
+
+        assert_eq!(method.to_source(), "static init(): void".to_string());
+    }
+
+    #[test]
+    fn class_to_source() {
+        let class = TSType::new_class(
+            "Main".to_string(),
+            Vec::from([TSType::new_method(
+                true,
+                "init".to_string(),
+                BTreeMap::new(),
+                TSType::Scalar("void"),
+            )]),
+        );
+
+        assert_eq!(
+            class.to_source(),
+            "class Main {\n  static init(): void\n}".to_string()
+        );
+    }
+
+    #[test]
+    fn namespace_to_source() {
+        let namespace = TSType::new_namespace(
+            "Elm".to_string(),
+            Vec::from([TSType::new_class("Main".to_string(), Vec::new())]),
+        );
+
+        assert_eq!(
+            namespace.to_source(),
+            "declare namespace Elm {\n  class Main {\n  }\n}".to_string()
+        );
     }
 }
