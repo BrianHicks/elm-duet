@@ -32,14 +32,14 @@ impl Schema {
             buffer.push('\n');
             buffer.push_str(
                 &typescript::TSType::from_schema(flags)
-                    .to_typedecl("Flags".to_string())
+                    .into_typedecl("Flags".to_string())
                     .to_source(),
             );
 
             buffer.push('\n');
             buffer.push_str(
                 &typescript::TSType::new_ref("Flags".to_string())
-                    .to_init()
+                    .into_init()
                     .to_source(),
             );
         }

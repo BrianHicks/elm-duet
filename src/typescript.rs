@@ -118,11 +118,11 @@ impl TSType {
         Self::TypeRef(name)
     }
 
-    pub fn to_init(self) -> Self {
+    pub fn into_init(self) -> Self {
         Self::new_init(self)
     }
 
-    pub fn to_typedecl(self, name: String) -> Self {
+    pub fn into_typedecl(self, name: String) -> Self {
         Self::TypeDecl {
             name,
             definition: Box::from(self),
@@ -200,7 +200,7 @@ mod tests {
     fn to_typedecl() {
         let type_ =
             TSType::from_schema(from_json(json!({"properties": {"a": {"type": "string"}}})))
-                .to_typedecl("Flags".to_string());
+                .into_typedecl("Flags".to_string());
 
         assert_eq!(
             type_.to_source(),
