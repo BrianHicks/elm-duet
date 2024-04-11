@@ -16,25 +16,28 @@ Here's an example for an app that stores a [jwt](https://jwt.io/) in `localStora
 
 ```json
 {
-  "mainModule": "Main",
-  "flags": {
-    "properties": {
-      "currentJwt": {
-        "type": "string",
-        "nullable": true
-      }
-    }
-  },
-  "ports": {
-    "newJwt": {
-      "metadata": {
-        "direction": "elmToJs"
+  "modules": {
+    "Main": {
+      "flags": {
+        "properties": {
+          "currentJwt": {
+            "type": "string",
+            "nullable": true
+          }
+        }
       },
-      "type": "string"
-    },
-    "logout": {
-      "metadata": {
-        "direction": "elmToJs"
+      "ports": {
+        "newJwt": {
+          "metadata": {
+            "direction": "elmToJs"
+          },
+          "type": "string"
+        },
+        "logout": {
+          "metadata": {
+            "direction": "elmToJs"
+          }
+        }
       }
     }
   }

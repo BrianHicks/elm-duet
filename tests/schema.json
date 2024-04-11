@@ -1,12 +1,15 @@
 {
-  "mainModule": "Foo.Bar.Main",
-  "flags": {
-    "properties": {
-      "currentTimeMillis": {
-	"type": "float32"
-      },
-      "notificationPermission": {
-	"enum": ["default", "granted", "denied"]
+  "modules": {
+    "Foo.Bar.Main": {
+      "flags": {
+	"properties": {
+	  "currentTimeMillis": {
+	    "type": "float32"
+	  },
+	  "notificationPermission": {
+	    "enum": ["default", "granted", "denied"]
+	  }
+	}
       }
     }
   }
