@@ -6,6 +6,7 @@ pub enum TSType {
     Object(BTreeMap<String, TSType>),
     Scalar(&'static str),
     StringScalar(String),
+    TypeRef(String),
     Union(Vec<TSType>),
     Function {
         args: BTreeMap<String, TSType>,
@@ -59,6 +60,7 @@ impl TSType {
                 out.push_str(string);
                 out.push('"');
             }
+            Self::TypeRef(ref_) => out.push_str(ref_),
             Self::Union(types) => {
                 for (i, type_) in types.iter().enumerate() {
                     if i != 0 {
@@ -113,7 +115,7 @@ impl TSType {
     }
 
     pub fn new_ref(name: String) -> Self {
-        Self::StringScalar(name)
+        Self::TypeRef(name)
     }
 
     pub fn to_init(self) -> Self {

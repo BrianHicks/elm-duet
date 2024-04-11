@@ -12,7 +12,7 @@ type Flags = {
 }
 
 (config: {
-  flags: "Flags";
+  flags: Flags;
   node: HTMLElement;
 }): void
 
