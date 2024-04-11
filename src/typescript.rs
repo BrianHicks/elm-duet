@@ -27,6 +27,10 @@ pub enum TSType {
         name: String,
         members: Vec<TSType>,
     },
+    ClassProperty {
+        name: String,
+        definition: Box<TSType>,
+    },
     MethodDecl {
         is_static: bool,
         name: String,
@@ -111,7 +115,7 @@ impl TSType {
                 for member in members {
                     out.push_str("  ");
                     out.push_str(&member.to_source().replace('\n', "\n  "));
-                    out.push('\n');
+                    out.push('\n'); // TODO: separate by two newlines
                 }
                 out.push('}');
             }
@@ -122,9 +126,14 @@ impl TSType {
                 for member in members {
                     out.push_str("  ");
                     out.push_str(&member.to_source().replace('\n', "\n  "));
-                    out.push('\n');
+                    out.push('\n'); // TODO: separate by two newlines
                 }
                 out.push('}');
+            }
+            Self::ClassProperty { name, definition } => {
+                out.push_str(name); // TODO: escape?
+                out.push_str(": ");
+                out.push_str(&definition.to_source());
             }
             Self::MethodDecl {
                 is_static,
@@ -154,15 +163,19 @@ impl TSType {
     }
 
     fn new_init(flags: TSType) -> Self {
-        Self::new_function(
-            BTreeMap::from([(
-                "config".to_string(),
-                Self::Object(BTreeMap::from([
-                    ("node".to_string(), Self::Scalar("HTMLElement")),
-                    ("flags".to_string(), flags),
-                ])),
-            )]),
-            Self::Scalar("void"),
+        Self::new_method(
+            true,
+            "init".to_string(),
+            Self::new_function(
+                BTreeMap::from([(
+                    "config".to_string(),
+                    Self::Object(BTreeMap::from([
+                        ("node".to_string(), Self::Scalar("HTMLElement")),
+                        ("flags".to_string(), flags),
+                    ])),
+                )]),
+                Self::Scalar("void"),
+            ),
         )
     }
 
@@ -192,6 +205,13 @@ impl TSType {
 
     pub fn into_typedecl(self, name: String) -> Self {
         Self::TypeDecl {
+            name,
+            definition: Box::from(self),
+        }
+    }
+
+    pub fn into_class_property(self, name: String) -> TSType {
+        Self::ClassProperty {
             name,
             definition: Box::from(self),
         }
@@ -301,6 +321,21 @@ mod tests {
         assert_eq!(
             class.to_source(),
             "class Main {\n  static init(): void\n}".to_string()
+        );
+    }
+
+    #[test]
+    fn class_property_to_source() {
+        let class = TSType::new_class(
+            "Main".to_string(),
+            Vec::from([
+                TSType::new_ref("Flags".to_string()).into_class_property("flags".to_string())
+            ]),
+        );
+
+        assert_eq!(
+            class.to_source(),
+            "class Main {\n  flags: Flags\n}".to_string()
         );
     }
 
