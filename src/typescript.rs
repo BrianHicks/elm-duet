@@ -28,14 +28,6 @@ pub enum TSType {
         name: String,
         members: Vec<TSType>,
     },
-    ClassDecl {
-        name: String,
-        members: Vec<TSType>,
-    },
-    ClassProperty {
-        name: String,
-        definition: Box<TSType>,
-    },
     NamedFunctionDecl {
         name: String,
         function: Box<TSType>, // in practice, should always be a `Function`
@@ -134,22 +126,6 @@ impl TSType {
                 }
                 out.push('}');
             }
-            Self::ClassDecl { name, members } => {
-                out.push_str("class ");
-                out.push_str(name); // TODO: escape?
-                out.push_str(" {\n");
-                for member in members {
-                    out.push_str("  ");
-                    out.push_str(&member.to_source().replace('\n', "\n  "));
-                    out.push('\n'); // TODO: separate by two newlines
-                }
-                out.push('}');
-            }
-            Self::ClassProperty { name, definition } => {
-                out.push_str(name); // TODO: escape?
-                out.push_str(": ");
-                out.push_str(&definition.to_source());
-            }
             Self::NamedFunctionDecl { name, function } => {
                 out.push_str("function ");
                 out.push_str(name); // TODO: escape?
@@ -199,10 +175,6 @@ impl TSType {
         Self::NamespaceDecl { name, members }
     }
 
-    pub fn new_class(name: String, members: Vec<Self>) -> Self {
-        Self::ClassDecl { name, members }
-    }
-
     pub fn new_named_function(name: String, function: TSType) -> Self {
         Self::NamedFunctionDecl {
             name,
@@ -216,13 +188,6 @@ impl TSType {
 
     pub fn into_typedecl(self, name: String) -> Self {
         Self::TypeDecl {
-            name,
-            definition: Box::from(self),
-        }
-    }
-
-    pub fn into_class_property(self, name: String) -> TSType {
-        Self::ClassProperty {
             name,
             definition: Box::from(self),
         }
@@ -389,37 +354,6 @@ mod tests {
         );
 
         assert_eq!(method.to_source(), "function init(): void".to_string());
-    }
-
-    #[test]
-    fn class_to_source() {
-        let class = TSType::new_class(
-            "Main".to_string(),
-            Vec::from([TSType::new_named_function(
-                "init".to_string(),
-                TSType::new_function(BTreeMap::new(), TSType::Scalar("void")),
-            )]),
-        );
-
-        assert_eq!(
-            class.to_source(),
-            "class Main {\n  function init(): void\n}".to_string()
-        );
-    }
-
-    #[test]
-    fn class_property_to_source() {
-        let class = TSType::new_class(
-            "Main".to_string(),
-            Vec::from([
-                TSType::new_ref("Flags".to_string()).into_class_property("flags".to_string())
-            ]),
-        );
-
-        assert_eq!(
-            class.to_source(),
-            "class Main {\n  flags: Flags\n}".to_string()
-        );
     }
 
     #[test]
