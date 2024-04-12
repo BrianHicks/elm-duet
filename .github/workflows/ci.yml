@@ -17,6 +17,14 @@ jobs:
         uses: moonrepo/setup-rust@v1.1.0
       - name: Test
         run: cargo test
+      - name: Test README files
+        run: |
+          python3 scripts/update_readme_files.py
+          DIFF="$(git diff README.md)"
+          if test -n "$DIFF"; then
+            printf "Change detected in README.md:\n\n%s" "$DIFF"
+            exit 1
+          fi
 
   format:
     runs-on: ubuntu-latest
