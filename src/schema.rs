@@ -16,6 +16,7 @@ pub struct Schema {
 #[derive(Debug, Deserialize)]
 pub struct Module {
     pub flags: Option<jtd::SerdeSchema>,
+    pub ports: Option<BTreeMap<String, jtd::SerdeSchema>>,
 }
 
 impl Schema {
