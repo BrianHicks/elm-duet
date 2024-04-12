@@ -3,7 +3,7 @@
 You can generate TypeScript types like this:
 
 ```console
-$ elm-duet tests/schema.json
+$ elm-duet schema.json
 wrote elm.ts
 
 ```
