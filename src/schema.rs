@@ -32,8 +32,8 @@ impl Schema {
         for (module_name, module) in &self.modules {
             let module_path: Vec<&str> = module_name.split('.').collect();
 
-            if let Some(flags_serde) = &module.flags {
-                builder.insert(
+            match &module.flags {
+                Some(flags_serde) => builder.insert(
                     &module_path,
                     TSType::from_schema(
                         jtd::Schema::from_serde_schema(flags_serde.clone()).wrap_err_with(
@@ -46,12 +46,11 @@ impl Schema {
                         )?,
                     )
                     .into_typedecl("Flags".to_string()),
-                )?;
-            } else {
-                builder.insert(
+                )?,
+                None => builder.insert(
                     &module_path,
                     TSType::new_ref("Record<string, never>".to_string()),
-                )?;
+                )?,
             }
 
             builder.insert(
