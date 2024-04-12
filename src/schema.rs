@@ -28,8 +28,6 @@ impl Schema {
     pub fn flags_to_ts(&self) -> Result<String> {
         let mut builder = NamespaceBuilder::root("Elm".to_string());
 
-        // let mut classes = Vec::with_capacity(self.modules.len());
-
         for (module_name, module) in &self.modules {
             let module_path: Vec<&str> = module_name.split('.').collect();
 
