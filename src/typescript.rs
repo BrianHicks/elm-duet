@@ -240,7 +240,10 @@ impl TSType {
 
 #[derive(Debug)]
 pub enum NamespaceBuilder {
-    Root(BTreeMap<String, NamespaceBuilder>),
+    Root {
+        name: String,
+        below: BTreeMap<String, NamespaceBuilder>,
+    },
     Branch {
         name: String,
         members: Vec<TSType>,
@@ -249,15 +252,18 @@ pub enum NamespaceBuilder {
 }
 
 impl NamespaceBuilder {
-    pub fn root() -> Self {
-        Self::Root(BTreeMap::new())
+    pub fn root(name: String) -> Self {
+        Self::Root {
+            name,
+            below: BTreeMap::new(),
+        }
     }
 
     pub fn insert(&mut self, path: &[&str], value: TSType) -> Result<()> {
         let mut here = self;
         for part in path {
             let below = match here {
-                Self::Root(below) => below,
+                Self::Root { below, .. } => below,
                 Self::Branch { below, .. } => below,
             };
 
@@ -271,7 +277,7 @@ impl NamespaceBuilder {
         }
 
         match here {
-            Self::Root(_) => {
+            Self::Root { .. } => {
                 eyre::bail!("path provided led to a Root namespace builder. Can't insert!")
             }
             Self::Branch { members, .. } => members.push(value),
@@ -280,16 +286,12 @@ impl NamespaceBuilder {
         Ok(())
     }
 
-    pub fn into_tstype(self, root_name: String) -> TSType {
+    pub fn into_tstype(self) -> TSType {
         match self {
-            Self::Root(below) => {
-                let members = below
-                    .into_iter()
-                    .map(|(_, v)| v.into_tstype(root_name.clone()))
-                    .collect();
-
-                TSType::new_module(root_name, members)
-            }
+            Self::Root { name, below } => TSType::new_module(
+                name,
+                below.into_iter().map(|(_, v)| v.into_tstype()).collect(),
+            ),
             Self::Branch {
                 name,
                 members,
@@ -300,7 +302,7 @@ impl NamespaceBuilder {
                 ts_members.extend(
                     below
                         .into_iter()
-                        .map(|(_, v)| v.into_tstype(root_name.clone()))
+                        .map(|(_, v)| v.into_tstype())
                         .collect::<Vec<TSType>>(),
                 );
 
