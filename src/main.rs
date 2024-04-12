@@ -11,13 +11,18 @@ use std::path::PathBuf;
 struct Cli {
     /// Location of the definition file
     source: PathBuf,
+
+    /// Destination for TypeScript types
+    #[clap(long, default_value = "elm.ts")]
+    typescript_dest: PathBuf,
 }
 
 impl Cli {
     fn run(&self) -> Result<()> {
         let schema = schema::Schema::from_fs(&self.source).wrap_err("could not read schema")?;
 
-        println!("{}", schema.flags_to_ts().unwrap().unwrap());
+        std::fs::write(&self.typescript_dest, schema.flags_to_ts()?)?;
+        println!("wrote {}", self.typescript_dest.display());
 
         Ok(())
     }
