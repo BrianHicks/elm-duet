@@ -22,6 +22,7 @@
             # formatters
             pkgs.elmPackages.elm-format
             pkgs.nodePackages.prettier
+            pkgs.typos
           ];
         };
       }

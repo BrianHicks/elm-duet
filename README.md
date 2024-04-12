@@ -3,13 +3,13 @@
 Elm is great, and TypeScript is great, but the flags and ports between them are hard to use safely.
 They're the only part of the a system between those two languages that aren't typed by default.
 
-You can get around this in various ways, of course:
+You can get around this in various ways, of course, either by maintaining a definitions by hand or generating one side from the other.
+In general, though, you run into a couple different issues:
 
-- Manually maintain a `.d.ts` for your Elm app: works, but now you have two sources of truth and have to keep them in sync by hand. That falls apart quickly as the app grows or new people join the team.
-- Generate a `.d.ts` from Elm types. Beats doing it by hand, but it constrains you to simple types unless you want to write an interpreter for both your type aliases and inevitable custom types that need decoders from `Json.Decode.Value`.
-- Generate Elm types from your TypeScript types. Again, needs a lot of work to intepret the types correctly and translate them.
+- It's easy for one side or the other to get out of date and errors to slip through CI and code review into production.
+- Definitions in one language may not be translatable to the other (despite the two type systems having pretty good overlap.)
 
-elm-duet works around this by creating a single source of truth to generate both `.d.ts` files and Elm types+decoders.
+`elm-duet` tries to get around this by creating a single source of truth to generate both TypeScript definitions and Elm types with decoders.
 We use [JSON Type Definitions](https://jsontypedef.com/) (JTD, [five-minute tutorial](https://jsontypedef.com/docs/jtd-in-5-minutes/)) to say precisely what we want and generate ergonomic types on both sides (plus helpers like encoders to make testing easy!)
 
 Here's an example for an app that stores a [jwt](https://jwt.io/) in `localStorage` or similar to present to Elm:
