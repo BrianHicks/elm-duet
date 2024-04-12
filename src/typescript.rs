@@ -1,3 +1,4 @@
+use color_eyre::Result;
 use jtd::{Schema, Type};
 use std::collections::BTreeMap;
 
@@ -233,6 +234,78 @@ impl TSType {
         Self::ClassProperty {
             name,
             definition: Box::from(self),
+        }
+    }
+}
+
+#[derive(Debug)]
+pub enum NamespaceBuilder {
+    Root(BTreeMap<String, NamespaceBuilder>),
+    Branch {
+        name: String,
+        members: Vec<TSType>,
+        below: BTreeMap<String, NamespaceBuilder>,
+    },
+}
+
+impl NamespaceBuilder {
+    pub fn root() -> Self {
+        Self::Root(BTreeMap::new())
+    }
+
+    pub fn insert(&mut self, path: &[&str], value: TSType) -> Result<()> {
+        let mut here = self;
+        for part in path {
+            let below = match here {
+                Self::Root(below) => below,
+                Self::Branch { below, .. } => below,
+            };
+
+            here = below
+                .entry(part.to_string())
+                .or_insert_with(|| Self::Branch {
+                    name: part.to_string(),
+                    members: Vec::new(),
+                    below: BTreeMap::new(),
+                });
+        }
+
+        match here {
+            Self::Root(_) => {
+                eyre::bail!("path provided led to a Root namespace builder. Can't insert!")
+            }
+            Self::Branch { members, .. } => members.push(value),
+        }
+
+        Ok(())
+    }
+
+    pub fn into_tstype(self, root_name: String) -> TSType {
+        match self {
+            Self::Root(below) => {
+                let members = below
+                    .into_iter()
+                    .map(|(_, v)| v.into_tstype(root_name.clone()))
+                    .collect();
+
+                TSType::new_module(root_name, members)
+            }
+            Self::Branch {
+                name,
+                members,
+                below,
+            } => {
+                let mut ts_members = Vec::with_capacity(members.len() + below.len());
+                ts_members.extend(members);
+                ts_members.extend(
+                    below
+                        .into_iter()
+                        .map(|(_, v)| v.into_tstype(root_name.clone()))
+                        .collect::<Vec<TSType>>(),
+                );
+
+                TSType::new_namespace(name, ts_members)
+            }
         }
     }
 }
