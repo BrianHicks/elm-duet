@@ -43,3 +43,9 @@ jobs:
         uses: moonrepo/setup-rust@v1.1.0
       - name: Lint
         run: cargo clippy -- --deny warnings
+
+  typos:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: crate-ci/typos@master
