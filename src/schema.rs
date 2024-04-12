@@ -31,7 +31,7 @@ impl Schema {
         // let mut classes = Vec::with_capacity(self.modules.len());
 
         for (module_name, module) in &self.modules {
-            let module_path: Vec<&str> = module_name.split(".").collect();
+            let module_path: Vec<&str> = module_name.split('.').collect();
 
             if let Some(flags_serde) = &module.flags {
                 builder.insert(

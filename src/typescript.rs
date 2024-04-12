@@ -244,10 +244,9 @@ impl NamespaceBuilder {
 
     pub fn into_tstype(self) -> TSType {
         match self {
-            Self::Root { name, below } => TSType::new_module(
-                name,
-                below.into_iter().map(|(_, v)| v.into_tstype()).collect(),
-            ),
+            Self::Root { name, below } => {
+                TSType::new_module(name, below.into_values().map(|v| v.into_tstype()).collect())
+            }
             Self::Branch {
                 name,
                 members,
@@ -257,8 +256,8 @@ impl NamespaceBuilder {
                 ts_members.extend(members);
                 ts_members.extend(
                     below
-                        .into_iter()
-                        .map(|(_, v)| v.into_tstype())
+                        .into_values()
+                        .map(|v| v.into_tstype())
                         .collect::<Vec<TSType>>(),
                 );
 
