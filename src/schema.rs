@@ -57,14 +57,7 @@ impl Schema {
 
             builder.insert(
                 &module_path,
-                TSType::new_class(
-                    "App".to_string(),
-                    Vec::from([
-                        TSType::new_ref("Flags".to_string()).into_init(),
-                        TSType::new_ref("Ports".to_string())
-                            .into_class_property("flags".to_string()),
-                    ]),
-                ),
+                TSType::new_ref("Flags".to_string()).into_init(),
             )?;
 
             builder.insert(

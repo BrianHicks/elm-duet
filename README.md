@@ -55,13 +55,10 @@ declare module Elm {
     type Flags = {
       currentJwt: string;
     }
-    class App {
-      static init(config: {
-        flags: Flags;
-        node: HTMLElement;
-      }): void
-      flags: Ports
-    }
+    function init(config: {
+      flags: Flags;
+      node: HTMLElement;
+    }): void
     type Ports = {
     }
   }

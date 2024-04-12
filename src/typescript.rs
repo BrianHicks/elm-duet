@@ -36,8 +36,7 @@ pub enum TSType {
         name: String,
         definition: Box<TSType>,
     },
-    MethodDecl {
-        is_static: bool,
+    NamedFunctionDecl {
         name: String,
         function: Box<TSType>, // in practice, should always be a `Function`
     },
@@ -151,14 +150,8 @@ impl TSType {
                 out.push_str(": ");
                 out.push_str(&definition.to_source());
             }
-            Self::MethodDecl {
-                is_static,
-                name,
-                function,
-            } => {
-                if *is_static {
-                    out.push_str("static ");
-                }
+            Self::NamedFunctionDecl { name, function } => {
+                out.push_str("function ");
                 out.push_str(name); // TODO: escape?
                 out.push_str(&function.to_source());
             }
@@ -179,8 +172,7 @@ impl TSType {
     }
 
     fn new_init(flags: TSType) -> Self {
-        Self::new_method(
-            true,
+        Self::new_named_function(
             "init".to_string(),
             Self::new_function(
                 BTreeMap::from([(
@@ -211,9 +203,8 @@ impl TSType {
         Self::ClassDecl { name, members }
     }
 
-    pub fn new_method(is_static: bool, name: String, function: TSType) -> Self {
-        Self::MethodDecl {
-            is_static,
+    pub fn new_named_function(name: String, function: TSType) -> Self {
+        Self::NamedFunctionDecl {
             name,
             function: Box::from(function),
         }
@@ -392,21 +383,19 @@ mod tests {
 
     #[test]
     fn method_to_source() {
-        let method = TSType::new_method(
-            true,
+        let method = TSType::new_named_function(
             "init".to_string(),
             TSType::new_function(BTreeMap::new(), TSType::Scalar("void")),
         );
 
-        assert_eq!(method.to_source(), "static init(): void".to_string());
+        assert_eq!(method.to_source(), "function init(): void".to_string());
     }
 
     #[test]
     fn class_to_source() {
         let class = TSType::new_class(
             "Main".to_string(),
-            Vec::from([TSType::new_method(
-                true,
+            Vec::from([TSType::new_named_function(
                 "init".to_string(),
                 TSType::new_function(BTreeMap::new(), TSType::Scalar("void")),
             )]),
@@ -414,7 +403,7 @@ mod tests {
 
         assert_eq!(
             class.to_source(),
-            "class Main {\n  static init(): void\n}".to_string()
+            "class Main {\n  function init(): void\n}".to_string()
         );
     }
 

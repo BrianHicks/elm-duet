@@ -14,13 +14,10 @@ declare module Elm {
           currentTimeMillis: number;
           notificationPermission: "default" | "denied" | "granted";
         }
-        class App {
-          static init(config: {
-            flags: Flags;
-            node: HTMLElement;
-          }): void
-          flags: Ports
-        }
+        function init(config: {
+          flags: Flags;
+          node: HTMLElement;
+        }): void
         type Ports = {
         }
       }
