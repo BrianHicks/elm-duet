@@ -8,12 +8,12 @@ declare module Elm {
           currentTimeMillis: number;
           notificationPermission: "default" | "denied" | "granted";
         }
+        type Ports = {
+        }
         function init(config: {
           flags: Flags;
           node: HTMLElement;
         }): void
-        type Ports = {
-        }
       }
     }
   }

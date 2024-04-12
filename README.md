@@ -63,12 +63,12 @@ declare module Elm {
     type Flags = {
       currentJwt: string;
     }
+    type Ports = {
+    }
     function init(config: {
       flags: Flags;
       node: HTMLElement;
     }): void
-    type Ports = {
-    }
   }
 }
 ```

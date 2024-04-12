@@ -55,12 +55,12 @@ impl Schema {
 
             builder.insert(
                 &module_path,
-                TSType::new_ref("Flags".to_string()).into_init(),
+                TSType::new_object(BTreeMap::new()).into_typedecl("Ports".to_string()),
             )?;
 
             builder.insert(
                 &module_path,
-                TSType::new_object(BTreeMap::new()).into_typedecl("Ports".to_string()),
+                TSType::new_ref("Flags".to_string()).into_init(),
             )?;
         }
 
