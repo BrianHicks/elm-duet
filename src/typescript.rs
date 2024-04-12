@@ -19,6 +19,10 @@ pub enum TSType {
         name: String,
         definition: Box<TSType>,
     },
+    ModuleDecl {
+        name: String,
+        members: Vec<TSType>,
+    },
     NamespaceDecl {
         name: String,
         members: Vec<TSType>,
@@ -108,6 +112,17 @@ impl TSType {
                 out.push_str(" = ");
                 out.push_str(&definition.to_source());
             }
+            Self::ModuleDecl { name, members } => {
+                out.push_str("declare module ");
+                out.push_str(name); // TODO: escape?
+                out.push_str(" {\n");
+                for member in members {
+                    out.push_str("  ");
+                    out.push_str(&member.to_source().replace('\n', "\n  "));
+                    out.push('\n'); // TODO: separate by two newlines
+                }
+                out.push('}');
+            }
             Self::NamespaceDecl { name, members } => {
                 out.push_str("declare namespace ");
                 out.push_str(name); // TODO: escape?
@@ -181,6 +196,10 @@ impl TSType {
 
     pub fn new_ref(name: String) -> Self {
         Self::TypeRef(name)
+    }
+
+    fn new_module(name: String, members: Vec<TSType>) -> Self {
+        Self::ModuleDecl { name, members }
     }
 
     pub fn new_namespace(name: String, members: Vec<Self>) -> Self {
@@ -336,6 +355,19 @@ mod tests {
         assert_eq!(
             class.to_source(),
             "class Main {\n  flags: Flags\n}".to_string()
+        );
+    }
+
+    #[test]
+    fn module_to_source() {
+        let namespace = TSType::new_module(
+            "Elm".to_string(),
+            Vec::from([TSType::new_namespace("Main".to_string(), Vec::new())]),
+        );
+
+        assert_eq!(
+            namespace.to_source(),
+            "declare module Elm {\n  declare namespace Main {\n  }\n}".to_string()
         );
     }
 
