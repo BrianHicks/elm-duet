@@ -42,6 +42,7 @@ Here's an example for an app that stores a [jwt](https://jwt.io/) in `localStora
     }
   }
 }
+
 ```
 
 You can generate code from this by calling `elm-duet path/to/your/schema.json`:
