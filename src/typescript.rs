@@ -124,7 +124,7 @@ impl TSType {
                 out.push('}');
             }
             Self::NamespaceDecl { name, members } => {
-                out.push_str("declare namespace ");
+                out.push_str("namespace ");
                 out.push_str(name); // TODO: escape?
                 out.push_str(" {\n");
                 for member in members {
@@ -367,20 +367,14 @@ mod tests {
 
         assert_eq!(
             namespace.to_source(),
-            "declare module Elm {\n  declare namespace Main {\n  }\n}".to_string()
+            "declare module Elm {\n  namespace Main {\n  }\n}".to_string()
         );
     }
 
     #[test]
     fn namespace_to_source() {
-        let namespace = TSType::new_namespace(
-            "Elm".to_string(),
-            Vec::from([TSType::new_class("Main".to_string(), Vec::new())]),
-        );
+        let namespace = TSType::new_namespace("Main".to_string(), Vec::from([]));
 
-        assert_eq!(
-            namespace.to_source(),
-            "declare namespace Elm {\n  class Main {\n  }\n}".to_string()
-        );
+        assert_eq!(namespace.to_source(), "namespace Main {\n}".to_string());
     }
 }
