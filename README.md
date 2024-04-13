@@ -29,13 +29,13 @@ Here's an example for an app that stores a [jwt](https://jwt.io/) in `localStora
       "ports": {
         "newJwt": {
           "metadata": {
-            "direction": "elmToJs"
+            "direction": "ElmToJs"
           },
           "type": "string"
         },
         "logout": {
           "metadata": {
-            "direction": "elmToJs"
+            "direction": "ElmToJs"
           }
         }
       }

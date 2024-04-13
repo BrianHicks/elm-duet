@@ -12,13 +12,13 @@
       "ports": {
         "newJwt": {
           "metadata": {
-            "direction": "elmToJs"
+            "direction": "ElmToJs"
           },
           "type": "string"
         },
         "logout": {
           "metadata": {
-            "direction": "elmToJs"
+            "direction": "ElmToJs"
           }
         }
       }

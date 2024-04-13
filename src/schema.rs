@@ -16,7 +16,26 @@ pub struct Schema {
 #[derive(Debug, Deserialize)]
 pub struct Module {
     pub flags: Option<jtd::SerdeSchema>,
-    pub ports: Option<BTreeMap<String, jtd::SerdeSchema>>,
+    pub ports: Option<BTreeMap<String, Port>>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct Port {
+    metadata: PortMeta,
+
+    #[serde(flatten)]
+    pub schema: jtd::SerdeSchema,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct PortMeta {
+    direction: PortDirection,
+}
+
+#[derive(Debug, Deserialize)]
+pub enum PortDirection {
+    JsToElm,
+    ElmToJs,
 }
 
 impl Schema {
