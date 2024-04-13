@@ -8,8 +8,7 @@ declare module Elm {
           currentTimeMillis: number;
           notificationPermission: "default" | "denied" | "granted";
         }
-        type Ports = {
-        }
+        type Ports = Record<string, never>
         function init(config: {
           flags: Flags;
           node: HTMLElement;

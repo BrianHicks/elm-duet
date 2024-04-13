@@ -68,14 +68,19 @@ impl Schema {
                 )?,
                 None => builder.insert(
                     &module_path,
-                    TSType::new_ref("Record<string, never>".to_string()),
+                    TSType::new_ref("Record<string, never>".to_string())
+                        .into_typedecl("Flags".to_string()),
                 )?,
             }
 
-            builder.insert(
-                &module_path,
-                TSType::new_object(BTreeMap::new()).into_typedecl("Ports".to_string()),
-            )?;
+            match &module.ports {
+                Some(ports) => todo!(),
+                None => builder.insert(
+                    &module_path,
+                    TSType::new_ref("Record<string, never>".to_string())
+                        .into_typedecl("Ports".to_string()),
+                )?,
+            }
 
             builder.insert(
                 &module_path,
