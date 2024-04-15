@@ -88,7 +88,37 @@ impl Schema {
                                         })?,
                                 );
 
-                                Ok((name.clone(), type_))
+                                let func_record = match value.metadata.direction {
+                                    PortDirection::JsToElm => {
+                                        TSType::new_object(BTreeMap::from([(
+                                            "send".to_string(),
+                                            TSType::new_function(
+                                                BTreeMap::from([("value".to_string(), type_)]),
+                                                TSType::new_void(),
+                                            ),
+                                        )]))
+                                    }
+                                    PortDirection::ElmToJs => {
+                                        TSType::new_object(BTreeMap::from([(
+                                            "subscribe".to_string(),
+                                            TSType::new_function(
+                                                BTreeMap::from([(
+                                                    "callback".to_string(),
+                                                    TSType::new_function(
+                                                        BTreeMap::from([(
+                                                            "value".to_string(),
+                                                            type_,
+                                                        )]),
+                                                        TSType::new_void(),
+                                                    ),
+                                                )]),
+                                                TSType::new_void(),
+                                            ),
+                                        )]))
+                                    }
+                                };
+
+                                Ok((name.clone(), func_record))
                             })
                             .collect::<Result<BTreeMap<String, TSType>>>()?,
                     )

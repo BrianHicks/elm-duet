@@ -6,8 +6,12 @@ declare module Elm {
       currentJwt: string;
     }
     type Ports = {
-      logout: Record<string, never>;
-      newJwt: string;
+      logout: {
+        subscribe: (callback: (value: Record<string, never>): void): void;
+      };
+      newJwt: {
+        subscribe: (callback: (value: string): void): void;
+      };
     }
     function init(config: {
       flags: Flags;

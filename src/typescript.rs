@@ -148,11 +148,15 @@ impl TSType {
         Self::NeverObject
     }
 
-    fn new_function(args: BTreeMap<String, TSType>, returning: TSType) -> Self {
+    pub fn new_function(args: BTreeMap<String, TSType>, returning: TSType) -> Self {
         Self::Function {
             args,
             returning: Box::new(returning),
         }
+    }
+
+    pub fn new_void() -> Self {
+        Self::Scalar("void")
     }
 
     fn new_init(flags: TSType) -> Self {

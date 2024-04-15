@@ -10,6 +10,61 @@
 	    "enum": ["default", "granted", "denied"]
 	  }
 	}
+      },
+      "ports": {
+	"requestNotificationPermission": {
+	  "metadata": {
+	    "direction": "ElmToJs"
+	  }
+	},
+	"notificationPermission": {
+	  "metadata": {
+	    "direction": "JsToElm"
+	  },
+	  "enum": ["default", "denied", "granted"]
+	},
+	"sendNotification": {
+	  "metadata": {
+	    "direction": "ElmToJs"
+	  },
+	  "properties": {
+	    "title": {
+	      "type": "string"
+	    },
+	    "options": {
+	      "properties": {
+		"badge": {
+		  "type": "string",
+		  "nullable": true
+		},
+		"body": {
+		  "type": "string",
+		  "nullable": true
+		},
+		"icon": {
+		  "type": "string",
+		  "nullable": true
+		},
+		"lang": {
+		  "type": "string",
+		  "nullable": true
+		},
+		"requireInteraction": {
+		  "type": "boolean",
+		  "nullable": true
+		},
+		"silent": {
+		  "type": "boolean",
+		  "nullable": true
+		},
+		"tag": {
+		  "type": "string",
+		  "nullable": true
+		}
+	      }
+	    }
+	  }
+	}
       }
     }
   }
