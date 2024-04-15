@@ -185,6 +185,26 @@ impl TSType {
         )
     }
 
+    pub fn new_send_function(value: TSType) -> Self {
+        TSType::new_function(
+            BTreeMap::from([("value".to_string(), value)]),
+            TSType::new_void(),
+        )
+    }
+
+    pub fn new_subscribe_function(value: TSType) -> Self {
+        TSType::new_function(
+            BTreeMap::from([(
+                "callback".to_string(),
+                TSType::new_function(
+                    BTreeMap::from([("value".to_string(), value)]),
+                    TSType::new_void(),
+                ),
+            )]),
+            TSType::new_void(),
+        )
+    }
+
     pub fn new_ref(name: String) -> Self {
         Self::TypeRef(name)
     }

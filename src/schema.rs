@@ -92,28 +92,13 @@ impl Schema {
                                     PortDirection::JsToElm => {
                                         TSType::new_object(BTreeMap::from([(
                                             "send".to_string(),
-                                            TSType::new_function(
-                                                BTreeMap::from([("value".to_string(), type_)]),
-                                                TSType::new_void(),
-                                            ),
+                                            TSType::new_send_function(type_),
                                         )]))
                                     }
                                     PortDirection::ElmToJs => {
                                         TSType::new_object(BTreeMap::from([(
                                             "subscribe".to_string(),
-                                            TSType::new_function(
-                                                BTreeMap::from([(
-                                                    "callback".to_string(),
-                                                    TSType::new_function(
-                                                        BTreeMap::from([(
-                                                            "value".to_string(),
-                                                            type_,
-                                                        )]),
-                                                        TSType::new_void(),
-                                                    ),
-                                                )]),
-                                                TSType::new_void(),
-                                            ),
+                                            TSType::new_subscribe_function(type_),
                                         )]))
                                     }
                                 };
