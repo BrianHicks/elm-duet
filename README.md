@@ -61,7 +61,7 @@ Which results in this schema:
 declare module Elm {
   namespace Main {
     type Flags = {
-      currentJwt: string;
+      currentJwt: string | null;
     }
     type Ports = {
       logout: {

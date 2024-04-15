@@ -6,7 +6,10 @@ use std::collections::BTreeMap;
 pub enum TSType {
     Object(BTreeMap<String, TSType>),
     NeverObject,
-    Scalar(&'static str),
+    Scalar {
+        value: &'static str,
+        nullable: bool,
+    },
     StringScalar(String),
     TypeRef(String),
     Union(Vec<TSType>),
@@ -44,18 +47,23 @@ impl TSType {
                     .map(|(name, value)| (name, Self::from_schema(value)))
                     .collect(),
             ),
-            Schema::Type { type_, .. } => Self::Scalar(match type_ {
-                Type::Int8
-                | Type::Int16
-                | Type::Int32
-                | Type::Uint8
-                | Type::Uint16
-                | Type::Uint32
-                | Type::Float32
-                | Type::Float64 => "number",
-                Type::String | Type::Timestamp => "string",
-                Type::Boolean => "bool",
-            }),
+            Schema::Type {
+                type_, nullable, ..
+            } => Self::Scalar {
+                value: match type_ {
+                    Type::Int8
+                    | Type::Int16
+                    | Type::Int32
+                    | Type::Uint8
+                    | Type::Uint16
+                    | Type::Uint32
+                    | Type::Float32
+                    | Type::Float64 => "number",
+                    Type::String | Type::Timestamp => "string",
+                    Type::Boolean => "bool",
+                },
+                nullable,
+            },
             Schema::Enum { enum_, .. } => {
                 Self::Union(enum_.into_iter().map(Self::StringScalar).collect())
             }
@@ -80,7 +88,12 @@ impl TSType {
                 out.push('}');
             }
             Self::NeverObject => out.push_str("Record<string, never>"),
-            Self::Scalar(literal) => out.push_str(literal),
+            Self::Scalar { value, nullable } => {
+                out.push_str(value);
+                if *nullable {
+                    out.push_str(" | null");
+                }
+            }
             Self::StringScalar(string) => {
                 out.push('"');
                 out.push_str(string);
@@ -175,7 +188,10 @@ impl TSType {
     }
 
     pub fn new_void() -> Self {
-        Self::Scalar("void")
+        Self::Scalar {
+            value: "void",
+            nullable: false,
+        }
     }
 
     fn new_init(flags: TSType) -> Self {
@@ -185,11 +201,17 @@ impl TSType {
                 BTreeMap::from([(
                     "config",
                     Self::Object(BTreeMap::from([
-                        ("node".to_string(), Self::Scalar("HTMLElement")),
+                        (
+                            "node".to_string(),
+                            Self::Scalar {
+                                value: "HTMLElement",
+                                nullable: false,
+                            },
+                        ),
                         ("flags".to_string(), flags),
                     ])),
                 )]),
-                Self::Scalar("void"),
+                Self::new_void(),
             ),
         )
     }
@@ -333,56 +355,104 @@ mod tests {
     fn interprets_int8() {
         let schema = from_json(json!({"type": "int8"}));
 
-        assert_eq!(TSType::from_schema(schema), TSType::Scalar("number"));
+        assert_eq!(
+            TSType::from_schema(schema),
+            TSType::Scalar {
+                value: "number",
+                nullable: false
+            }
+        );
     }
 
     #[test]
     fn interprets_int16() {
         let schema = from_json(json!({"type": "int16"}));
 
-        assert_eq!(TSType::from_schema(schema), TSType::Scalar("number"));
+        assert_eq!(
+            TSType::from_schema(schema),
+            TSType::Scalar {
+                value: "number",
+                nullable: false
+            }
+        );
     }
 
     #[test]
     fn interprets_int32() {
         let schema = from_json(json!({"type": "int32"}));
 
-        assert_eq!(TSType::from_schema(schema), TSType::Scalar("number"));
+        assert_eq!(
+            TSType::from_schema(schema),
+            TSType::Scalar {
+                value: "number",
+                nullable: false
+            }
+        );
     }
 
     #[test]
     fn interprets_uint8() {
         let schema = from_json(json!({"type": "uint8"}));
 
-        assert_eq!(TSType::from_schema(schema), TSType::Scalar("number"));
+        assert_eq!(
+            TSType::from_schema(schema),
+            TSType::Scalar {
+                value: "number",
+                nullable: false
+            }
+        );
     }
 
     #[test]
     fn interprets_uint16() {
         let schema = from_json(json!({"type": "uint16"}));
 
-        assert_eq!(TSType::from_schema(schema), TSType::Scalar("number"));
+        assert_eq!(
+            TSType::from_schema(schema),
+            TSType::Scalar {
+                value: "number",
+                nullable: false
+            }
+        );
     }
 
     #[test]
     fn interprets_uint32() {
         let schema = from_json(json!({"type": "uint32"}));
 
-        assert_eq!(TSType::from_schema(schema), TSType::Scalar("number"));
+        assert_eq!(
+            TSType::from_schema(schema),
+            TSType::Scalar {
+                value: "number",
+                nullable: false
+            }
+        );
     }
 
     #[test]
     fn interprets_float32() {
         let schema = from_json(json!({"type": "float32"}));
 
-        assert_eq!(TSType::from_schema(schema), TSType::Scalar("number"));
+        assert_eq!(
+            TSType::from_schema(schema),
+            TSType::Scalar {
+                value: "number",
+                nullable: false
+            }
+        );
     }
 
     #[test]
     fn interprets_float64() {
         let schema = from_json(json!({"type": "float64"}));
 
-        assert_eq!(TSType::from_schema(schema), TSType::Scalar("number"));
+        assert_eq!(
+            TSType::from_schema(schema),
+            TSType::Scalar {
+                value: "number",
+                nullable: false
+            }
+        );
     }
 
     #[test]
@@ -426,13 +496,42 @@ mod tests {
     }
 
     #[test]
+    fn scalar_to_source() {
+        let type_ = TSType::from_schema(from_json(json!({"type": "string"})));
+
+        assert_eq!(type_.to_source(true), "string".to_string());
+    }
+
+    #[test]
+    fn nullable_scalar_to_source() {
+        let type_ = TSType::from_schema(from_json(json!({"type": "string", "nullable": true})));
+
+        assert_eq!(type_.to_source(true), "string | null".to_string());
+    }
+
+    #[test]
     fn function_to_source_toplevel() {
         let type_ = TSType::new_function(
             BTreeMap::from([
-                ("one", TSType::Scalar("number")),
-                ("two", TSType::Scalar("string")),
+                (
+                    "one",
+                    TSType::Scalar {
+                        value: "number",
+                        nullable: false,
+                    },
+                ),
+                (
+                    "two",
+                    TSType::Scalar {
+                        value: "string",
+                        nullable: false,
+                    },
+                ),
             ]),
-            TSType::Scalar("string"),
+            TSType::Scalar {
+                value: "string",
+                nullable: false,
+            },
         );
 
         assert_eq!(
@@ -445,10 +544,25 @@ mod tests {
     fn function_to_source_not_toplevel() {
         let type_ = TSType::new_function(
             BTreeMap::from([
-                ("one", TSType::Scalar("number")),
-                ("two", TSType::Scalar("string")),
+                (
+                    "one",
+                    TSType::Scalar {
+                        value: "number",
+                        nullable: false,
+                    },
+                ),
+                (
+                    "two",
+                    TSType::Scalar {
+                        value: "string",
+                        nullable: false,
+                    },
+                ),
             ]),
-            TSType::Scalar("string"),
+            TSType::Scalar {
+                value: "string",
+                nullable: false,
+            },
         );
 
         assert_eq!(
@@ -473,7 +587,13 @@ mod tests {
     fn method_to_source() {
         let method = TSType::new_named_function(
             "init",
-            TSType::new_function(BTreeMap::new(), TSType::Scalar("void")),
+            TSType::new_function(
+                BTreeMap::new(),
+                TSType::Scalar {
+                    value: "void",
+                    nullable: false,
+                },
+            ),
         );
 
         assert_eq!(method.to_source(true), "function init(): void".to_string());

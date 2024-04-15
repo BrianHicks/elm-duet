@@ -18,13 +18,13 @@ declare module Elm {
           sendNotification: {
             subscribe: (callback: (value: {
               options: {
-                badge: string;
-                body: string;
-                icon: string;
-                lang: string;
-                requireInteraction: bool;
-                silent: bool;
-                tag: string;
+                badge: string | null;
+                body: string | null;
+                icon: string | null;
+                lang: string | null;
+                requireInteraction: bool | null;
+                silent: bool | null;
+                tag: string | null;
               };
               title: string;
             }) => void) => void;
