@@ -82,7 +82,19 @@ impl TSType {
                 nullable,
             },
             Schema::Empty { .. } => Self::NeverObject,
-            _ => todo!("{:#?}", schema),
+            Schema::Ref { ref_, nullable, .. } => todo!(),
+            Schema::Elements {
+                elements, nullable, ..
+            } => todo!(),
+            Schema::Values {
+                values, nullable, ..
+            } => todo!(),
+            Schema::Discriminator {
+                discriminator,
+                mapping,
+                nullable,
+                ..
+            } => todo!(),
         }
     }
 
