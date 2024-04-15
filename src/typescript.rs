@@ -58,7 +58,7 @@ impl TSType {
         }
     }
 
-    pub fn to_source(&self) -> String {
+    pub fn to_source(&self, is_toplevel: bool) -> String {
         let mut out = String::new();
 
         match self {
@@ -68,7 +68,7 @@ impl TSType {
                     out.push_str("  ");
                     out.push_str(name); // TODO: escape?
                     out.push_str(": ");
-                    out.push_str(&value.to_source().replace('\n', "\n  "));
+                    out.push_str(&value.to_source(false).replace('\n', "\n  "));
                     out.push_str(";\n");
                 }
                 out.push('}');
@@ -86,7 +86,7 @@ impl TSType {
                     if i != 0 {
                         out.push_str(" | ");
                     }
-                    out.push_str(&type_.to_source())
+                    out.push_str(&type_.to_source(false))
                 }
             }
             Self::Function { args, returning } => {
@@ -97,16 +97,20 @@ impl TSType {
                     }
                     out.push_str(name);
                     out.push_str(": ");
-                    out.push_str(&type_.to_source());
+                    out.push_str(&type_.to_source(false));
                 }
-                out.push_str("): ");
-                out.push_str(&returning.to_source());
+                if is_toplevel {
+                    out.push_str("): ");
+                } else {
+                    out.push_str(") => ");
+                }
+                out.push_str(&returning.to_source(false));
             }
             Self::TypeDecl { name, definition } => {
                 out.push_str("type ");
                 out.push_str(name); // TODO: escape?
                 out.push_str(" = ");
-                out.push_str(&definition.to_source());
+                out.push_str(&definition.to_source(false));
             }
             Self::ModuleDecl { name, members } => {
                 out.push_str("declare module ");
@@ -114,7 +118,7 @@ impl TSType {
                 out.push_str(" {\n");
                 for member in members {
                     out.push_str("  ");
-                    out.push_str(&member.to_source().replace('\n', "\n  "));
+                    out.push_str(&member.to_source(true).replace('\n', "\n  "));
                     out.push('\n'); // TODO: separate by two newlines
                 }
                 out.push('}');
@@ -125,7 +129,7 @@ impl TSType {
                 out.push_str(" {\n");
                 for member in members {
                     out.push_str("  ");
-                    out.push_str(&member.to_source().replace('\n', "\n  "));
+                    out.push_str(&member.to_source(true).replace('\n', "\n  "));
                     out.push('\n'); // TODO: separate by two newlines
                 }
                 out.push('}');
@@ -133,7 +137,7 @@ impl TSType {
             Self::NamedFunctionDecl { name, function } => {
                 out.push_str("function ");
                 out.push_str(name); // TODO: escape?
-                out.push_str(&function.to_source());
+                out.push_str(&function.to_source(true));
             }
         }
 
@@ -295,7 +299,7 @@ mod tests {
 
         let type_ = TSType::from_schema(schema);
 
-        assert_eq!(type_.to_source(), "number".to_string())
+        assert_eq!(type_.to_source(true), "number".to_string())
     }
 
     #[test]
@@ -304,7 +308,7 @@ mod tests {
 
         let type_ = TSType::from_schema(schema);
 
-        assert_eq!(type_.to_source(), "string".to_string())
+        assert_eq!(type_.to_source(true), "string".to_string())
     }
 
     #[test]
@@ -313,7 +317,7 @@ mod tests {
 
         let type_ = TSType::from_schema(schema);
 
-        assert_eq!(type_.to_source(), "bool".to_string())
+        assert_eq!(type_.to_source(true), "bool".to_string())
     }
 
     #[test]
@@ -326,7 +330,7 @@ mod tests {
 
         let type_ = TSType::from_schema(schema);
 
-        assert_eq!(type_.to_source(), "{\n  a: number;\n}".to_string())
+        assert_eq!(type_.to_source(true), "{\n  a: number;\n}".to_string())
     }
 
     #[test]
@@ -335,11 +339,11 @@ mod tests {
 
         let type_ = TSType::from_schema(schema);
 
-        assert_eq!(type_.to_source(), "\"a\" | \"b\"".to_string())
+        assert_eq!(type_.to_source(true), "\"a\" | \"b\"".to_string())
     }
 
     #[test]
-    fn function_to_source() {
+    fn function_to_source_toplevel() {
         let type_ = TSType::new_function(
             BTreeMap::from([
                 ("one".to_string(), TSType::Scalar("number")),
@@ -349,8 +353,24 @@ mod tests {
         );
 
         assert_eq!(
-            type_.to_source(),
+            type_.to_source(true),
             "(one: number, two: string): string".to_string()
+        )
+    }
+
+    #[test]
+    fn function_to_source_not_toplevel() {
+        let type_ = TSType::new_function(
+            BTreeMap::from([
+                ("one".to_string(), TSType::Scalar("number")),
+                ("two".to_string(), TSType::Scalar("string")),
+            ]),
+            TSType::Scalar("string"),
+        );
+
+        assert_eq!(
+            type_.to_source(false),
+            "(one: number, two: string) => string".to_string()
         )
     }
 
@@ -361,7 +381,7 @@ mod tests {
                 .into_typedecl("Flags".to_string());
 
         assert_eq!(
-            type_.to_source(),
+            type_.to_source(true),
             "type Flags = {\n  a: string;\n}".to_string(),
         )
     }
@@ -373,7 +393,7 @@ mod tests {
             TSType::new_function(BTreeMap::new(), TSType::Scalar("void")),
         );
 
-        assert_eq!(method.to_source(), "function init(): void".to_string());
+        assert_eq!(method.to_source(true), "function init(): void".to_string());
     }
 
     #[test]
@@ -384,7 +404,7 @@ mod tests {
         );
 
         assert_eq!(
-            namespace.to_source(),
+            namespace.to_source(true),
             "declare module Elm {\n  namespace Main {\n  }\n}".to_string()
         );
     }
@@ -393,6 +413,6 @@ mod tests {
     fn namespace_to_source() {
         let namespace = TSType::new_namespace("Main".to_string(), Vec::from([]));
 
-        assert_eq!(namespace.to_source(), "namespace Main {\n}".to_string());
+        assert_eq!(namespace.to_source(true), "namespace Main {\n}".to_string());
     }
 }

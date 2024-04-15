@@ -65,10 +65,10 @@ declare module Elm {
     }
     type Ports = {
       logout: {
-        subscribe: (callback: (value: Record<string, never>): void): void;
+        subscribe: (callback: (value: Record<string, never>) => void) => void;
       };
       newJwt: {
-        subscribe: (callback: (value: string): void): void;
+        subscribe: (callback: (value: string) => void) => void;
       };
     }
     function init(config: {

@@ -10,10 +10,10 @@ declare module Elm {
         }
         type Ports = {
           notificationPermission: {
-            send: (value: "default" | "denied" | "granted"): void;
+            send: (value: "default" | "denied" | "granted") => void;
           };
           requestNotificationPermission: {
-            subscribe: (callback: (value: Record<string, never>): void): void;
+            subscribe: (callback: (value: Record<string, never>) => void) => void;
           };
           sendNotification: {
             subscribe: (callback: (value: {
@@ -27,7 +27,7 @@ declare module Elm {
                 tag: string;
               };
               title: string;
-            }): void): void;
+            }) => void) => void;
           };
         }
         function init(config: {
