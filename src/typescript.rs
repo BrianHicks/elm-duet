@@ -68,7 +68,7 @@ impl TSType {
                     out.push_str("  ");
                     out.push_str(name); // TODO: escape?
                     out.push_str(": ");
-                    out.push_str(&value.to_source());
+                    out.push_str(&value.to_source().replace('\n', "\n  "));
                     out.push_str(";\n");
                 }
                 out.push('}');
