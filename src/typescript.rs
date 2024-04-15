@@ -2,7 +2,7 @@ use color_eyre::Result;
 use jtd::{Schema, Type};
 use std::collections::BTreeMap;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum TSType {
     Object(BTreeMap<String, TSType>),
     NeverObject,
@@ -45,10 +45,16 @@ impl TSType {
                     .collect(),
             ),
             Schema::Type { type_, .. } => Self::Scalar(match type_ {
-                Type::Float32 => "number",
-                Type::String => "string",
+                Type::Int8
+                | Type::Int16
+                | Type::Int32
+                | Type::Uint8
+                | Type::Uint16
+                | Type::Uint32
+                | Type::Float32
+                | Type::Float64 => "number",
+                Type::String | Type::Timestamp => "string",
                 Type::Boolean => "bool",
-                _ => todo!("scalar: {type_:#?}"),
             }),
             Schema::Enum { enum_, .. } => {
                 Self::Union(enum_.into_iter().map(Self::StringScalar).collect())
@@ -294,12 +300,59 @@ mod tests {
     }
 
     #[test]
+    fn interprets_int8() {
+        let schema = from_json(json!({"type": "int8"}));
+
+        assert_eq!(TSType::from_schema(schema), TSType::Scalar("number"));
+    }
+
+    #[test]
+    fn interprets_int16() {
+        let schema = from_json(json!({"type": "int16"}));
+
+        assert_eq!(TSType::from_schema(schema), TSType::Scalar("number"));
+    }
+
+    #[test]
+    fn interprets_int32() {
+        let schema = from_json(json!({"type": "int32"}));
+
+        assert_eq!(TSType::from_schema(schema), TSType::Scalar("number"));
+    }
+
+    #[test]
+    fn interprets_uint8() {
+        let schema = from_json(json!({"type": "uint8"}));
+
+        assert_eq!(TSType::from_schema(schema), TSType::Scalar("number"));
+    }
+
+    #[test]
+    fn interprets_uint16() {
+        let schema = from_json(json!({"type": "uint16"}));
+
+        assert_eq!(TSType::from_schema(schema), TSType::Scalar("number"));
+    }
+
+    #[test]
+    fn interprets_uint32() {
+        let schema = from_json(json!({"type": "uint32"}));
+
+        assert_eq!(TSType::from_schema(schema), TSType::Scalar("number"));
+    }
+
+    #[test]
     fn interprets_float32() {
         let schema = from_json(json!({"type": "float32"}));
 
-        let type_ = TSType::from_schema(schema);
+        assert_eq!(TSType::from_schema(schema), TSType::Scalar("number"));
+    }
 
-        assert_eq!(type_.to_source(true), "number".to_string())
+    #[test]
+    fn interprets_float64() {
+        let schema = from_json(json!({"type": "float64"}));
+
+        assert_eq!(TSType::from_schema(schema), TSType::Scalar("number"));
     }
 
     #[test]
