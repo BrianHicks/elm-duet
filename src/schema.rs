@@ -68,17 +68,35 @@ impl Schema {
                 )?,
                 None => builder.insert(
                     &module_path,
-                    TSType::new_ref("Record<string, never>".to_string())
-                        .into_typedecl("Flags".to_string()),
+                    TSType::new_neverobject().into_typedecl("Flags".to_string()),
                 )?,
             }
 
             match &module.ports {
-                Some(ports) => todo!(),
+                Some(ports) => builder.insert(
+                    &module_path,
+                    TSType::new_object(
+                        ports
+                            .iter()
+                            .map(|(name, value)| {
+                                let type_ = TSType::from_schema(
+                                    jtd::Schema::from_serde_schema(value.schema.clone())
+                                        .wrap_err_with(|| {
+                                            format!(
+                                                "could not interpret JTD schema for port {name}"
+                                            )
+                                        })?,
+                                );
+
+                                Ok((name.clone(), type_))
+                            })
+                            .collect::<Result<BTreeMap<String, TSType>>>()?,
+                    )
+                    .into_typedecl("Ports".to_string()),
+                )?,
                 None => builder.insert(
                     &module_path,
-                    TSType::new_ref("Record<string, never>".to_string())
-                        .into_typedecl("Ports".to_string()),
+                    TSType::new_neverobject().into_typedecl("Ports".to_string()),
                 )?,
             }
 

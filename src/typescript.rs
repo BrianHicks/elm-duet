@@ -5,6 +5,7 @@ use std::collections::BTreeMap;
 #[derive(Debug)]
 pub enum TSType {
     Object(BTreeMap<String, TSType>),
+    NeverObject,
     Scalar(&'static str),
     StringScalar(String),
     TypeRef(String),
@@ -51,6 +52,7 @@ impl TSType {
             Schema::Enum { enum_, .. } => {
                 Self::Union(enum_.into_iter().map(Self::StringScalar).collect())
             }
+            Schema::Empty { .. } => Self::NeverObject,
             _ => todo!("{:#?}", schema),
         }
     }
@@ -70,6 +72,7 @@ impl TSType {
                 }
                 out.push('}');
             }
+            Self::NeverObject => out.push_str("Record<string, never>"),
             Self::Scalar(literal) => out.push_str(literal),
             Self::StringScalar(string) => {
                 out.push('"');
@@ -138,6 +141,10 @@ impl TSType {
 
     pub fn new_object(properties: BTreeMap<String, TSType>) -> Self {
         Self::Object(properties)
+    }
+
+    pub fn new_neverobject() -> Self {
+        Self::NeverObject
     }
 
     fn new_function(args: BTreeMap<String, TSType>, returning: TSType) -> Self {

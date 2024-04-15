@@ -6,6 +6,8 @@ declare module Elm {
       currentJwt: string;
     }
     type Ports = {
+      logout: Record<string, never>;
+      newJwt: string;
     }
     function init(config: {
       flags: Flags;
