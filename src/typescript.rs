@@ -4,7 +4,10 @@ use std::collections::BTreeMap;
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum TSType {
-    Object(BTreeMap<String, TSType>),
+    Object {
+        properties: BTreeMap<String, TSType>,
+        nullable: bool,
+    },
     NeverObject,
     Scalar {
         value: &'static str,
@@ -41,12 +44,17 @@ pub enum TSType {
 impl TSType {
     pub fn from_schema(schema: Schema) -> Self {
         match schema {
-            Schema::Properties { properties, .. } => Self::Object(
-                properties
+            Schema::Properties {
+                properties,
+                nullable,
+                ..
+            } => Self::Object {
+                properties: properties
                     .into_iter()
                     .map(|(name, value)| (name, Self::from_schema(value)))
                     .collect(),
-            ),
+                nullable,
+            },
             Schema::Type {
                 type_, nullable, ..
             } => Self::Scalar {
@@ -76,9 +84,12 @@ impl TSType {
         let mut out = String::new();
 
         match self {
-            Self::Object(fields) => {
+            Self::Object {
+                properties,
+                nullable,
+            } => {
                 out.push_str("{\n");
-                for (name, value) in fields {
+                for (name, value) in properties {
                     out.push_str("  ");
                     out.push_str(name); // TODO: escape?
                     out.push_str(": ");
@@ -86,6 +97,10 @@ impl TSType {
                     out.push_str(";\n");
                 }
                 out.push('}');
+
+                if *nullable {
+                    out.push_str(" | null");
+                }
             }
             Self::NeverObject => out.push_str("Record<string, never>"),
             Self::Scalar { value, nullable } => {
@@ -164,12 +179,12 @@ impl TSType {
     }
 
     pub fn new_object(properties: BTreeMap<&str, TSType>) -> Self {
-        Self::Object(
-            properties
+        Self::Object {
+            properties: properties
                 .into_iter()
                 .map(|(k, v)| (k.to_owned(), v))
                 .collect(),
-        )
+        }
     }
 
     pub fn new_singleton_object(key: &str, value: TSType) -> Self {
@@ -200,16 +215,18 @@ impl TSType {
             Self::new_function(
                 BTreeMap::from([(
                     "config",
-                    Self::Object(BTreeMap::from([
-                        (
-                            "node".to_string(),
-                            Self::Scalar {
-                                value: "HTMLElement",
-                                nullable: false,
-                            },
-                        ),
-                        ("flags".to_string(), flags),
-                    ])),
+                    Self::Object {
+                        properties: BTreeMap::from([
+                            (
+                                "node".to_string(),
+                                Self::Scalar {
+                                    value: "HTMLElement",
+                                    nullable: false,
+                                },
+                            ),
+                            ("flags".to_string(), flags),
+                        ]),
+                    },
                 )]),
                 Self::new_void(),
             ),
