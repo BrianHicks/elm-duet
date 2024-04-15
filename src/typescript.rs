@@ -19,6 +19,10 @@ pub enum TSType {
         members: Vec<TSType>,
         nullable: bool,
     },
+    List {
+        elements: Box<TSType>,
+        nullable: bool,
+    },
     Function {
         args: BTreeMap<String, TSType>,
         returning: Box<TSType>,
@@ -85,7 +89,10 @@ impl TSType {
             Schema::Ref { ref_, nullable, .. } => todo!(),
             Schema::Elements {
                 elements, nullable, ..
-            } => todo!(),
+            } => Self::List {
+                elements: Box::new(Self::from_schema(*elements)),
+                nullable,
+            },
             Schema::Values {
                 values, nullable, ..
             } => todo!(),
@@ -143,6 +150,22 @@ impl TSType {
 
                 if *nullable {
                     out.push_str(" | null")
+                }
+            }
+            Self::List { elements, nullable } => {
+                let elements_source = elements.to_source(false);
+
+                if elements_source.contains(' ') {
+                    out.push_str("(");
+                    out.push_str(&elements_source);
+                    out.push_str(")[]");
+                } else {
+                    out.push_str(&elements_source);
+                    out.push_str("[]");
+                }
+
+                if *nullable {
+                    out.push_str(" | null");
                 }
             }
             Self::Function { args, returning } => {
@@ -534,6 +557,24 @@ mod tests {
     }
 
     #[test]
+    fn interprets_elements() {
+        let schema = from_json(json!({"elements": {"type": "string"}}));
+
+        let type_ = TSType::from_schema(schema);
+
+        assert_eq!(
+            type_,
+            TSType::List {
+                elements: Box::new(TSType::Scalar {
+                    value: "string",
+                    nullable: false
+                }),
+                nullable: false
+            }
+        )
+    }
+
+    #[test]
     fn scalar_to_source() {
         let type_ = TSType::from_schema(from_json(json!({"type": "string"})));
 
@@ -655,5 +696,19 @@ mod tests {
         let namespace = TSType::new_namespace("Main", Vec::from([]));
 
         assert_eq!(namespace.to_source(true), "namespace Main {\n}".to_string());
+    }
+
+    #[test]
+    fn list_to_source() {
+        let type_ = TSType::from_schema(from_json(json!({"elements": {"type": "string"}})));
+
+        assert_eq!(type_.to_source(true), "string[]".to_string());
+    }
+
+    #[test]
+    fn list_to_source_space() {
+        let type_ = TSType::from_schema(from_json(json!({"elements": {"enum": ["a", "b"]}})));
+
+        assert_eq!(type_.to_source(true), "(\"a\" | \"b\")[]".to_string());
     }
 }
