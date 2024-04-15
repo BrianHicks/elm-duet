@@ -9,6 +9,10 @@ pub enum TSType {
         nullable: bool,
     },
     NeverObject,
+    Record {
+        values: Box<TSType>,
+        nullable: bool,
+    },
     Scalar {
         value: &'static str,
         nullable: bool,
@@ -95,7 +99,10 @@ impl TSType {
             },
             Schema::Values {
                 values, nullable, ..
-            } => todo!(),
+            } => Self::Record {
+                values: Box::new(Self::from_schema(*values)),
+                nullable,
+            },
             Schema::Discriminator {
                 discriminator,
                 mapping,
@@ -128,6 +135,15 @@ impl TSType {
                 }
             }
             Self::NeverObject => out.push_str("Record<string, never>"),
+            Self::Record { values, nullable } => {
+                out.push_str("Record<string, ");
+                out.push_str(&values.to_source(false));
+                out.push_str(">");
+
+                if *nullable {
+                    out.push_str(" | null");
+                }
+            }
             Self::Scalar { value, nullable } => {
                 out.push_str(value);
                 if *nullable {
@@ -575,6 +591,24 @@ mod tests {
     }
 
     #[test]
+    fn interprets_values() {
+        let schema = from_json(json!({"values": {"type": "string"}}));
+
+        let type_ = TSType::from_schema(schema);
+
+        assert_eq!(
+            type_,
+            TSType::Record {
+                values: Box::new(TSType::Scalar {
+                    value: "string",
+                    nullable: false
+                }),
+                nullable: false
+            }
+        )
+    }
+
+    #[test]
     fn scalar_to_source() {
         let type_ = TSType::from_schema(from_json(json!({"type": "string"})));
 
@@ -710,5 +744,12 @@ mod tests {
         let type_ = TSType::from_schema(from_json(json!({"elements": {"enum": ["a", "b"]}})));
 
         assert_eq!(type_.to_source(true), "(\"a\" | \"b\")[]".to_string());
+    }
+
+    #[test]
+    fn values_to_source_space() {
+        let type_ = TSType::from_schema(from_json(json!({"values": {"type": "string"}})));
+
+        assert_eq!(type_.to_source(true), "Record<string, string>".to_string());
     }
 }
