@@ -184,6 +184,7 @@ impl TSType {
                 .into_iter()
                 .map(|(k, v)| (k.to_owned(), v))
                 .collect(),
+            nullable: false,
         }
     }
 
@@ -215,18 +216,16 @@ impl TSType {
             Self::new_function(
                 BTreeMap::from([(
                     "config",
-                    Self::Object {
-                        properties: BTreeMap::from([
-                            (
-                                "node".to_string(),
-                                Self::Scalar {
-                                    value: "HTMLElement",
-                                    nullable: false,
-                                },
-                            ),
-                            ("flags".to_string(), flags),
-                        ]),
-                    },
+                    Self::new_object(BTreeMap::from([
+                        (
+                            "node",
+                            Self::Scalar {
+                                value: "HTMLElement",
+                                nullable: false,
+                            },
+                        ),
+                        ("flags", flags),
+                    ])),
                 )]),
                 Self::new_void(),
             ),
