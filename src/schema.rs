@@ -89,18 +89,14 @@ impl Schema {
                                 );
 
                                 let func_record = match value.metadata.direction {
-                                    PortDirection::JsToElm => {
-                                        TSType::new_object(BTreeMap::from([(
-                                            "send".to_string(),
-                                            TSType::new_send_function(type_),
-                                        )]))
-                                    }
-                                    PortDirection::ElmToJs => {
-                                        TSType::new_object(BTreeMap::from([(
-                                            "subscribe".to_string(),
-                                            TSType::new_subscribe_function(type_),
-                                        )]))
-                                    }
+                                    PortDirection::JsToElm => TSType::new_singleton_object(
+                                        "send".to_string(),
+                                        TSType::new_send_function(type_),
+                                    ),
+                                    PortDirection::ElmToJs => TSType::new_singleton_object(
+                                        "subscribe".to_string(),
+                                        TSType::new_subscribe_function(type_),
+                                    ),
                                 };
 
                                 Ok((name.clone(), func_record))

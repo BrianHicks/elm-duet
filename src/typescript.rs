@@ -154,6 +154,10 @@ impl TSType {
         Self::Object(properties)
     }
 
+    pub fn new_singleton_object(key: String, value: TSType) -> Self {
+        Self::new_object(BTreeMap::from([(key, value)]))
+    }
+
     pub fn new_neverobject() -> Self {
         Self::NeverObject
     }
