@@ -150,11 +150,16 @@ impl TSType {
         out
     }
 
-    pub fn new_object(properties: BTreeMap<String, TSType>) -> Self {
-        Self::Object(properties)
+    pub fn new_object(properties: BTreeMap<&str, TSType>) -> Self {
+        Self::Object(
+            properties
+                .into_iter()
+                .map(|(k, v)| (k.to_owned(), v))
+                .collect(),
+        )
     }
 
-    pub fn new_singleton_object(key: String, value: TSType) -> Self {
+    pub fn new_singleton_object(key: &str, value: TSType) -> Self {
         Self::new_object(BTreeMap::from([(key, value)]))
     }
 
@@ -162,9 +167,9 @@ impl TSType {
         Self::NeverObject
     }
 
-    pub fn new_function(args: BTreeMap<String, TSType>, returning: TSType) -> Self {
+    pub fn new_function(args: BTreeMap<&str, TSType>, returning: TSType) -> Self {
         Self::Function {
-            args,
+            args: args.into_iter().map(|(k, v)| (k.to_owned(), v)).collect(),
             returning: Box::new(returning),
         }
     }
@@ -175,10 +180,10 @@ impl TSType {
 
     fn new_init(flags: TSType) -> Self {
         Self::new_named_function(
-            "init".to_string(),
+            "init",
             Self::new_function(
                 BTreeMap::from([(
-                    "config".to_string(),
+                    "config",
                     Self::Object(BTreeMap::from([
                         ("node".to_string(), Self::Scalar("HTMLElement")),
                         ("flags".to_string(), flags),
@@ -190,40 +195,40 @@ impl TSType {
     }
 
     pub fn new_send_function(value: TSType) -> Self {
-        TSType::new_function(
-            BTreeMap::from([("value".to_string(), value)]),
-            TSType::new_void(),
-        )
+        TSType::new_function(BTreeMap::from([("value", value)]), TSType::new_void())
     }
 
     pub fn new_subscribe_function(value: TSType) -> Self {
         TSType::new_function(
             BTreeMap::from([(
-                "callback".to_string(),
-                TSType::new_function(
-                    BTreeMap::from([("value".to_string(), value)]),
-                    TSType::new_void(),
-                ),
+                "callback",
+                TSType::new_function(BTreeMap::from([("value", value)]), TSType::new_void()),
             )]),
             TSType::new_void(),
         )
     }
 
-    pub fn new_ref(name: String) -> Self {
-        Self::TypeRef(name)
+    pub fn new_ref(name: &str) -> Self {
+        Self::TypeRef(name.to_owned())
     }
 
-    fn new_module(name: String, members: Vec<TSType>) -> Self {
-        Self::ModuleDecl { name, members }
+    fn new_module(name: &str, members: Vec<TSType>) -> Self {
+        Self::ModuleDecl {
+            name: name.to_owned(),
+            members,
+        }
     }
 
-    pub fn new_namespace(name: String, members: Vec<Self>) -> Self {
-        Self::NamespaceDecl { name, members }
+    pub fn new_namespace(name: &str, members: Vec<Self>) -> Self {
+        Self::NamespaceDecl {
+            name: name.to_owned(),
+            members,
+        }
     }
 
-    pub fn new_named_function(name: String, function: TSType) -> Self {
+    pub fn new_named_function(name: &str, function: TSType) -> Self {
         Self::NamedFunctionDecl {
-            name,
+            name: name.to_owned(),
             function: Box::from(function),
         }
     }
@@ -232,9 +237,9 @@ impl TSType {
         Self::new_init(self)
     }
 
-    pub fn into_typedecl(self, name: String) -> Self {
+    pub fn into_typedecl(self, name: &str) -> Self {
         Self::TypeDecl {
-            name,
+            name: name.to_owned(),
             definition: Box::from(self),
         }
     }
@@ -254,9 +259,9 @@ pub enum NamespaceBuilder {
 }
 
 impl NamespaceBuilder {
-    pub fn root(name: String) -> Self {
+    pub fn root(name: &str) -> Self {
         Self::Root {
-            name,
+            name: name.to_owned(),
             below: BTreeMap::new(),
         }
     }
@@ -290,9 +295,10 @@ impl NamespaceBuilder {
 
     pub fn into_tstype(self) -> TSType {
         match self {
-            Self::Root { name, below } => {
-                TSType::new_module(name, below.into_values().map(|v| v.into_tstype()).collect())
-            }
+            Self::Root { name, below } => TSType::new_module(
+                &name,
+                below.into_values().map(|v| v.into_tstype()).collect(),
+            ),
             Self::Branch {
                 name,
                 members,
@@ -307,7 +313,7 @@ impl NamespaceBuilder {
                         .collect::<Vec<TSType>>(),
                 );
 
-                TSType::new_namespace(name, ts_members)
+                TSType::new_namespace(&name, ts_members)
             }
         }
     }
@@ -423,8 +429,8 @@ mod tests {
     fn function_to_source_toplevel() {
         let type_ = TSType::new_function(
             BTreeMap::from([
-                ("one".to_string(), TSType::Scalar("number")),
-                ("two".to_string(), TSType::Scalar("string")),
+                ("one", TSType::Scalar("number")),
+                ("two", TSType::Scalar("string")),
             ]),
             TSType::Scalar("string"),
         );
@@ -439,8 +445,8 @@ mod tests {
     fn function_to_source_not_toplevel() {
         let type_ = TSType::new_function(
             BTreeMap::from([
-                ("one".to_string(), TSType::Scalar("number")),
-                ("two".to_string(), TSType::Scalar("string")),
+                ("one", TSType::Scalar("number")),
+                ("two", TSType::Scalar("string")),
             ]),
             TSType::Scalar("string"),
         );
@@ -455,7 +461,7 @@ mod tests {
     fn typedecl_to_source() {
         let type_ =
             TSType::from_schema(from_json(json!({"properties": {"a": {"type": "string"}}})))
-                .into_typedecl("Flags".to_string());
+                .into_typedecl("Flags");
 
         assert_eq!(
             type_.to_source(true),
@@ -466,7 +472,7 @@ mod tests {
     #[test]
     fn method_to_source() {
         let method = TSType::new_named_function(
-            "init".to_string(),
+            "init",
             TSType::new_function(BTreeMap::new(), TSType::Scalar("void")),
         );
 
@@ -476,8 +482,8 @@ mod tests {
     #[test]
     fn module_to_source() {
         let namespace = TSType::new_module(
-            "Elm".to_string(),
-            Vec::from([TSType::new_namespace("Main".to_string(), Vec::new())]),
+            "Elm",
+            Vec::from([TSType::new_namespace("Main", Vec::new())]),
         );
 
         assert_eq!(
@@ -488,7 +494,7 @@ mod tests {
 
     #[test]
     fn namespace_to_source() {
-        let namespace = TSType::new_namespace("Main".to_string(), Vec::from([]));
+        let namespace = TSType::new_namespace("Main", Vec::from([]));
 
         assert_eq!(namespace.to_source(true), "namespace Main {\n}".to_string());
     }

@@ -46,7 +46,7 @@ impl Schema {
     }
 
     pub fn flags_to_ts(&self) -> Result<String> {
-        let mut builder = NamespaceBuilder::root("Elm".to_string());
+        let mut builder = NamespaceBuilder::root("Elm");
 
         for (module_name, module) in &self.modules {
             let module_path: Vec<&str> = module_name.split('.').collect();
@@ -64,57 +64,51 @@ impl Schema {
                             },
                         )?,
                     )
-                    .into_typedecl("Flags".to_string()),
+                    .into_typedecl("Flags"),
                 )?,
                 None => builder.insert(
                     &module_path,
-                    TSType::new_neverobject().into_typedecl("Flags".to_string()),
+                    TSType::new_neverobject().into_typedecl("Flags"),
                 )?,
             }
 
             match &module.ports {
-                Some(ports) => builder.insert(
-                    &module_path,
-                    TSType::new_object(
-                        ports
-                            .iter()
-                            .map(|(name, value)| {
-                                let type_ = TSType::from_schema(
-                                    jtd::Schema::from_serde_schema(value.schema.clone())
-                                        .wrap_err_with(|| {
-                                            format!(
-                                                "could not interpret JTD schema for port {name}"
-                                            )
-                                        })?,
-                                );
+                Some(ports) => {
+                    let mut port_keys = BTreeMap::new();
 
-                                let func_record = match value.metadata.direction {
-                                    PortDirection::JsToElm => TSType::new_singleton_object(
-                                        "send".to_string(),
-                                        TSType::new_send_function(type_),
-                                    ),
-                                    PortDirection::ElmToJs => TSType::new_singleton_object(
-                                        "subscribe".to_string(),
-                                        TSType::new_subscribe_function(type_),
-                                    ),
-                                };
+                    for (name, value) in ports {
+                        let type_ = TSType::from_schema(
+                            jtd::Schema::from_serde_schema(value.schema.clone()).wrap_err_with(
+                                || format!("could not interpret JTD schema for port {name}"),
+                            )?,
+                        );
 
-                                Ok((name.clone(), func_record))
-                            })
-                            .collect::<Result<BTreeMap<String, TSType>>>()?,
-                    )
-                    .into_typedecl("Ports".to_string()),
-                )?,
+                        let func_record = match value.metadata.direction {
+                            PortDirection::JsToElm => TSType::new_singleton_object(
+                                "send",
+                                TSType::new_send_function(type_),
+                            ),
+                            PortDirection::ElmToJs => TSType::new_singleton_object(
+                                "subscribe",
+                                TSType::new_subscribe_function(type_),
+                            ),
+                        };
+
+                        port_keys.insert(name.as_str(), func_record);
+                    }
+
+                    builder.insert(
+                        &module_path,
+                        TSType::new_object(port_keys).into_typedecl("Ports"),
+                    )?
+                }
                 None => builder.insert(
                     &module_path,
-                    TSType::new_neverobject().into_typedecl("Ports".to_string()),
+                    TSType::new_neverobject().into_typedecl("Ports"),
                 )?,
             }
 
-            builder.insert(
-                &module_path,
-                TSType::new_ref("Flags".to_string()).into_init(),
-            )?;
+            builder.insert(&module_path, TSType::new_ref("Flags").into_init())?;
         }
 
         Ok(format!(
