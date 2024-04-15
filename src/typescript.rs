@@ -15,7 +15,10 @@ pub enum TSType {
     },
     StringScalar(String),
     TypeRef(String),
-    Union(Vec<TSType>),
+    Union {
+        members: Vec<TSType>,
+        nullable: bool,
+    },
     Function {
         args: BTreeMap<String, TSType>,
         returning: Box<TSType>,
@@ -72,9 +75,12 @@ impl TSType {
                 },
                 nullable,
             },
-            Schema::Enum { enum_, .. } => {
-                Self::Union(enum_.into_iter().map(Self::StringScalar).collect())
-            }
+            Schema::Enum {
+                enum_, nullable, ..
+            } => Self::Union {
+                members: enum_.into_iter().map(Self::StringScalar).collect(),
+                nullable,
+            },
             Schema::Empty { .. } => Self::NeverObject,
             _ => todo!("{:#?}", schema),
         }
@@ -115,12 +121,16 @@ impl TSType {
                 out.push('"');
             }
             Self::TypeRef(ref_) => out.push_str(ref_),
-            Self::Union(types) => {
-                for (i, type_) in types.iter().enumerate() {
+            Self::Union { members, nullable } => {
+                for (i, type_) in members.iter().enumerate() {
                     if i != 0 {
                         out.push_str(" | ");
                     }
                     out.push_str(&type_.to_source(false))
+                }
+
+                if *nullable {
+                    out.push_str(" | null")
                 }
             }
             Self::Function { args, returning } => {
