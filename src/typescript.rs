@@ -47,6 +47,7 @@ impl TSType {
             Schema::Type { type_, .. } => Self::Scalar(match type_ {
                 Type::Float32 => "number",
                 Type::String => "string",
+                Type::Boolean => "bool",
                 _ => todo!("scalar: {type_:#?}"),
             }),
             Schema::Enum { enum_, .. } => {
@@ -300,6 +301,15 @@ mod tests {
         let type_ = TSType::from_schema(schema);
 
         assert_eq!(type_.to_source(), "string".to_string())
+    }
+
+    #[test]
+    fn interprets_boolean() {
+        let schema = from_json(json!({"type": "boolean"}));
+
+        let type_ = TSType::from_schema(schema);
+
+        assert_eq!(type_.to_source(), "bool".to_string())
     }
 
     #[test]
