@@ -1,4 +1,5 @@
 use color_eyre::Result;
+use eyre::eyre;
 use jtd::{Schema, Type};
 use std::collections::BTreeMap;
 
@@ -108,7 +109,19 @@ impl TSType {
                 mapping,
                 nullable,
                 ..
-            } => todo!(),
+            } => {
+                let mut members = Vec::with_capacity(mapping.len());
+
+                for (tag, value) in mapping {
+                    let mut value_type = Self::from_schema(value);
+                    value_type
+                        .add_key_to_object(&discriminator, Self::StringScalar(tag))
+                        .expect("jtd discriminator should have enforced that the value type must be an object");
+                    members.push(value_type);
+                }
+
+                Self::Union { members, nullable }
+            }
         }
     }
 
@@ -251,6 +264,16 @@ impl TSType {
 
     pub fn new_singleton_object(key: &str, value: TSType) -> Self {
         Self::new_object(BTreeMap::from([(key, value)]))
+    }
+
+    pub fn add_key_to_object(&mut self, key: &str, value: TSType) -> Result<()> {
+        match self {
+            Self::Object { properties, .. } => {
+                properties.insert(key.to_string(), value);
+                Ok(())
+            }
+            _ => Err(eyre!("add_key_to_object only works on objects")),
+        }
     }
 
     pub fn new_neverobject() -> Self {
@@ -609,6 +632,60 @@ mod tests {
     }
 
     #[test]
+    fn interprets_discriminator() {
+        let schema = from_json(json!({
+            "discriminator": "tag",
+            "mapping": {
+                "one": {
+                    "properties": {
+                        "a": {
+                            "type": "float32"
+                        }
+                    }
+                },
+                "two": {
+                    "properties": {
+                        "b": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        }));
+
+        let type_ = TSType::from_schema(schema);
+
+        assert_eq!(
+            type_,
+            TSType::Union {
+                members: Vec::from([
+                    TSType::new_object(BTreeMap::from([
+                        ("tag", TSType::StringScalar("one".to_string())),
+                        (
+                            "a",
+                            TSType::Scalar {
+                                value: "number",
+                                nullable: false
+                            }
+                        ),
+                    ])),
+                    TSType::new_object(BTreeMap::from([
+                        ("tag", TSType::StringScalar("two".to_string())),
+                        (
+                            "b",
+                            TSType::Scalar {
+                                value: "string",
+                                nullable: false
+                            }
+                        ),
+                    ])),
+                ]),
+                nullable: false
+            }
+        )
+    }
+
+    #[test]
     fn scalar_to_source() {
         let type_ = TSType::from_schema(from_json(json!({"type": "string"})));
 
@@ -751,5 +828,35 @@ mod tests {
         let type_ = TSType::from_schema(from_json(json!({"values": {"type": "string"}})));
 
         assert_eq!(type_.to_source(true), "Record<string, string>".to_string());
+    }
+
+    #[test]
+    fn discriminator_to_source() {
+        let schema = from_json(json!({
+            "discriminator": "tag",
+            "mapping": {
+                "one": {
+                    "properties": {
+                        "a": {
+                            "type": "float32"
+                        }
+                    }
+                },
+                "two": {
+                    "properties": {
+                        "b": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        }));
+
+        let type_ = TSType::from_schema(schema);
+
+        assert_eq!(
+            type_.to_source(true),
+            "{\n  a: number;\n  tag: \"one\";\n} | {\n  b: string;\n  tag: \"two\";\n}".to_string()
+        );
     }
 }
