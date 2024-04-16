@@ -51,6 +51,8 @@ impl Schema {
         for (module_name, module) in &self.modules {
             let module_path: Vec<&str> = module_name.split('.').collect();
 
+            let globals = BTreeMap::new();
+
             match &module.flags {
                 Some(flags_serde) => builder.insert(
                     &module_path,
@@ -63,6 +65,7 @@ impl Schema {
                                 )
                             },
                         )?,
+                        &globals,
                     )
                     .into_typedecl("Flags"),
                 )?,
@@ -81,6 +84,7 @@ impl Schema {
                             jtd::Schema::from_serde_schema(value.schema.clone()).wrap_err_with(
                                 || format!("could not interpret JTD schema for port {name}"),
                             )?,
+                            &globals,
                         );
 
                         let func_record = match value.metadata.direction {

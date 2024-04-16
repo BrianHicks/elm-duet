@@ -54,7 +54,7 @@ pub enum TSType {
 }
 
 impl TSType {
-    pub fn from_schema(schema: Schema) -> Self {
+    pub fn from_schema(schema: Schema, globals: &BTreeMap<String, Self>) -> Self {
         match schema {
             Schema::Properties {
                 properties,
@@ -63,7 +63,7 @@ impl TSType {
             } => Self::Object {
                 properties: properties
                     .into_iter()
-                    .map(|(name, value)| (name, Self::from_schema(value)))
+                    .map(|(name, value)| (name, Self::from_schema(value, globals)))
                     .collect(),
                 nullable,
             },
@@ -95,13 +95,13 @@ impl TSType {
             Schema::Elements {
                 elements, nullable, ..
             } => Self::List {
-                elements: Box::new(Self::from_schema(*elements)),
+                elements: Box::new(Self::from_schema(*elements, globals)),
                 nullable,
             },
             Schema::Values {
                 values, nullable, ..
             } => Self::Record {
-                values: Box::new(Self::from_schema(*values)),
+                values: Box::new(Self::from_schema(*values, globals)),
                 nullable,
             },
             Schema::Discriminator {
@@ -113,7 +113,7 @@ impl TSType {
                 let mut members = Vec::with_capacity(mapping.len());
 
                 for (tag, value) in mapping {
-                    let mut value_type = Self::from_schema(value);
+                    let mut value_type = Self::from_schema(value, globals);
                     value_type
                         .add_key_to_object(&discriminator, Self::StringScalar(tag))
                         .expect("jtd discriminator should have enforced that the value type must be an object");
@@ -451,12 +451,14 @@ mod tests {
         jtd::Schema::from_serde_schema(json).unwrap()
     }
 
+    fn from_schema(value: Value) -> TSType {
+        TSType::from_schema(from_json(value), &BTreeMap::new())
+    }
+
     #[test]
     fn interprets_int8() {
-        let schema = from_json(json!({"type": "int8"}));
-
         assert_eq!(
-            TSType::from_schema(schema),
+            from_schema(json!({"type": "int8"})),
             TSType::Scalar {
                 value: "number",
                 nullable: false
@@ -466,10 +468,8 @@ mod tests {
 
     #[test]
     fn interprets_int16() {
-        let schema = from_json(json!({"type": "int16"}));
-
         assert_eq!(
-            TSType::from_schema(schema),
+            from_schema(json!({"type": "int16"})),
             TSType::Scalar {
                 value: "number",
                 nullable: false
@@ -479,10 +479,8 @@ mod tests {
 
     #[test]
     fn interprets_int32() {
-        let schema = from_json(json!({"type": "int32"}));
-
         assert_eq!(
-            TSType::from_schema(schema),
+            from_schema(json!({"type": "int32"})),
             TSType::Scalar {
                 value: "number",
                 nullable: false
@@ -492,10 +490,8 @@ mod tests {
 
     #[test]
     fn interprets_uint8() {
-        let schema = from_json(json!({"type": "uint8"}));
-
         assert_eq!(
-            TSType::from_schema(schema),
+            from_schema(json!({"type": "uint8"})),
             TSType::Scalar {
                 value: "number",
                 nullable: false
@@ -505,10 +501,8 @@ mod tests {
 
     #[test]
     fn interprets_uint16() {
-        let schema = from_json(json!({"type": "uint16"}));
-
         assert_eq!(
-            TSType::from_schema(schema),
+            from_schema(json!({"type": "uint16"})),
             TSType::Scalar {
                 value: "number",
                 nullable: false
@@ -518,10 +512,8 @@ mod tests {
 
     #[test]
     fn interprets_uint32() {
-        let schema = from_json(json!({"type": "uint32"}));
-
         assert_eq!(
-            TSType::from_schema(schema),
+            from_schema(json!({"type": "uint32"})),
             TSType::Scalar {
                 value: "number",
                 nullable: false
@@ -531,10 +523,8 @@ mod tests {
 
     #[test]
     fn interprets_float32() {
-        let schema = from_json(json!({"type": "float32"}));
-
         assert_eq!(
-            TSType::from_schema(schema),
+            from_schema(json!({"type": "float32"})),
             TSType::Scalar {
                 value: "number",
                 nullable: false
@@ -544,10 +534,8 @@ mod tests {
 
     #[test]
     fn interprets_float64() {
-        let schema = from_json(json!({"type": "float64"}));
-
         assert_eq!(
-            TSType::from_schema(schema),
+            from_schema(json!({"type": "float64"})),
             TSType::Scalar {
                 value: "number",
                 nullable: false
@@ -557,49 +545,39 @@ mod tests {
 
     #[test]
     fn interprets_string() {
-        let schema = from_json(json!({"type": "string"}));
-
-        let type_ = TSType::from_schema(schema);
+        let type_ = from_schema(json!({"type": "string"}));
 
         assert_eq!(type_.to_source(true), "string".to_string())
     }
 
     #[test]
     fn interprets_boolean() {
-        let schema = from_json(json!({"type": "boolean"}));
-
-        let type_ = TSType::from_schema(schema);
+        let type_ = from_schema(json!({"type": "boolean"}));
 
         assert_eq!(type_.to_source(true), "bool".to_string())
     }
 
     #[test]
     fn interprets_object() {
-        let schema = from_json(json!({
+        let type_ = from_schema(json!({
             "properties": {
                 "a": { "type": "float32" }
             }
         }));
-
-        let type_ = TSType::from_schema(schema);
 
         assert_eq!(type_.to_source(true), "{\n  a: number;\n}".to_string())
     }
 
     #[test]
     fn interprets_enum() {
-        let schema = from_json(json!({"enum": ["a", "b"]}));
-
-        let type_ = TSType::from_schema(schema);
+        let type_ = from_schema(json!({"enum": ["a", "b"]}));
 
         assert_eq!(type_.to_source(true), "\"a\" | \"b\"".to_string())
     }
 
     #[test]
     fn interprets_elements() {
-        let schema = from_json(json!({"elements": {"type": "string"}}));
-
-        let type_ = TSType::from_schema(schema);
+        let type_ = from_schema(json!({"elements": {"type": "string"}}));
 
         assert_eq!(
             type_,
@@ -615,9 +593,7 @@ mod tests {
 
     #[test]
     fn interprets_values() {
-        let schema = from_json(json!({"values": {"type": "string"}}));
-
-        let type_ = TSType::from_schema(schema);
+        let type_ = from_schema(json!({"values": {"type": "string"}}));
 
         assert_eq!(
             type_,
@@ -633,7 +609,7 @@ mod tests {
 
     #[test]
     fn interprets_discriminator() {
-        let schema = from_json(json!({
+        let type_ = from_schema(json!({
             "discriminator": "tag",
             "mapping": {
                 "one": {
@@ -652,8 +628,6 @@ mod tests {
                 }
             }
         }));
-
-        let type_ = TSType::from_schema(schema);
 
         assert_eq!(
             type_,
@@ -687,14 +661,14 @@ mod tests {
 
     #[test]
     fn scalar_to_source() {
-        let type_ = TSType::from_schema(from_json(json!({"type": "string"})));
+        let type_ = from_schema(json!({"type": "string"}));
 
         assert_eq!(type_.to_source(true), "string".to_string());
     }
 
     #[test]
     fn nullable_scalar_to_source() {
-        let type_ = TSType::from_schema(from_json(json!({"type": "string", "nullable": true})));
+        let type_ = from_schema(json!({"type": "string", "nullable": true}));
 
         assert_eq!(type_.to_source(true), "string | null".to_string());
     }
@@ -764,8 +738,7 @@ mod tests {
     #[test]
     fn typedecl_to_source() {
         let type_ =
-            TSType::from_schema(from_json(json!({"properties": {"a": {"type": "string"}}})))
-                .into_typedecl("Flags");
+            from_schema(json!({"properties": {"a": {"type": "string"}}})).into_typedecl("Flags");
 
         assert_eq!(
             type_.to_source(true),
@@ -811,28 +784,28 @@ mod tests {
 
     #[test]
     fn list_to_source() {
-        let type_ = TSType::from_schema(from_json(json!({"elements": {"type": "string"}})));
+        let type_ = from_schema(json!({"elements": {"type": "string"}}));
 
         assert_eq!(type_.to_source(true), "string[]".to_string());
     }
 
     #[test]
     fn list_to_source_space() {
-        let type_ = TSType::from_schema(from_json(json!({"elements": {"enum": ["a", "b"]}})));
+        let type_ = from_schema(json!({"elements": {"enum": ["a", "b"]}}));
 
         assert_eq!(type_.to_source(true), "(\"a\" | \"b\")[]".to_string());
     }
 
     #[test]
     fn values_to_source_space() {
-        let type_ = TSType::from_schema(from_json(json!({"values": {"type": "string"}})));
+        let type_ = from_schema(json!({"values": {"type": "string"}}));
 
         assert_eq!(type_.to_source(true), "Record<string, string>".to_string());
     }
 
     #[test]
     fn discriminator_to_source() {
-        let schema = from_json(json!({
+        let type_ = from_schema(json!({
             "discriminator": "tag",
             "mapping": {
                 "one": {
@@ -851,8 +824,6 @@ mod tests {
                 }
             }
         }));
-
-        let type_ = TSType::from_schema(schema);
 
         assert_eq!(
             type_.to_source(true),
