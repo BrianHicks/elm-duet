@@ -48,10 +48,18 @@ impl Schema {
     pub fn flags_to_ts(&self) -> Result<String> {
         let mut builder = NamespaceBuilder::root("Elm");
 
+        let mut globals = BTreeMap::new();
+        for (name, serde_schema) in &self.definitions {
+            globals.insert(
+                name.clone(),
+                jtd::Schema::from_serde_schema(serde_schema.clone()).wrap_err_with(|| {
+                    format!("could not interpret JTD schema for the {name} definition")
+                })?,
+            );
+        }
+
         for (module_name, module) in &self.modules {
             let module_path: Vec<&str> = module_name.split('.').collect();
-
-            let globals = BTreeMap::new();
 
             match &module.flags {
                 Some(flags_serde) => builder.insert(
