@@ -125,6 +125,24 @@ impl TSType {
         }
     }
 
+    fn set_nullable(&mut self, new_value: bool) {
+        match self {
+            TSType::Object { nullable, .. } => *nullable = new_value,
+            TSType::Record { nullable, .. } => *nullable = new_value,
+            TSType::Scalar { nullable, .. } => *nullable = new_value,
+            TSType::Union { nullable, .. } => *nullable = new_value,
+            TSType::List { nullable, .. } => *nullable = new_value,
+            TSType::Function { .. }
+            | TSType::TypeDecl { .. }
+            | TSType::ModuleDecl { .. }
+            | TSType::NamespaceDecl { .. }
+            | TSType::NamedFunctionDecl { .. }
+            | TSType::StringScalar(_)
+            | TSType::TypeRef(_)
+            | TSType::NeverObject => (),
+        }
+    }
+
     pub fn to_source(&self, is_toplevel: bool) -> String {
         let mut out = String::new();
 
