@@ -64,6 +64,38 @@
 	      }
 	    }
 	  }
+	},
+	"changeDocument": {
+	  "metadata": {
+	    "direction": "ElmToJs"
+	  },
+	  "discriminator": "tag",
+	  "mapping": {
+	    "SetMinutesPerPing": {
+	      "properties": {
+		"value": {
+		  "type": "float32"
+		}
+	      }
+	    },
+	    "AddNewPingAt": {
+	      "properties": {
+		"value": {
+		  "type": "float32"
+		}
+	      }
+	    },
+	    "SetTagForPing": {
+	      "properties": {
+		"index": {
+		  "type": "uint32"
+		},
+		"value": {
+		  "type": "string"
+		}
+	      }
+	    }
+	  }
 	}
       }
     }

@@ -9,6 +9,19 @@ declare module Elm {
           notificationPermission: "default" | "denied" | "granted";
         }
         type Ports = {
+          changeDocument: {
+            subscribe: (callback: (value: {
+              tag: "AddNewPingAt";
+              value: number;
+            } | {
+              tag: "SetMinutesPerPing";
+              value: number;
+            } | {
+              index: number;
+              tag: "SetTagForPing";
+              value: string;
+            }) => void) => void;
+          };
           notificationPermission: {
             send: (value: "default" | "denied" | "granted") => void;
           };
