@@ -54,7 +54,7 @@ pub enum TSType {
 }
 
 impl TSType {
-    pub fn from_schema(schema: Schema, globals: &BTreeMap<String, Self>) -> Self {
+    pub fn from_schema(schema: Schema, globals: &BTreeMap<String, Schema>) -> Self {
         match schema {
             Schema::Properties {
                 properties,
@@ -91,7 +91,19 @@ impl TSType {
                 nullable,
             },
             Schema::Empty { .. } => Self::NeverObject,
-            Schema::Ref { ref_, nullable, .. } => todo!(),
+            Schema::Ref {
+                ref_,
+                nullable,
+                definitions,
+                ..
+            } => match definitions.get(&ref_).or_else(|| globals.get(&ref_)) {
+                Some(schema) => {
+                    let mut tstype = Self::from_schema(schema.clone(), globals);
+                    tstype.set_nullable(nullable);
+                    tstype
+                }
+                None => panic!("the disco"),
+            },
             Schema::Elements {
                 elements, nullable, ..
             } => Self::List {
@@ -676,6 +688,82 @@ mod tests {
             }
         )
     }
+
+    #[test]
+    fn interprets_ref() {
+        let type_ = from_schema(json!({
+            "ref": "foo",
+            "definitions": {
+                "foo": {
+                    "type": "string"
+                },
+            },
+        }));
+
+        assert_eq!(
+            type_,
+            TSType::Scalar {
+                value: "string",
+                nullable: false,
+            }
+        );
+    }
+
+    #[test]
+    fn interprets_ref_nullable() {
+        let type_ = from_schema(json!({
+            "ref": "foo",
+            "nullable": true,
+            "definitions": {
+                "foo": {
+                    "type": "string"
+                },
+            },
+        }));
+
+        assert_eq!(
+            type_,
+            TSType::Scalar {
+                value: "string",
+                nullable: true,
+            }
+        );
+    }
+
+    #[test]
+    fn interprets_ref_global() {
+        let ref_schema = from_json(json!({"ref": "foo"}));
+        let def_schema = from_json(json!({"type": "string"}));
+
+        let type_ = TSType::from_schema(
+            ref_schema,
+            &BTreeMap::from([("foo".to_string(), def_schema)]),
+        );
+
+        assert_eq!(
+            type_,
+            TSType::Scalar {
+                value: "string",
+                nullable: false,
+            }
+        );
+    }
+
+    // #[test]
+    // fn interprets_ref_missing_definition() {
+    //     let type_ = from_schema(json!({
+    //         "ref": "foo",
+    //         "nullable": true,
+    //     }));
+    //
+    //     assert_eq!(
+    //         type_,
+    //         TSType::Scalar {
+    //             value: "string",
+    //             nullable: true,
+    //         }
+    //     );
+    // }
 
     #[test]
     fn scalar_to_source() {
