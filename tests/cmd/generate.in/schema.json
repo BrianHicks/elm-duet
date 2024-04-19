@@ -96,8 +96,19 @@
 	      }
 	    }
 	  }
+	},
+	"docFromAutomerge": {
+	  "metadata": {
+	    "direction": "JsToElm"
+	  },
+	  "ref": "doc"
 	}
       }
+    }
+  },
+  "definitions": {
+    "doc": {
+      "properties": {}
     }
   }
 }

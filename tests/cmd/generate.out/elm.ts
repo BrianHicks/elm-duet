@@ -22,6 +22,10 @@ declare module Elm {
               value: string;
             }) => void) => void;
           };
+          docFromAutomerge: {
+            send: (value: {
+            }) => void;
+          };
           notificationPermission: {
             send: (value: "default" | "denied" | "granted") => void;
           };
