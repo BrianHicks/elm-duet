@@ -67,6 +67,7 @@ impl Schema {
                         )?,
                         &globals,
                     )
+                    .wrap_err("could not convert flags")?
                     .into_typedecl("Flags"),
                 )?,
                 None => builder.insert(
@@ -85,7 +86,8 @@ impl Schema {
                                 || format!("could not interpret JTD schema for port {name}"),
                             )?,
                             &globals,
-                        );
+                        )
+                        .wrap_err_with(|| format!("could not convert port {name}"))?;
 
                         let func_record = match value.metadata.direction {
                             PortDirection::JsToElm => TSType::new_singleton_object(

@@ -1,5 +1,5 @@
 use color_eyre::Result;
-use eyre::eyre;
+use eyre::{bail, WrapErr};
 use jtd::{Schema, Type};
 use std::collections::BTreeMap;
 
@@ -54,22 +54,29 @@ pub enum TSType {
 }
 
 impl TSType {
-    pub fn from_schema(schema: Schema, globals: &BTreeMap<String, Schema>) -> Self {
+    pub fn from_schema(schema: Schema, globals: &BTreeMap<String, Schema>) -> Result<Self> {
         match schema {
             Schema::Properties {
                 properties,
                 nullable,
                 ..
-            } => Self::Object {
-                properties: properties
-                    .into_iter()
-                    .map(|(name, value)| (name, Self::from_schema(value, globals)))
-                    .collect(),
-                nullable,
-            },
+            } => {
+                let mut converted_properties = BTreeMap::new();
+                for (name, value) in properties {
+                    let type_ = Self::from_schema(value, globals)
+                        .wrap_err_with(|| format!("could not convert the {name} key"))?;
+
+                    converted_properties.insert(name, type_);
+                }
+
+                Ok(Self::Object {
+                    properties: converted_properties,
+                    nullable,
+                })
+            }
             Schema::Type {
                 type_, nullable, ..
-            } => Self::Scalar {
+            } => Ok(Self::Scalar {
                 value: match type_ {
                     Type::Int8
                     | Type::Int16
@@ -83,14 +90,14 @@ impl TSType {
                     Type::Boolean => "bool",
                 },
                 nullable,
-            },
+            }),
             Schema::Enum {
                 enum_, nullable, ..
-            } => Self::Union {
+            } => Ok(Self::Union {
                 members: enum_.into_iter().map(Self::StringScalar).collect(),
                 nullable,
-            },
-            Schema::Empty { .. } => Self::NeverObject,
+            }),
+            Schema::Empty { .. } => Ok(Self::NeverObject),
             Schema::Ref {
                 ref_,
                 nullable,
@@ -98,24 +105,31 @@ impl TSType {
                 ..
             } => match definitions.get(&ref_).or_else(|| globals.get(&ref_)) {
                 Some(schema) => {
-                    let mut tstype = Self::from_schema(schema.clone(), globals);
+                    let mut tstype = Self::from_schema(schema.clone(), globals)
+                        .wrap_err_with(|| format!("could not convert the value of ref `{ref_}`"))?;
                     tstype.set_nullable(nullable);
-                    tstype
+                    Ok(tstype)
                 }
-                None => panic!("the disco"),
+                None => bail!("could not find a definition for `{ref_}`"),
             },
             Schema::Elements {
                 elements, nullable, ..
-            } => Self::List {
-                elements: Box::new(Self::from_schema(*elements, globals)),
+            } => Ok(Self::List {
+                elements: Box::new(
+                    Self::from_schema(*elements, globals)
+                        .wrap_err("could not convert the elements type")?,
+                ),
                 nullable,
-            },
+            }),
             Schema::Values {
                 values, nullable, ..
-            } => Self::Record {
-                values: Box::new(Self::from_schema(*values, globals)),
+            } => Ok(Self::Record {
+                values: Box::new(
+                    Self::from_schema(*values, globals)
+                        .wrap_err("could not convert the values type")?,
+                ),
                 nullable,
-            },
+            }),
             Schema::Discriminator {
                 discriminator,
                 mapping,
@@ -125,14 +139,17 @@ impl TSType {
                 let mut members = Vec::with_capacity(mapping.len());
 
                 for (tag, value) in mapping {
-                    let mut value_type = Self::from_schema(value, globals);
+                    let mut value_type = Self::from_schema(value, globals)
+                        .wrap_err_with(|| format!("could not convert the {tag} tag"))?;
+
                     value_type
                         .add_key_to_object(&discriminator, Self::StringScalar(tag))
-                        .expect("jtd discriminator should have enforced that the value type must be an object");
+                        .wrap_err("jtd discriminator should have enforced that the value type must be an object")?;
+
                     members.push(value_type);
                 }
 
-                Self::Union { members, nullable }
+                Ok(Self::Union { members, nullable })
             }
         }
     }
@@ -302,7 +319,7 @@ impl TSType {
                 properties.insert(key.to_string(), value);
                 Ok(())
             }
-            _ => Err(eyre!("add_key_to_object only works on objects")),
+            _ => bail!("add_key_to_object only works on objects"),
         }
     }
 
@@ -483,6 +500,7 @@ mod tests {
 
     fn from_schema(value: Value) -> TSType {
         TSType::from_schema(from_json(value), &BTreeMap::new())
+            .expect("valid schema from JSON value")
     }
 
     #[test]
@@ -738,7 +756,8 @@ mod tests {
         let type_ = TSType::from_schema(
             ref_schema,
             &BTreeMap::from([("foo".to_string(), def_schema)]),
-        );
+        )
+        .unwrap();
 
         assert_eq!(
             type_,
@@ -749,21 +768,18 @@ mod tests {
         );
     }
 
-    // #[test]
-    // fn interprets_ref_missing_definition() {
-    //     let type_ = from_schema(json!({
-    //         "ref": "foo",
-    //         "nullable": true,
-    //     }));
-    //
-    //     assert_eq!(
-    //         type_,
-    //         TSType::Scalar {
-    //             value: "string",
-    //             nullable: true,
-    //         }
-    //     );
-    // }
+    #[test]
+    fn interprets_ref_missing_definition() {
+        let ref_schema = from_json(json!({"ref": "foo"}));
+        let def_schema = from_json(json!({"type": "string"}));
+
+        let err = TSType::from_schema(ref_schema, &BTreeMap::new()).unwrap_err();
+
+        assert_eq!(
+            err.to_string(),
+            "could not find a definition for `foo`".to_string(),
+        );
+    }
 
     #[test]
     fn scalar_to_source() {
