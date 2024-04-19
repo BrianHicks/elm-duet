@@ -8,6 +8,7 @@ declare module Elm {
           currentTimeMillis: number;
           notificationPermission: "default" | "denied" | "granted";
         }
+      
         type Ports = {
           changeDocument: {
             subscribe: (callback: (value: {
@@ -47,6 +48,7 @@ declare module Elm {
             }) => void) => void;
           };
         }
+      
         function init(config: {
           flags: Flags;
           node: HTMLElement;

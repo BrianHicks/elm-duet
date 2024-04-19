@@ -271,10 +271,13 @@ impl TSType {
                 out.push_str("declare module ");
                 out.push_str(name); // TODO: escape?
                 out.push_str(" {\n");
-                for member in members {
+                for (i, member) in members.iter().enumerate() {
+                    if i > 0 {
+                        out.push('\n');
+                    }
                     out.push_str("  ");
                     out.push_str(&member.to_source(true).replace('\n', "\n  "));
-                    out.push('\n'); // TODO: separate by two newlines
+                    out.push('\n');
                 }
                 out.push('}');
             }
@@ -282,10 +285,13 @@ impl TSType {
                 out.push_str("namespace ");
                 out.push_str(name); // TODO: escape?
                 out.push_str(" {\n");
-                for member in members {
+                for (i, member) in members.iter().enumerate() {
+                    if i > 0 {
+                        out.push('\n');
+                    }
                     out.push_str("  ");
                     out.push_str(&member.to_source(true).replace('\n', "\n  "));
-                    out.push('\n'); // TODO: separate by two newlines
+                    out.push('\n');
                 }
                 out.push('}');
             }
