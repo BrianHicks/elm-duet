@@ -33,8 +33,7 @@ impl Type {
                 | jtd::Type::Uint16
                 | jtd::Type::Int32
                 | jtd::Type::Uint32 => Self::Scalar("Int"),
-                jtd::Type::Float32 => todo!(),
-                jtd::Type::Float64 => todo!(),
+                jtd::Type::Float32 | jtd::Type::Float64 => Self::Scalar("Float"),
                 jtd::Type::String => todo!(),
                 jtd::Type::Timestamp => todo!(),
             }),
@@ -152,6 +151,20 @@ mod tests {
             let type_ = from_schema(json!({"type": "uint32"}));
 
             assert_eq!(type_, Type::Scalar("Int"));
+        }
+
+        #[test]
+        fn interprets_float32() {
+            let type_ = from_schema(json!({"type": "float32"}));
+
+            assert_eq!(type_, Type::Scalar("Float"));
+        }
+
+        #[test]
+        fn interprets_float64() {
+            let type_ = from_schema(json!({"type": "float64"}));
+
+            assert_eq!(type_, Type::Scalar("Float"));
         }
     }
 
