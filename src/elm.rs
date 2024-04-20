@@ -1,4 +1,4 @@
-use eyre::Result;
+use eyre::{Result, WrapErr};
 use jtd::Schema;
 
 #[derive(Debug, PartialEq, Eq)]
@@ -6,6 +6,7 @@ pub enum Type {
     Scalar(&'static str),
     Maybe(Box<Type>),
     Unit,
+    DictWithStringKeys(Box<Type>),
 }
 
 impl Type {
@@ -61,11 +62,11 @@ impl Type {
                 additional_properties,
             } => todo!(),
             Schema::Values {
-                definitions,
-                metadata,
-                nullable,
-                values,
-            } => todo!(),
+                nullable, values, ..
+            } => Ok(Self::DictWithStringKeys(Box::new(
+                Self::from_schema(*values)
+                    .wrap_err("could not interpret a type for the values of the type")?,
+            ))),
             Schema::Discriminator {
                 definitions,
                 metadata,
@@ -202,6 +203,20 @@ mod tests {
             let type_ = from_schema(json!({}));
 
             assert_eq!(type_, Type::Unit);
+        }
+
+        #[test]
+        fn interprets_values() {
+            let type_ = from_schema(json!({
+                "values": {
+                    "type": "string",
+                },
+            }));
+
+            assert_eq!(
+                type_,
+                Type::DictWithStringKeys(Box::new(Type::Scalar("String")))
+            );
         }
     }
 
