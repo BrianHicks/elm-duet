@@ -5,15 +5,13 @@ use jtd::Schema;
 pub enum Type {
     Scalar(&'static str),
     Maybe(Box<Type>),
+    Unit,
 }
 
 impl Type {
     fn from_schema(schema: Schema) -> Result<Self> {
         match schema {
-            Schema::Empty {
-                definitions,
-                metadata,
-            } => todo!(),
+            Schema::Empty { .. } => Ok(Self::Unit),
             Schema::Ref {
                 definitions,
                 metadata,
@@ -197,6 +195,13 @@ mod tests {
             let type_ = from_schema(json!({"type": "string", "nullable": true}));
 
             assert_eq!(type_, Type::Maybe(Box::new(Type::Scalar("String"))));
+        }
+
+        #[test]
+        fn interprets_empty() {
+            let type_ = from_schema(json!({}));
+
+            assert_eq!(type_, Type::Unit);
         }
     }
 
