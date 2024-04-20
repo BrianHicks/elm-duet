@@ -7,7 +7,7 @@ $ elm-duet schema.json
 wrote elm.ts
 Ok(
     (
-        TypeRef(
+        Ref(
             "Flags",
         ),
         [
@@ -26,7 +26,7 @@ Ok(
                         "currentTimeMillis": Scalar(
                             "Float",
                         ),
-                        "notificationPermission": TypeRef(
+                        "notificationPermission": Ref(
                             "NotificationPermission",
                         ),
                     },

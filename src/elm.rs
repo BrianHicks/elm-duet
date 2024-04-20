@@ -9,7 +9,7 @@ pub enum Type {
     Unit,
     DictWithStringKeys(Box<Type>),
     List(Box<Type>),
-    TypeRef(String),
+    Ref(String),
     Record(BTreeMap<String, Type>),
 }
 
@@ -74,7 +74,7 @@ impl Type {
                         cases,
                     });
 
-                    Self::TypeRef(name.to_string())
+                    Self::Ref(name.to_string())
                 }
                 None => bail!("string names are required for enums"),
             },
@@ -115,7 +115,7 @@ impl Type {
                         type_: Self::Record(fields),
                     });
 
-                    Self::TypeRef(name.to_string())
+                    Self::Ref(name.to_string())
                 }
                 None => bail!("string names are required for properties"),
             },
@@ -357,7 +357,7 @@ mod tests {
                 "enum": ["a", "b"],
             }));
 
-            assert_eq!(type_, Type::TypeRef("Foo".to_string()));
+            assert_eq!(type_, Type::Ref("Foo".to_string()));
 
             assert_eq!(
                 decls,
@@ -403,7 +403,7 @@ mod tests {
                 },
             }));
 
-            assert_eq!(type_, Type::TypeRef("Foo".to_string()));
+            assert_eq!(type_, Type::Ref("Foo".to_string()));
 
             assert_eq!(
                 decls,

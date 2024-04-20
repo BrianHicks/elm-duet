@@ -55,7 +55,7 @@ $ elm-duet examples/jwt_schema.json --typescript-dest examples/jwt_schema.ts
 wrote examples/jwt_schema.ts
 Ok(
     (
-        TypeRef(
+        Ref(
             "Flags",
         ),
         [
