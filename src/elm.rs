@@ -26,7 +26,7 @@ pub enum Decl {
 }
 
 impl Type {
-    fn from_schema(schema: Schema) -> Result<(Self, Vec<Decl>)> {
+    pub fn from_schema(schema: Schema) -> Result<(Self, Vec<Decl>)> {
         let mut is_nullable = false;
         let mut decls = Vec::new();
 

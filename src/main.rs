@@ -33,6 +33,8 @@ impl Cli {
         std::fs::write(&self.typescript_dest, schema.flags_to_ts()?)?;
         println!("wrote {}", self.typescript_dest.display());
 
+        println!("{}", schema.to_elm()?);
+
         Ok(())
     }
 }
