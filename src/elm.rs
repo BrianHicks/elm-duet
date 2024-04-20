@@ -1,4 +1,80 @@
 use eyre::Result;
+use jtd::Schema;
+
+#[derive(Debug, PartialEq, Eq)]
+pub enum Type {
+    Scalar(&'static str),
+    Maybe(Box<Type>),
+}
+
+impl Type {
+    fn from_schema(schema: Schema) -> Result<Self> {
+        match schema {
+            Schema::Empty {
+                definitions,
+                metadata,
+            } => todo!(),
+            Schema::Ref {
+                definitions,
+                metadata,
+                nullable,
+                ref_,
+            } => todo!(),
+            Schema::Type {
+                metadata,
+                nullable,
+                type_,
+                ..
+            } => Ok(match type_ {
+                jtd::Type::Boolean => todo!(),
+                jtd::Type::Int8
+                | jtd::Type::Uint8
+                | jtd::Type::Int16
+                | jtd::Type::Uint16
+                | jtd::Type::Int32
+                | jtd::Type::Uint32 => Self::Scalar("Int"),
+                jtd::Type::Float32 => todo!(),
+                jtd::Type::Float64 => todo!(),
+                jtd::Type::String => todo!(),
+                jtd::Type::Timestamp => todo!(),
+            }),
+            Schema::Enum {
+                definitions,
+                metadata,
+                nullable,
+                enum_,
+            } => todo!(),
+            Schema::Elements {
+                definitions,
+                metadata,
+                nullable,
+                elements,
+            } => todo!(),
+            Schema::Properties {
+                definitions,
+                metadata,
+                nullable,
+                properties,
+                optional_properties,
+                properties_is_present,
+                additional_properties,
+            } => todo!(),
+            Schema::Values {
+                definitions,
+                metadata,
+                nullable,
+                values,
+            } => todo!(),
+            Schema::Discriminator {
+                definitions,
+                metadata,
+                nullable,
+                discriminator,
+                mapping,
+            } => todo!(),
+        }
+    }
+}
 
 pub struct Module {
     name: Vec<String>,
@@ -21,6 +97,63 @@ impl Module {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    mod type_ {
+        use serde_json::{json, Value};
+
+        use super::*;
+
+        fn from_json(value: Value) -> jtd::Schema {
+            let json = serde_json::from_value(value).unwrap();
+            Schema::from_serde_schema(json).unwrap()
+        }
+
+        fn from_schema(value: Value) -> Type {
+            Type::from_schema(from_json(value)).expect("valid schema from JSON value")
+        }
+
+        #[test]
+        fn interprets_int8() {
+            let type_ = from_schema(json!({"type": "int8"}));
+
+            assert_eq!(type_, Type::Scalar("Int"));
+        }
+
+        #[test]
+        fn interprets_int16() {
+            let type_ = from_schema(json!({"type": "int16"}));
+
+            assert_eq!(type_, Type::Scalar("Int"));
+        }
+
+        #[test]
+        fn interprets_int32() {
+            let type_ = from_schema(json!({"type": "int32"}));
+
+            assert_eq!(type_, Type::Scalar("Int"));
+        }
+
+        #[test]
+        fn interprets_uint8() {
+            let type_ = from_schema(json!({"type": "uint8"}));
+
+            assert_eq!(type_, Type::Scalar("Int"));
+        }
+
+        #[test]
+        fn interprets_uint16() {
+            let type_ = from_schema(json!({"type": "uint16"}));
+
+            assert_eq!(type_, Type::Scalar("Int"));
+        }
+
+        #[test]
+        fn interprets_uint32() {
+            let type_ = from_schema(json!({"type": "uint32"}));
+
+            assert_eq!(type_, Type::Scalar("Int"));
+        }
+    }
 
     mod module {
         use super::*;
