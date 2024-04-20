@@ -1,5 +1,6 @@
-use eyre::{Result, WrapErr};
+use eyre::{bail, Result, WrapErr};
 use jtd::Schema;
+use std::collections::BTreeMap;
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum Type {
@@ -8,10 +9,16 @@ pub enum Type {
     Unit,
     DictWithStringKeys(Box<Type>),
     List(Box<Type>),
+    TypeRef(String),
 }
 
 #[derive(Debug, PartialEq, Eq)]
-pub enum Decl {}
+pub enum Decl {
+    CustomTypeEnum {
+        name: String,
+        cases: BTreeMap<String, String>,
+    },
+}
 
 impl Type {
     fn from_schema(schema: Schema) -> Result<(Self, Vec<Decl>)> {
@@ -44,11 +51,28 @@ impl Type {
                 }
             }
             Schema::Enum {
-                definitions,
                 metadata,
                 nullable,
                 enum_,
-            } => todo!(),
+                ..
+            } => match metadata.get("name").and_then(|n| n.as_str()) {
+                Some(name) => {
+                    is_nullable = nullable;
+
+                    let mut cases = BTreeMap::new();
+                    for value in enum_ {
+                        cases.insert(value.to_uppercase(), value.to_string());
+                    }
+
+                    decls.push(Decl::CustomTypeEnum {
+                        name: name.to_string(),
+                        cases,
+                    });
+
+                    Self::TypeRef(name.to_string())
+                }
+                None => bail!("string names are required for enums"),
+            },
             Schema::Elements {
                 nullable, elements, ..
             } => {
@@ -283,6 +307,42 @@ mod tests {
             assert_eq!(
                 type_,
                 Type::Maybe(Box::new(Type::List(Box::new(Type::Scalar("String")))))
+            );
+        }
+
+        #[test]
+        fn interprets_enum_no_name() {
+            let err = Type::from_schema(from_json(json!({
+                "enum": ["a", "b"],
+            })))
+            .unwrap_err();
+
+            assert_eq!(
+                err.to_string(),
+                "string names are required for enums".to_string()
+            );
+        }
+
+        #[test]
+        fn interprets_enum() {
+            let (type_, decls) = from_schema(json!({
+                "metadata": {
+                    "name": "Foo",
+                },
+                "enum": ["a", "b"],
+            }));
+
+            assert_eq!(type_, Type::TypeRef("Foo".to_string()));
+
+            assert_eq!(
+                decls,
+                Vec::from([Decl::CustomTypeEnum {
+                    name: "Foo".to_string(),
+                    cases: BTreeMap::from([
+                        ("A".to_string(), "a".to_string()),
+                        ("B".to_string(), "b".to_string()),
+                    ]),
+                }])
             );
         }
     }
