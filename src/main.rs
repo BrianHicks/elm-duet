@@ -1,3 +1,4 @@
+mod elm;
 mod schema;
 mod typescript;
 
