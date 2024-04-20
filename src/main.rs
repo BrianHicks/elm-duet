@@ -15,6 +15,14 @@ struct Cli {
     /// Destination for TypeScript types
     #[clap(long, default_value = "elm.ts")]
     typescript_dest: PathBuf,
+
+    /// Destination for Elm types
+    #[clap(long, default_value = "src/")]
+    elm_dest: PathBuf,
+
+    /// Prefix for Elm module path
+    #[clap(long, default_value = "Interop")]
+    elm_prefix: String,
 }
 
 impl Cli {
