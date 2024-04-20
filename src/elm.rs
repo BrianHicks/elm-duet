@@ -7,6 +7,7 @@ pub enum Type {
     Maybe(Box<Type>),
     Unit,
     DictWithStringKeys(Box<Type>),
+    List(Box<Type>),
 }
 
 impl Type {
@@ -45,11 +46,15 @@ impl Type {
                 enum_,
             } => todo!(),
             Schema::Elements {
-                definitions,
-                metadata,
-                nullable,
-                elements,
-            } => todo!(),
+                nullable, elements, ..
+            } => {
+                is_nullable = nullable;
+
+                Self::List(Box::new(
+                    Self::from_schema(*elements)
+                        .wrap_err("could not convert elements of a list")?,
+                ))
+            }
             Schema::Properties {
                 definitions,
                 metadata,
@@ -66,7 +71,7 @@ impl Type {
 
                 Self::DictWithStringKeys(Box::new(
                     Self::from_schema(*values)
-                        .wrap_err("could not interpret a type for the values of the type")?,
+                        .wrap_err("could not convert the values of an object")?,
                 ))
             }
             Schema::Discriminator {
@@ -241,6 +246,32 @@ mod tests {
                 Type::Maybe(Box::new(Type::DictWithStringKeys(Box::new(Type::Scalar(
                     "String"
                 )))))
+            );
+        }
+
+        #[test]
+        fn interprets_elements() {
+            let type_ = from_schema(json!({
+                "elements": {
+                    "type": "string",
+                },
+            }));
+
+            assert_eq!(type_, Type::List(Box::new(Type::Scalar("String"))));
+        }
+
+        #[test]
+        fn interprets_nullable_elements() {
+            let type_ = from_schema(json!({
+                "elements": {
+                    "type": "string",
+                },
+                "nullable": true,
+            }));
+
+            assert_eq!(
+                type_,
+                Type::Maybe(Box::new(Type::List(Box::new(Type::Scalar("String")))))
             );
         }
     }
