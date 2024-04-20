@@ -10,6 +10,7 @@ pub enum Type {
     DictWithStringKeys(Box<Type>),
     List(Box<Type>),
     TypeRef(String),
+    Record(BTreeMap<String, Type>),
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -17,6 +18,10 @@ pub enum Decl {
     CustomTypeEnum {
         name: String,
         cases: BTreeMap<String, String>,
+    },
+    TypeAlias {
+        name: String,
+        type_: Type,
     },
 }
 
@@ -86,14 +91,34 @@ impl Type {
                 Self::List(Box::new(type_))
             }
             Schema::Properties {
-                definitions,
                 metadata,
                 nullable,
                 properties,
-                optional_properties,
-                properties_is_present,
-                additional_properties,
-            } => todo!(),
+                ..
+            } => match metadata.get("name").and_then(|n| n.as_str()) {
+                Some(name) => {
+                    is_nullable = nullable;
+
+                    let mut fields = BTreeMap::new();
+                    for (field_name, field_schema) in properties {
+                        let (field_type, field_decls) = Self::from_schema(field_schema)
+                            .wrap_err_with(|| {
+                                format!("could not convert the type of `{field_name}`")
+                            })?;
+
+                        decls.extend(field_decls);
+                        fields.insert(field_name.to_string(), field_type);
+                    }
+
+                    decls.push(Decl::TypeAlias {
+                        name: name.to_string(),
+                        type_: Self::Record(fields),
+                    });
+
+                    Self::TypeRef(name.to_string())
+                }
+                None => bail!("string names are required for properties"),
+            },
             Schema::Values {
                 nullable, values, ..
             } => {
@@ -342,6 +367,52 @@ mod tests {
                         ("A".to_string(), "a".to_string()),
                         ("B".to_string(), "b".to_string()),
                     ]),
+                }])
+            );
+        }
+
+        #[test]
+        fn interprets_properties_no_name() {
+            let err = Type::from_schema(from_json(json!({
+                "properties": {
+                    "a": {
+                        "type": "string",
+                    },
+                    "b": {
+                        "type": "int32",
+                    },
+                },
+            })))
+            .unwrap_err();
+
+            assert_eq!(
+                err.to_string(),
+                "string names are required for properties".to_string()
+            );
+        }
+
+        #[test]
+        fn interprets_properties() {
+            let (type_, decls) = from_schema(json!({
+                "metadata": {
+                    "name": "Foo",
+                },
+                "properties": {
+                    "a": {},
+                    "b": {},
+                },
+            }));
+
+            assert_eq!(type_, Type::TypeRef("Foo".to_string()));
+
+            assert_eq!(
+                decls,
+                Vec::from([Decl::TypeAlias {
+                    name: "Foo".to_string(),
+                    type_: Type::Record(BTreeMap::from([
+                        ("a".to_string(), Type::Unit),
+                        ("b".to_string(), Type::Unit),
+                    ])),
                 }])
             );
         }
