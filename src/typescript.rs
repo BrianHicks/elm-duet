@@ -198,7 +198,7 @@ impl TSType {
             Self::Record { values, nullable } => {
                 out.push_str("Record<string, ");
                 out.push_str(&values.to_source(false));
-                out.push_str(">");
+                out.push('>');
 
                 if *nullable {
                     out.push_str(" | null");
@@ -232,7 +232,7 @@ impl TSType {
                 let elements_source = elements.to_source(false);
 
                 if elements_source.contains(' ') {
-                    out.push_str("(");
+                    out.push('(');
                     out.push_str(&elements_source);
                     out.push_str(")[]");
                 } else {
@@ -777,7 +777,6 @@ mod tests {
     #[test]
     fn interprets_ref_missing_definition() {
         let ref_schema = from_json(json!({"ref": "foo"}));
-        let def_schema = from_json(json!({"type": "string"}));
 
         let err = TSType::from_schema(ref_schema, &BTreeMap::new()).unwrap_err();
 
