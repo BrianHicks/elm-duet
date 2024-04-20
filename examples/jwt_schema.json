@@ -2,6 +2,9 @@
   "modules": {
     "Main": {
       "flags": {
+        "metadata": {
+          "name": "Flags"
+        },
         "properties": {
           "currentJwt": {
             "type": "string",

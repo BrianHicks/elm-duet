@@ -19,6 +19,9 @@ Here's an example for an app that stores a [jwt](https://jwt.io/) in `localStora
   "modules": {
     "Main": {
       "flags": {
+        "metadata": {
+          "name": "Flags"
+        },
         "properties": {
           "currentJwt": {
             "type": "string",
@@ -50,6 +53,27 @@ You can generate code from this by calling `elm-duet path/to/your/schema.json`:
 ```console
 $ elm-duet examples/jwt_schema.json --typescript-dest examples/jwt_schema.ts
 wrote examples/jwt_schema.ts
+Ok(
+    (
+        TypeRef(
+            "Flags",
+        ),
+        [
+            TypeAlias {
+                name: "Flags",
+                type_: Record(
+                    {
+                        "currentJwt": Maybe(
+                            Scalar(
+                                "String",
+                            ),
+                        ),
+                    },
+                ),
+            },
+        ],
+    ),
+)
 
 ```
 

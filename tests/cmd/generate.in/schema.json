@@ -2,11 +2,17 @@
   "modules": {
     "Foo.Bar.Main": {
       "flags": {
+	"metadata": {
+	  "name": "Flags"
+	},
 	"properties": {
 	  "currentTimeMillis": {
 	    "type": "float32"
 	  },
 	  "notificationPermission": {
+	    "metadata": {
+	      "name": "NotificationPermission"
+	    },
 	    "enum": ["default", "granted", "denied"]
 	  }
 	}
@@ -25,13 +31,17 @@
 	},
 	"sendNotification": {
 	  "metadata": {
-	    "direction": "ElmToJs"
+	    "direction": "ElmToJs",
+	    "name": "Notification"
 	  },
 	  "properties": {
 	    "title": {
 	      "type": "string"
 	    },
 	    "options": {
+	      "metadata": {
+		"name": "NotificationOptions"
+	      },
 	      "properties": {
 		"badge": {
 		  "type": "string",
@@ -72,6 +82,9 @@
 	  "discriminator": "tag",
 	  "mapping": {
 	    "SetMinutesPerPing": {
+	      "metadata": {
+		"name": "SetMinutesPerPing"
+	      },
 	      "properties": {
 		"value": {
 		  "type": "float32"
@@ -79,6 +92,9 @@
 	      }
 	    },
 	    "AddNewPingAt": {
+	      "metadata": {
+		"name": "AddNewPingAt"
+	      },
 	      "properties": {
 		"value": {
 		  "type": "float32"
@@ -86,6 +102,9 @@
 	      }
 	    },
 	    "SetTagForPing": {
+	      "metadata": {
+		"name": "SetTagForPing"
+	      },
 	      "properties": {
 		"index": {
 		  "type": "uint32"
