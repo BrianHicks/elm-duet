@@ -33,10 +33,10 @@ impl Type {
         let base = match schema {
             Schema::Empty { .. } => Self::Unit,
             Schema::Ref {
-                definitions,
-                metadata,
-                nullable,
-                ref_,
+                definitions: _,
+                metadata: _,
+                nullable: _,
+                ref_: _,
             } => todo!(),
             Schema::Type {
                 nullable, type_, ..
@@ -132,11 +132,11 @@ impl Type {
                 Self::DictWithStringKeys(Box::new(type_))
             }
             Schema::Discriminator {
-                definitions,
-                metadata,
-                nullable,
-                discriminator,
-                mapping,
+                definitions: _,
+                metadata: _,
+                nullable: _,
+                discriminator: _,
+                mapping: _,
             } => todo!(),
         };
 
