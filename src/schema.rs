@@ -48,6 +48,16 @@ impl Schema {
     pub fn flags_to_ts(&self) -> Result<String> {
         let mut builder = NamespaceBuilder::root("Elm");
 
+        let mut globals = BTreeMap::new();
+        for (name, serde_schema) in &self.definitions {
+            globals.insert(
+                name.clone(),
+                jtd::Schema::from_serde_schema(serde_schema.clone()).wrap_err_with(|| {
+                    format!("could not interpret JTD schema for the {name} definition")
+                })?,
+            );
+        }
+
         for (module_name, module) in &self.modules {
             let module_path: Vec<&str> = module_name.split('.').collect();
 
@@ -63,7 +73,9 @@ impl Schema {
                                 )
                             },
                         )?,
+                        &globals,
                     )
+                    .wrap_err("could not convert flags")?
                     .into_typedecl("Flags"),
                 )?,
                 None => builder.insert(
@@ -81,7 +93,9 @@ impl Schema {
                             jtd::Schema::from_serde_schema(value.schema.clone()).wrap_err_with(
                                 || format!("could not interpret JTD schema for port {name}"),
                             )?,
-                        );
+                            &globals,
+                        )
+                        .wrap_err_with(|| format!("could not convert port {name}"))?;
 
                         let func_record = match value.metadata.direction {
                             PortDirection::JsToElm => TSType::new_singleton_object(

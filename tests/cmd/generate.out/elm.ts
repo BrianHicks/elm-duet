@@ -8,7 +8,25 @@ declare module Elm {
           currentTimeMillis: number;
           notificationPermission: "default" | "denied" | "granted";
         }
+      
         type Ports = {
+          changeDocument: {
+            subscribe: (callback: (value: {
+              tag: "AddNewPingAt";
+              value: number;
+            } | {
+              tag: "SetMinutesPerPing";
+              value: number;
+            } | {
+              index: number;
+              tag: "SetTagForPing";
+              value: string;
+            }) => void) => void;
+          };
+          docFromAutomerge: {
+            send: (value: {
+            }) => void;
+          };
           notificationPermission: {
             send: (value: "default" | "denied" | "granted") => void;
           };
@@ -30,6 +48,7 @@ declare module Elm {
             }) => void) => void;
           };
         }
+      
         function init(config: {
           flags: Flags;
           node: HTMLElement;
