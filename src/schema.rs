@@ -133,16 +133,14 @@ impl Schema {
     }
 
     pub fn to_elm(&self) -> Result<String> {
-        for (_, module) in &self.modules {
-            return Ok(match &module.flags {
-                Some(flags) => format!(
-                    "{:#?}",
-                    elm::Type::from_schema(jtd::Schema::from_serde_schema(flags.clone())?)
-                ),
-                None => "no flags, oh well".to_string(),
-            });
-        }
+        let module = self.modules.values().next().unwrap();
 
-        eyre::bail!("todo")
+        return Ok(match &module.flags {
+            Some(flags) => format!(
+                "{:#?}",
+                elm::Type::from_schema(jtd::Schema::from_serde_schema(flags.clone())?)
+            ),
+            None => "no flags, oh well".to_string(),
+        });
     }
 }
