@@ -21,21 +21,26 @@ impl Type {
                 ref_,
             } => todo!(),
             Schema::Type {
-                metadata,
-                nullable,
-                type_,
-                ..
-            } => Ok(match type_ {
-                jtd::Type::Boolean => Self::Scalar("Bool"),
-                jtd::Type::Int8
-                | jtd::Type::Uint8
-                | jtd::Type::Int16
-                | jtd::Type::Uint16
-                | jtd::Type::Int32
-                | jtd::Type::Uint32 => Self::Scalar("Int"),
-                jtd::Type::Float32 | jtd::Type::Float64 => Self::Scalar("Float"),
-                jtd::Type::String | jtd::Type::Timestamp => Self::Scalar("String"),
-            }),
+                nullable, type_, ..
+            } => {
+                let base = match type_ {
+                    jtd::Type::Boolean => Self::Scalar("Bool"),
+                    jtd::Type::Int8
+                    | jtd::Type::Uint8
+                    | jtd::Type::Int16
+                    | jtd::Type::Uint16
+                    | jtd::Type::Int32
+                    | jtd::Type::Uint32 => Self::Scalar("Int"),
+                    jtd::Type::Float32 | jtd::Type::Float64 => Self::Scalar("Float"),
+                    jtd::Type::String | jtd::Type::Timestamp => Self::Scalar("String"),
+                };
+
+                if nullable {
+                    Ok(Self::Maybe(Box::new(base)))
+                } else {
+                    Ok(base)
+                }
+            }
             Schema::Enum {
                 definitions,
                 metadata,
@@ -185,6 +190,13 @@ mod tests {
             let type_ = from_schema(json!({"type": "boolean"}));
 
             assert_eq!(type_, Type::Scalar("Bool"));
+        }
+
+        #[test]
+        fn interprets_nullable_type() {
+            let type_ = from_schema(json!({"type": "string", "nullable": true}));
+
+            assert_eq!(type_, Type::Maybe(Box::new(Type::Scalar("String"))));
         }
     }
 
