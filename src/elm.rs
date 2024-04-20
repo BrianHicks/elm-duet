@@ -11,8 +11,10 @@ pub enum Type {
 
 impl Type {
     fn from_schema(schema: Schema) -> Result<Self> {
-        match schema {
-            Schema::Empty { .. } => Ok(Self::Unit),
+        let mut is_nullable = false;
+
+        let base = match schema {
+            Schema::Empty { .. } => Self::Unit,
             Schema::Ref {
                 definitions,
                 metadata,
@@ -22,7 +24,9 @@ impl Type {
             Schema::Type {
                 nullable, type_, ..
             } => {
-                let base = match type_ {
+                is_nullable = nullable;
+
+                match type_ {
                     jtd::Type::Boolean => Self::Scalar("Bool"),
                     jtd::Type::Int8
                     | jtd::Type::Uint8
@@ -32,12 +36,6 @@ impl Type {
                     | jtd::Type::Uint32 => Self::Scalar("Int"),
                     jtd::Type::Float32 | jtd::Type::Float64 => Self::Scalar("Float"),
                     jtd::Type::String | jtd::Type::Timestamp => Self::Scalar("String"),
-                };
-
-                if nullable {
-                    Ok(Self::Maybe(Box::new(base)))
-                } else {
-                    Ok(base)
                 }
             }
             Schema::Enum {
@@ -63,10 +61,14 @@ impl Type {
             } => todo!(),
             Schema::Values {
                 nullable, values, ..
-            } => Ok(Self::DictWithStringKeys(Box::new(
-                Self::from_schema(*values)
-                    .wrap_err("could not interpret a type for the values of the type")?,
-            ))),
+            } => {
+                is_nullable = nullable;
+
+                Self::DictWithStringKeys(Box::new(
+                    Self::from_schema(*values)
+                        .wrap_err("could not interpret a type for the values of the type")?,
+                ))
+            }
             Schema::Discriminator {
                 definitions,
                 metadata,
@@ -74,6 +76,12 @@ impl Type {
                 discriminator,
                 mapping,
             } => todo!(),
+        };
+
+        if is_nullable {
+            Ok(Self::Maybe(Box::new(base)))
+        } else {
+            Ok(base)
         }
     }
 }
@@ -216,6 +224,23 @@ mod tests {
             assert_eq!(
                 type_,
                 Type::DictWithStringKeys(Box::new(Type::Scalar("String")))
+            );
+        }
+
+        #[test]
+        fn interprets_nullable_values() {
+            let type_ = from_schema(json!({
+                "values": {
+                    "type": "string",
+                },
+                "nullable": true,
+            }));
+
+            assert_eq!(
+                type_,
+                Type::Maybe(Box::new(Type::DictWithStringKeys(Box::new(Type::Scalar(
+                    "String"
+                )))))
             );
         }
     }
