@@ -26,7 +26,7 @@ impl Type {
                 type_,
                 ..
             } => Ok(match type_ {
-                jtd::Type::Boolean => todo!(),
+                jtd::Type::Boolean => Self::Scalar("Bool"),
                 jtd::Type::Int8
                 | jtd::Type::Uint8
                 | jtd::Type::Int16
@@ -178,6 +178,13 @@ mod tests {
             let type_ = from_schema(json!({"type": "timestamp"}));
 
             assert_eq!(type_, Type::Scalar("String"));
+        }
+
+        #[test]
+        fn interprets_boolean() {
+            let type_ = from_schema(json!({"type": "boolean"}));
+
+            assert_eq!(type_, Type::Scalar("Bool"));
         }
     }
 
