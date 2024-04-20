@@ -135,12 +135,12 @@ impl Schema {
     pub fn to_elm(&self) -> Result<String> {
         let module = self.modules.values().next().unwrap();
 
-        return Ok(match &module.flags {
+        Ok(match &module.flags {
             Some(flags) => format!(
                 "{:#?}",
                 elm::Type::from_schema(jtd::Schema::from_serde_schema(flags.clone())?)
             ),
             None => "no flags, oh well".to_string(),
-        });
+        })
     }
 }
