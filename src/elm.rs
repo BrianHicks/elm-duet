@@ -10,9 +10,13 @@ pub enum Type {
     List(Box<Type>),
 }
 
+#[derive(Debug, PartialEq, Eq)]
+pub enum Decl {}
+
 impl Type {
-    fn from_schema(schema: Schema) -> Result<Self> {
+    fn from_schema(schema: Schema) -> Result<(Self, Vec<Decl>)> {
         let mut is_nullable = false;
+        let mut decls = Vec::new();
 
         let base = match schema {
             Schema::Empty { .. } => Self::Unit,
@@ -50,10 +54,12 @@ impl Type {
             } => {
                 is_nullable = nullable;
 
-                Self::List(Box::new(
-                    Self::from_schema(*elements)
-                        .wrap_err("could not convert elements of a list")?,
-                ))
+                let (type_, sub_decls) = Self::from_schema(*elements)
+                    .wrap_err("could not convert elements of a list")?;
+
+                decls.extend(sub_decls);
+
+                Self::List(Box::new(type_))
             }
             Schema::Properties {
                 definitions,
@@ -69,10 +75,12 @@ impl Type {
             } => {
                 is_nullable = nullable;
 
-                Self::DictWithStringKeys(Box::new(
-                    Self::from_schema(*values)
-                        .wrap_err("could not convert the values of an object")?,
-                ))
+                let (type_, sub_decls) =
+                    Self::from_schema(*values).wrap_err("could not convert elements of a list")?;
+
+                decls.extend(sub_decls);
+
+                Self::DictWithStringKeys(Box::new(type_))
             }
             Schema::Discriminator {
                 definitions,
@@ -83,11 +91,14 @@ impl Type {
             } => todo!(),
         };
 
-        if is_nullable {
-            Ok(Self::Maybe(Box::new(base)))
-        } else {
-            Ok(base)
-        }
+        Ok((
+            if is_nullable {
+                Self::Maybe(Box::new(base))
+            } else {
+                base
+            },
+            decls,
+        ))
     }
 }
 
@@ -123,104 +134,104 @@ mod tests {
             Schema::from_serde_schema(json).unwrap()
         }
 
-        fn from_schema(value: Value) -> Type {
+        fn from_schema(value: Value) -> (Type, Vec<Decl>) {
             Type::from_schema(from_json(value)).expect("valid schema from JSON value")
         }
 
         #[test]
         fn interprets_int8() {
-            let type_ = from_schema(json!({"type": "int8"}));
+            let (type_, _) = from_schema(json!({"type": "int8"}));
 
             assert_eq!(type_, Type::Scalar("Int"));
         }
 
         #[test]
         fn interprets_int16() {
-            let type_ = from_schema(json!({"type": "int16"}));
+            let (type_, _) = from_schema(json!({"type": "int16"}));
 
             assert_eq!(type_, Type::Scalar("Int"));
         }
 
         #[test]
         fn interprets_int32() {
-            let type_ = from_schema(json!({"type": "int32"}));
+            let (type_, _) = from_schema(json!({"type": "int32"}));
 
             assert_eq!(type_, Type::Scalar("Int"));
         }
 
         #[test]
         fn interprets_uint8() {
-            let type_ = from_schema(json!({"type": "uint8"}));
+            let (type_, _) = from_schema(json!({"type": "uint8"}));
 
             assert_eq!(type_, Type::Scalar("Int"));
         }
 
         #[test]
         fn interprets_uint16() {
-            let type_ = from_schema(json!({"type": "uint16"}));
+            let (type_, _) = from_schema(json!({"type": "uint16"}));
 
             assert_eq!(type_, Type::Scalar("Int"));
         }
 
         #[test]
         fn interprets_uint32() {
-            let type_ = from_schema(json!({"type": "uint32"}));
+            let (type_, _) = from_schema(json!({"type": "uint32"}));
 
             assert_eq!(type_, Type::Scalar("Int"));
         }
 
         #[test]
         fn interprets_float32() {
-            let type_ = from_schema(json!({"type": "float32"}));
+            let (type_, _) = from_schema(json!({"type": "float32"}));
 
             assert_eq!(type_, Type::Scalar("Float"));
         }
 
         #[test]
         fn interprets_float64() {
-            let type_ = from_schema(json!({"type": "float64"}));
+            let (type_, _) = from_schema(json!({"type": "float64"}));
 
             assert_eq!(type_, Type::Scalar("Float"));
         }
 
         #[test]
         fn interprets_string() {
-            let type_ = from_schema(json!({"type": "string"}));
+            let (type_, _) = from_schema(json!({"type": "string"}));
 
             assert_eq!(type_, Type::Scalar("String"));
         }
 
         #[test]
         fn interprets_timestamp() {
-            let type_ = from_schema(json!({"type": "timestamp"}));
+            let (type_, _) = from_schema(json!({"type": "timestamp"}));
 
             assert_eq!(type_, Type::Scalar("String"));
         }
 
         #[test]
         fn interprets_boolean() {
-            let type_ = from_schema(json!({"type": "boolean"}));
+            let (type_, _) = from_schema(json!({"type": "boolean"}));
 
             assert_eq!(type_, Type::Scalar("Bool"));
         }
 
         #[test]
         fn interprets_nullable_type() {
-            let type_ = from_schema(json!({"type": "string", "nullable": true}));
+            let (type_, _) = from_schema(json!({"type": "string", "nullable": true}));
 
             assert_eq!(type_, Type::Maybe(Box::new(Type::Scalar("String"))));
         }
 
         #[test]
         fn interprets_empty() {
-            let type_ = from_schema(json!({}));
+            let (type_, _) = from_schema(json!({}));
 
             assert_eq!(type_, Type::Unit);
         }
 
         #[test]
         fn interprets_values() {
-            let type_ = from_schema(json!({
+            let (type_, _) = from_schema(json!({
                 "values": {
                     "type": "string",
                 },
@@ -234,7 +245,7 @@ mod tests {
 
         #[test]
         fn interprets_nullable_values() {
-            let type_ = from_schema(json!({
+            let (type_, _) = from_schema(json!({
                 "values": {
                     "type": "string",
                 },
@@ -251,7 +262,7 @@ mod tests {
 
         #[test]
         fn interprets_elements() {
-            let type_ = from_schema(json!({
+            let (type_, _) = from_schema(json!({
                 "elements": {
                     "type": "string",
                 },
@@ -262,7 +273,7 @@ mod tests {
 
         #[test]
         fn interprets_nullable_elements() {
-            let type_ = from_schema(json!({
+            let (type_, _) = from_schema(json!({
                 "elements": {
                     "type": "string",
                 },
