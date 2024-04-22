@@ -8,8 +8,12 @@ impl InflectedString {
         &self.0
     }
 
-    pub fn to_class_case(&self) -> String {
-        self.orig().to_class_case()
+    pub fn to_pascal_case(&self) -> String {
+        self.orig().to_pascal_case()
+    }
+
+    pub fn to_camel_case(&self) -> String {
+        self.orig().to_camel_case()
     }
 }
 
