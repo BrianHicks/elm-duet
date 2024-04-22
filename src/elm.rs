@@ -38,11 +38,26 @@ impl Type {
         let base = match schema {
             Schema::Empty { .. } => Self::Unit,
             Schema::Ref {
-                definitions: _,
-                metadata: _,
-                nullable: _,
-                ref_: _,
-            } => todo!(),
+                definitions,
+                nullable,
+                ref_,
+                ..
+            } => match definitions.get(&ref_).or_else(|| globals.get(&ref_)) {
+                Some(schema) => {
+                    is_nullable = nullable;
+
+                    let (def_type, def_decls) = Self::from_schema(
+                        schema.clone(),
+                        name_suggestion.or_else(|| Some(ref_.to_string())),
+                        globals,
+                    )
+                    .wrap_err_with(|| format!("could not convert the value of ref `{ref_}`"))?;
+
+                    decls.extend(def_decls);
+                    def_type
+                }
+                None => bail!("could not find a definition for `{ref_}`"),
+            },
             Schema::Type {
                 nullable, type_, ..
             } => {
@@ -524,6 +539,57 @@ mod tests {
                         ])
                     },
                 ])
+            );
+        }
+
+        #[test]
+        fn interprets_ref_local() {
+            let (type_, decls) = from_schema(json!({
+                "definitions": {
+                    "foo": {
+                        "type": "string"
+                    }
+                },
+                "ref": "foo",
+            }));
+
+            assert_eq!(type_, Type::Scalar("String"));
+            assert_eq!(decls, Vec::new());
+        }
+
+        #[test]
+        fn interprets_ref_global() {
+            let (type_, decls) = Type::from_schema(
+                from_json(json!({
+                    "ref": "foo",
+                })),
+                None,
+                &BTreeMap::from([("foo".into(), from_json(json!({"type": "string"})))]),
+            )
+            .unwrap();
+
+            assert_eq!(type_, Type::Scalar("String"));
+            assert_eq!(decls, Vec::new());
+        }
+
+        #[test]
+        fn interprets_ref_suggesting_name() {
+            let (type_, decls) = Type::from_schema(
+                from_json(json!({
+                    "ref": "foo",
+                })),
+                None,
+                &BTreeMap::from([("foo".into(), from_json(json!({"properties": {}})))]),
+            )
+            .unwrap();
+
+            assert_eq!(type_, Type::Ref("foo".into()));
+            assert_eq!(
+                decls,
+                Vec::from([Decl::TypeAlias {
+                    name: "foo".into(),
+                    type_: Type::Record(BTreeMap::new())
+                }])
             );
         }
     }
