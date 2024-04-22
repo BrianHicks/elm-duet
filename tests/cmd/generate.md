@@ -15,17 +15,17 @@ Ok(
                 name: InflectedString(
                     "NotificationPermission",
                 ),
-                cases: [
+                cases: {
                     InflectedString(
                         "default",
-                    ),
+                    ): None,
                     InflectedString(
                         "denied",
-                    ),
+                    ): None,
                     InflectedString(
                         "granted",
-                    ),
-                ],
+                    ): None,
+                },
             },
             TypeAlias {
                 name: InflectedString(

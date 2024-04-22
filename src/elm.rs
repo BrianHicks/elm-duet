@@ -18,7 +18,7 @@ pub enum Type {
 pub enum Decl {
     CustomTypeEnum {
         name: InflectedString,
-        cases: Vec<InflectedString>,
+        cases: BTreeMap<InflectedString, Option<Type>>,
     },
     TypeAlias {
         name: InflectedString,
@@ -72,9 +72,9 @@ impl Type {
                 Some(name) => {
                     is_nullable = nullable;
 
-                    let mut cases = Vec::with_capacity(enum_.len());
+                    let mut cases = BTreeMap::new();
                     for value in enum_ {
-                        cases.push(value.into())
+                        cases.insert(value.into(), None);
                     }
 
                     decls.push(Decl::CustomTypeEnum {
@@ -147,12 +147,38 @@ impl Type {
                 Self::DictWithStringKeys(Box::new(type_))
             }
             Schema::Discriminator {
-                definitions: _,
-                metadata: _,
-                nullable: _,
+                metadata,
+                nullable,
+                mapping,
                 discriminator: _,
-                mapping: _,
-            } => todo!(),
+                ..
+            } => match metadata
+                .get("name")
+                .and_then(|n| n.as_str())
+                .or(name_suggestion.as_deref())
+            {
+                Some(name) => {
+                    is_nullable = nullable;
+
+                    let mut cases = BTreeMap::new();
+                    for (tag, tag_schema) in mapping {
+                        let (value_type, value_decls) =
+                            Self::from_schema(tag_schema, Some(tag.to_string())).wrap_err_with(
+                                || format!("could not convert mapping for `{tag}`"),
+                            )?;
+
+                        decls.extend(value_decls);
+                        cases.insert(tag.into(), Some(value_type));
+                    }
+                    decls.push(Decl::CustomTypeEnum {
+                        name: name.into(),
+                        cases,
+                    });
+
+                    Self::Ref(name.to_string())
+                }
+                None => bail!("string names are required for discriminators"),
+            },
         };
 
         Ok((
@@ -381,7 +407,7 @@ mod tests {
                 decls,
                 Vec::from([Decl::CustomTypeEnum {
                     name: "Foo".into(),
-                    cases: Vec::from(["a".into(), "b".into()]),
+                    cases: BTreeMap::from([("a".into(), None), ("b".into(), None)]),
                 }])
             );
         }
@@ -432,6 +458,61 @@ mod tests {
                         ("b".into(), Type::Unit),
                     ])),
                 }])
+            );
+        }
+
+        #[test]
+        fn interprets_mapping() {
+            let (type_, decls) = from_schema(json!({
+                "metadata": {
+                    "name": "Foo",
+                },
+                "discriminator": "tag",
+                "mapping": {
+                    "a": {
+                        "properties": {
+                            "value": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "b": {
+                        "properties": {
+                            "value": {
+                                "type": "float32"
+                            }
+                        }
+                    },
+                },
+            }));
+
+            assert_eq!(type_, Type::Ref("Foo".to_string()));
+
+            assert_eq!(
+                decls,
+                Vec::from([
+                    Decl::TypeAlias {
+                        name: "a".into(),
+                        type_: Type::Record(BTreeMap::from([(
+                            "value".into(),
+                            Type::Scalar("String")
+                        )]))
+                    },
+                    Decl::TypeAlias {
+                        name: "b".into(),
+                        type_: Type::Record(BTreeMap::from([(
+                            "value".into(),
+                            Type::Scalar("Float")
+                        )]))
+                    },
+                    Decl::CustomTypeEnum {
+                        name: "Foo".into(),
+                        cases: BTreeMap::from([
+                            ("a".into(), Some(Type::Ref("a".into()))),
+                            ("b".into(), Some(Type::Ref("b".into()))),
+                        ])
+                    },
+                ])
             );
         }
     }
