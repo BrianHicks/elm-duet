@@ -30,6 +30,7 @@ impl Type {
     pub fn from_schema(
         schema: Schema,
         name_suggestion: Option<String>,
+        globals: &BTreeMap<String, Schema>,
     ) -> Result<(Self, Vec<Decl>)> {
         let mut is_nullable = false;
         let mut decls = Vec::new();
@@ -91,9 +92,12 @@ impl Type {
             } => {
                 is_nullable = nullable;
 
-                let (type_, sub_decls) =
-                    Self::from_schema(*elements, name_suggestion.map(|n| format!("{n}Elements")))
-                        .wrap_err("could not convert elements of a list")?;
+                let (type_, sub_decls) = Self::from_schema(
+                    *elements,
+                    name_suggestion.map(|n| format!("{n}Elements")),
+                    globals,
+                )
+                .wrap_err("could not convert elements of a list")?;
 
                 decls.extend(sub_decls);
 
@@ -115,7 +119,7 @@ impl Type {
                     let mut fields = BTreeMap::new();
                     for (field_name, field_schema) in properties {
                         let (field_type, field_decls) =
-                            Self::from_schema(field_schema, Some(field_name.clone()))
+                            Self::from_schema(field_schema, Some(field_name.clone()), globals)
                                 .wrap_err_with(|| {
                                     format!("could not convert the type of `{field_name}`")
                                 })?;
@@ -138,9 +142,12 @@ impl Type {
             } => {
                 is_nullable = nullable;
 
-                let (type_, sub_decls) =
-                    Self::from_schema(*values, name_suggestion.map(|n| format!("{n}Values")))
-                        .wrap_err("could not convert elements of a list")?;
+                let (type_, sub_decls) = Self::from_schema(
+                    *values,
+                    name_suggestion.map(|n| format!("{n}Values")),
+                    globals,
+                )
+                .wrap_err("could not convert elements of a list")?;
 
                 decls.extend(sub_decls);
 
@@ -163,9 +170,10 @@ impl Type {
                     let mut cases = BTreeMap::new();
                     for (tag, tag_schema) in mapping {
                         let (value_type, value_decls) =
-                            Self::from_schema(tag_schema, Some(tag.to_string())).wrap_err_with(
-                                || format!("could not convert mapping for `{tag}`"),
-                            )?;
+                            Self::from_schema(tag_schema, Some(tag.to_string()), globals)
+                                .wrap_err_with(|| {
+                                    format!("could not convert mapping for `{tag}`")
+                                })?;
 
                         decls.extend(value_decls);
                         cases.insert(tag.into(), Some(value_type));
@@ -225,7 +233,8 @@ mod tests {
         }
 
         fn from_schema(value: Value) -> (Type, Vec<Decl>) {
-            Type::from_schema(from_json(value), None).expect("valid schema from JSON value")
+            Type::from_schema(from_json(value), None, &BTreeMap::new())
+                .expect("valid schema from JSON value")
         }
 
         #[test]
@@ -383,6 +392,7 @@ mod tests {
                     "enum": ["a", "b"],
                 })),
                 None,
+                &BTreeMap::new(),
             )
             .unwrap_err();
 
@@ -426,6 +436,7 @@ mod tests {
                     },
                 })),
                 None,
+                &BTreeMap::new(),
             )
             .unwrap_err();
 

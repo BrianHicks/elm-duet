@@ -46,18 +46,24 @@ impl Schema {
             .wrap_err_with(|| format!("could not read schema from {path:?}"))
     }
 
-    pub fn flags_to_ts(&self) -> Result<String> {
-        let mut builder = NamespaceBuilder::root("Elm");
-
-        let mut globals = BTreeMap::new();
+    fn globals(&self) -> Result<BTreeMap<String, jtd::Schema>> {
+        let mut out = BTreeMap::new();
         for (name, serde_schema) in &self.definitions {
-            globals.insert(
+            out.insert(
                 name.clone(),
                 jtd::Schema::from_serde_schema(serde_schema.clone()).wrap_err_with(|| {
                     format!("could not interpret JTD schema for the {name} definition")
                 })?,
             );
         }
+
+        Ok(out)
+    }
+
+    pub fn flags_to_ts(&self) -> Result<String> {
+        let mut builder = NamespaceBuilder::root("Elm");
+
+        let globals = self.globals()?;
 
         for (module_name, module) in &self.modules {
             let module_path: Vec<&str> = module_name.split('.').collect();
@@ -135,12 +141,15 @@ impl Schema {
     pub fn to_elm(&self) -> Result<String> {
         let module = self.modules.values().next().unwrap();
 
+        let globals = self.globals()?;
+
         Ok(match &module.flags {
             Some(flags) => format!(
                 "{:#?}",
                 elm::Type::from_schema(
                     jtd::Schema::from_serde_schema(flags.clone())?,
-                    Some("Flags".to_string())
+                    Some("Flags".to_string()),
+                    &globals
                 )
             ),
             None => "no flags, oh well".to_string(),
