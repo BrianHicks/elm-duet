@@ -138,7 +138,10 @@ impl Schema {
         Ok(match &module.flags {
             Some(flags) => format!(
                 "{:#?}",
-                elm::Type::from_schema(jtd::Schema::from_serde_schema(flags.clone())?)
+                elm::Type::from_schema(
+                    jtd::Schema::from_serde_schema(flags.clone())?,
+                    Some("Flags".to_string())
+                )
             ),
             None => "no flags, oh well".to_string(),
         })

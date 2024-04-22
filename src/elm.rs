@@ -26,7 +26,10 @@ pub enum Decl {
 }
 
 impl Type {
-    pub fn from_schema(schema: Schema) -> Result<(Self, Vec<Decl>)> {
+    pub fn from_schema(
+        schema: Schema,
+        name_suggestion: Option<String>,
+    ) -> Result<(Self, Vec<Decl>)> {
         let mut is_nullable = false;
         let mut decls = Vec::new();
 
@@ -60,7 +63,11 @@ impl Type {
                 nullable,
                 enum_,
                 ..
-            } => match metadata.get("name").and_then(|n| n.as_str()) {
+            } => match metadata
+                .get("name")
+                .and_then(|n| n.as_str())
+                .or(name_suggestion.as_deref())
+            {
                 Some(name) => {
                     is_nullable = nullable;
 
@@ -83,8 +90,9 @@ impl Type {
             } => {
                 is_nullable = nullable;
 
-                let (type_, sub_decls) = Self::from_schema(*elements)
-                    .wrap_err("could not convert elements of a list")?;
+                let (type_, sub_decls) =
+                    Self::from_schema(*elements, name_suggestion.map(|n| format!("{n}Elements")))
+                        .wrap_err("could not convert elements of a list")?;
 
                 decls.extend(sub_decls);
 
@@ -95,16 +103,21 @@ impl Type {
                 nullable,
                 properties,
                 ..
-            } => match metadata.get("name").and_then(|n| n.as_str()) {
+            } => match metadata
+                .get("name")
+                .and_then(|n| n.as_str())
+                .or(name_suggestion.as_deref())
+            {
                 Some(name) => {
                     is_nullable = nullable;
 
                     let mut fields = BTreeMap::new();
                     for (field_name, field_schema) in properties {
-                        let (field_type, field_decls) = Self::from_schema(field_schema)
-                            .wrap_err_with(|| {
-                                format!("could not convert the type of `{field_name}`")
-                            })?;
+                        let (field_type, field_decls) =
+                            Self::from_schema(field_schema, Some(field_name.clone()))
+                                .wrap_err_with(|| {
+                                    format!("could not convert the type of `{field_name}`")
+                                })?;
 
                         decls.extend(field_decls);
                         fields.insert(field_name.to_string(), field_type);
@@ -125,7 +138,8 @@ impl Type {
                 is_nullable = nullable;
 
                 let (type_, sub_decls) =
-                    Self::from_schema(*values).wrap_err("could not convert elements of a list")?;
+                    Self::from_schema(*values, name_suggestion.map(|n| format!("{n}Values")))
+                        .wrap_err("could not convert elements of a list")?;
 
                 decls.extend(sub_decls);
 
@@ -184,7 +198,7 @@ mod tests {
         }
 
         fn from_schema(value: Value) -> (Type, Vec<Decl>) {
-            Type::from_schema(from_json(value)).expect("valid schema from JSON value")
+            Type::from_schema(from_json(value), None).expect("valid schema from JSON value")
         }
 
         #[test]
@@ -337,9 +351,12 @@ mod tests {
 
         #[test]
         fn interprets_enum_no_name() {
-            let err = Type::from_schema(from_json(json!({
-                "enum": ["a", "b"],
-            })))
+            let err = Type::from_schema(
+                from_json(json!({
+                    "enum": ["a", "b"],
+                })),
+                None,
+            )
             .unwrap_err();
 
             assert_eq!(
@@ -373,16 +390,19 @@ mod tests {
 
         #[test]
         fn interprets_properties_no_name() {
-            let err = Type::from_schema(from_json(json!({
-                "properties": {
-                    "a": {
-                        "type": "string",
+            let err = Type::from_schema(
+                from_json(json!({
+                    "properties": {
+                        "a": {
+                            "type": "string",
+                        },
+                        "b": {
+                            "type": "int32",
+                        },
                     },
-                    "b": {
-                        "type": "int32",
-                    },
-                },
-            })))
+                })),
+                None,
+            )
             .unwrap_err();
 
             assert_eq!(

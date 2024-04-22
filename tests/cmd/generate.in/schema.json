@@ -2,9 +2,6 @@
   "modules": {
     "Foo.Bar.Main": {
       "flags": {
-	"metadata": {
-	  "name": "Flags"
-	},
 	"properties": {
 	  "currentTimeMillis": {
 	    "type": "float32"
