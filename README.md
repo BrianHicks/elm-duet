@@ -57,10 +57,14 @@ Ok(
         ),
         [
             TypeAlias {
-                name: "Flags",
+                name: InflectedString(
+                    "Flags",
+                ),
                 type_: Record(
                     {
-                        "currentJwt": Maybe(
+                        InflectedString(
+                            "currentJwt",
+                        ): Maybe(
                             Scalar(
                                 "String",
                             ),

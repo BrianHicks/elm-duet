@@ -1,3 +1,4 @@
+use crate::inflected_string::InflectedString;
 use eyre::{bail, Result, WrapErr};
 use jtd::Schema;
 use std::collections::BTreeMap;
@@ -10,17 +11,17 @@ pub enum Type {
     DictWithStringKeys(Box<Type>),
     List(Box<Type>),
     Ref(String),
-    Record(BTreeMap<String, Type>),
+    Record(BTreeMap<InflectedString, Type>),
 }
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum Decl {
     CustomTypeEnum {
-        name: String,
-        cases: BTreeMap<String, String>,
+        name: InflectedString,
+        cases: Vec<InflectedString>,
     },
     TypeAlias {
-        name: String,
+        name: InflectedString,
         type_: Type,
     },
 }
@@ -71,13 +72,13 @@ impl Type {
                 Some(name) => {
                     is_nullable = nullable;
 
-                    let mut cases = BTreeMap::new();
+                    let mut cases = Vec::with_capacity(enum_.len());
                     for value in enum_ {
-                        cases.insert(value.to_uppercase(), value.to_string());
+                        cases.push(value.into())
                     }
 
                     decls.push(Decl::CustomTypeEnum {
-                        name: name.to_string(),
+                        name: name.into(),
                         cases,
                     });
 
@@ -120,11 +121,11 @@ impl Type {
                                 })?;
 
                         decls.extend(field_decls);
-                        fields.insert(field_name.to_string(), field_type);
+                        fields.insert(field_name.into(), field_type);
                     }
 
                     decls.push(Decl::TypeAlias {
-                        name: name.to_string(),
+                        name: name.into(),
                         type_: Self::Record(fields),
                     });
 
@@ -379,11 +380,8 @@ mod tests {
             assert_eq!(
                 decls,
                 Vec::from([Decl::CustomTypeEnum {
-                    name: "Foo".to_string(),
-                    cases: BTreeMap::from([
-                        ("A".to_string(), "a".to_string()),
-                        ("B".to_string(), "b".to_string()),
-                    ]),
+                    name: "Foo".into(),
+                    cases: Vec::from(["a".into(), "b".into()]),
                 }])
             );
         }
@@ -428,10 +426,10 @@ mod tests {
             assert_eq!(
                 decls,
                 Vec::from([Decl::TypeAlias {
-                    name: "Foo".to_string(),
+                    name: "Foo".into(),
                     type_: Type::Record(BTreeMap::from([
-                        ("a".to_string(), Type::Unit),
-                        ("b".to_string(), Type::Unit),
+                        ("a".into(), Type::Unit),
+                        ("b".into(), Type::Unit),
                     ])),
                 }])
             );

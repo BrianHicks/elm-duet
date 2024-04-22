@@ -1,4 +1,5 @@
 mod elm;
+mod inflected_string;
 mod schema;
 mod typescript;
 

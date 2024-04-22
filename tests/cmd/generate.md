@@ -12,21 +12,35 @@ Ok(
         ),
         [
             CustomTypeEnum {
-                name: "NotificationPermission",
-                cases: {
-                    "DEFAULT": "default",
-                    "DENIED": "denied",
-                    "GRANTED": "granted",
-                },
+                name: InflectedString(
+                    "NotificationPermission",
+                ),
+                cases: [
+                    InflectedString(
+                        "default",
+                    ),
+                    InflectedString(
+                        "denied",
+                    ),
+                    InflectedString(
+                        "granted",
+                    ),
+                ],
             },
             TypeAlias {
-                name: "Flags",
+                name: InflectedString(
+                    "Flags",
+                ),
                 type_: Record(
                     {
-                        "currentTimeMillis": Scalar(
+                        InflectedString(
+                            "currentTimeMillis",
+                        ): Scalar(
                             "Float",
                         ),
-                        "notificationPermission": Ref(
+                        InflectedString(
+                            "notificationPermission",
+                        ): Ref(
                             "NotificationPermission",
                         ),
                     },
