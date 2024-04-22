@@ -8,7 +8,9 @@ wrote elm.ts
 Ok(
     (
         Ref(
-            "Flags",
+            InflectedString(
+                "Flags",
+            ),
         ),
         [
             CustomTypeEnum {
@@ -41,7 +43,9 @@ Ok(
                         InflectedString(
                             "notificationPermission",
                         ): Ref(
-                            "NotificationPermission",
+                            InflectedString(
+                                "NotificationPermission",
+                            ),
                         ),
                     },
                 ),

@@ -53,7 +53,9 @@ wrote examples/jwt_schema.ts
 Ok(
     (
         Ref(
-            "Flags",
+            InflectedString(
+                "Flags",
+            ),
         ),
         [
             TypeAlias {
