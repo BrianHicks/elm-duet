@@ -81,24 +81,25 @@
 	    "SetMinutesPerPing": {
 	      "properties": {
 		"value": {
-		  "type": "float32"
+		  "type": "float64"
 		}
 	      }
 	    },
 	    "AddNewPingAt": {
 	      "properties": {
 		"value": {
-		  "type": "float32"
+		  "type": "float64"
 		}
 	      }
 	    },
 	    "SetTagForPing": {
 	      "properties": {
 		"index": {
-		  "type": "uint32"
+		  "type": "float64"
 		},
 		"value": {
-		  "type": "string"
+		  "type": "string",
+		  "nullable": true
 		}
 	      }
 	    }

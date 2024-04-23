@@ -15,8 +15,8 @@ type alias SetMinutesPerPing =
 
 
 type alias SetTagForPing =
-    { index : Int
-    , value : String
+    { index : Float
+    , value : Maybe String
     }
 
 

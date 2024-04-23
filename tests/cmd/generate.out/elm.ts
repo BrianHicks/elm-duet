@@ -20,7 +20,7 @@ declare module Elm {
             } | {
               index: number;
               tag: "SetTagForPing";
-              value: string;
+              value: string | null;
             }) => void) => void;
           };
           docFromAutomerge: {
