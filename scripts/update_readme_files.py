@@ -16,6 +16,8 @@ for match in matches:
     with open(parts['source'], 'r') as fh:
         file_contents = fh.read()
 
+    print(f"inlined {parts['source']}")
+
     edited = edited[:start] + parts["open"] + file_contents + "\n```" + edited[end:]
 
 with open('README.md', 'w') as fh:
