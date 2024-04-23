@@ -1,3 +1,5 @@
+mod elm;
+mod inflected_string;
 mod schema;
 mod typescript;
 
@@ -15,6 +17,14 @@ struct Cli {
     /// Destination for TypeScript types
     #[clap(long, default_value = "elm.ts")]
     typescript_dest: PathBuf,
+
+    /// Destination for Elm types
+    #[clap(long, default_value = "src/")]
+    elm_dest: PathBuf,
+
+    /// Prefix for Elm module path
+    #[clap(long, default_value = "Interop")]
+    elm_prefix: String,
 }
 
 impl Cli {
@@ -23,6 +33,8 @@ impl Cli {
 
         std::fs::write(&self.typescript_dest, schema.flags_to_ts()?)?;
         println!("wrote {}", self.typescript_dest.display());
+
+        println!("{}", schema.to_elm()?);
 
         Ok(())
     }

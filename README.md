@@ -50,6 +50,33 @@ You can generate code from this by calling `elm-duet path/to/your/schema.json`:
 ```console
 $ elm-duet examples/jwt_schema.json --typescript-dest examples/jwt_schema.ts
 wrote examples/jwt_schema.ts
+Ok(
+    (
+        Ref(
+            InflectedString(
+                "Flags",
+            ),
+        ),
+        [
+            TypeAlias {
+                name: InflectedString(
+                    "Flags",
+                ),
+                type_: Record(
+                    {
+                        InflectedString(
+                            "currentJwt",
+                        ): Maybe(
+                            Scalar(
+                                "String",
+                            ),
+                        ),
+                    },
+                ),
+            },
+        ],
+    ),
+)
 
 ```
 
@@ -81,7 +108,7 @@ declare module Elm {
 }
 ```
 
-Here are more things you can do with the tool:
+Here's the full help to give you an idea of what you can do with the tool:
 
 ```console
 $ elm-duet --help
@@ -94,6 +121,8 @@ Arguments:
 
 Options:
       --typescript-dest <TYPESCRIPT_DEST>  Destination for TypeScript types [default: elm.ts]
+      --elm-dest <ELM_DEST>                Destination for Elm types [default: src/]
+      --elm-prefix <ELM_PREFIX>            Prefix for Elm module path [default: Interop]
   -h, --help                               Print help
   -V, --version                            Print version
 

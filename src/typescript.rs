@@ -1,3 +1,4 @@
+use crate::inflected_string::InflectedString;
 use color_eyre::Result;
 use eyre::{bail, WrapErr};
 use jtd::{Schema, Type};
@@ -6,7 +7,7 @@ use std::collections::BTreeMap;
 #[derive(Debug, PartialEq, Eq)]
 pub enum TSType {
     Object {
-        properties: BTreeMap<String, TSType>,
+        properties: BTreeMap<InflectedString, TSType>,
         nullable: bool,
     },
     NeverObject,
@@ -29,26 +30,26 @@ pub enum TSType {
         nullable: bool,
     },
     Function {
-        args: BTreeMap<String, TSType>,
+        args: BTreeMap<InflectedString, TSType>,
         returning: Box<TSType>,
     },
 
     // For the following members, we're making no effort to constrain what's valid where. That's up
     // to our tests!
     TypeDecl {
-        name: String,
+        name: InflectedString,
         definition: Box<TSType>,
     },
     ModuleDecl {
-        name: String,
+        name: InflectedString,
         members: Vec<TSType>,
     },
     NamespaceDecl {
-        name: String,
+        name: InflectedString,
         members: Vec<TSType>,
     },
     NamedFunctionDecl {
-        name: String,
+        name: InflectedString,
         function: Box<TSType>, // in practice, should always be a `Function`
     },
 }
@@ -66,7 +67,7 @@ impl TSType {
                     let type_ = Self::from_schema(value, globals)
                         .wrap_err_with(|| format!("could not convert the {name} key"))?;
 
-                    converted_properties.insert(name, type_);
+                    converted_properties.insert(name.into(), type_);
                 }
 
                 Ok(Self::Object {
@@ -183,7 +184,7 @@ impl TSType {
                 out.push_str("{\n");
                 for (name, value) in properties {
                     out.push_str("  ");
-                    out.push_str(name); // TODO: escape?
+                    out.push_str(&name.to_camel_case());
                     out.push_str(": ");
                     out.push_str(&value.to_source(false).replace('\n', "\n  "));
                     out.push_str(";\n");
@@ -250,7 +251,7 @@ impl TSType {
                     if i != 0 {
                         out.push_str(", ");
                     }
-                    out.push_str(name);
+                    out.push_str(&name.to_camel_case());
                     out.push_str(": ");
                     out.push_str(&type_.to_source(false));
                 }
@@ -263,13 +264,13 @@ impl TSType {
             }
             Self::TypeDecl { name, definition } => {
                 out.push_str("type ");
-                out.push_str(name); // TODO: escape?
+                out.push_str(&name.to_pascal_case());
                 out.push_str(" = ");
                 out.push_str(&definition.to_source(false));
             }
             Self::ModuleDecl { name, members } => {
                 out.push_str("declare module ");
-                out.push_str(name); // TODO: escape?
+                out.push_str(&name.to_pascal_case());
                 out.push_str(" {\n");
                 for (i, member) in members.iter().enumerate() {
                     if i > 0 {
@@ -283,7 +284,7 @@ impl TSType {
             }
             Self::NamespaceDecl { name, members } => {
                 out.push_str("namespace ");
-                out.push_str(name); // TODO: escape?
+                out.push_str(&name.to_pascal_case());
                 out.push_str(" {\n");
                 for (i, member) in members.iter().enumerate() {
                     if i > 0 {
@@ -297,7 +298,7 @@ impl TSType {
             }
             Self::NamedFunctionDecl { name, function } => {
                 out.push_str("function ");
-                out.push_str(name); // TODO: escape?
+                out.push_str(&name.to_camel_case());
                 out.push_str(&function.to_source(true));
             }
         }
@@ -307,10 +308,7 @@ impl TSType {
 
     pub fn new_object(properties: BTreeMap<&str, TSType>) -> Self {
         Self::Object {
-            properties: properties
-                .into_iter()
-                .map(|(k, v)| (k.to_owned(), v))
-                .collect(),
+            properties: properties.into_iter().map(|(k, v)| (k.into(), v)).collect(),
             nullable: false,
         }
     }
@@ -322,7 +320,7 @@ impl TSType {
     pub fn add_key_to_object(&mut self, key: &str, value: TSType) -> Result<()> {
         match self {
             Self::Object { properties, .. } => {
-                properties.insert(key.to_string(), value);
+                properties.insert(key.into(), value);
                 Ok(())
             }
             _ => bail!("add_key_to_object only works on objects"),
@@ -335,7 +333,7 @@ impl TSType {
 
     pub fn new_function(args: BTreeMap<&str, TSType>, returning: TSType) -> Self {
         Self::Function {
-            args: args.into_iter().map(|(k, v)| (k.to_owned(), v)).collect(),
+            args: args.into_iter().map(|(k, v)| (k.into(), v)).collect(),
             returning: Box::new(returning),
         }
     }
@@ -389,21 +387,21 @@ impl TSType {
 
     fn new_module(name: &str, members: Vec<TSType>) -> Self {
         Self::ModuleDecl {
-            name: name.to_owned(),
+            name: name.into(),
             members,
         }
     }
 
     pub fn new_namespace(name: &str, members: Vec<Self>) -> Self {
         Self::NamespaceDecl {
-            name: name.to_owned(),
+            name: name.into(),
             members,
         }
     }
 
     pub fn new_named_function(name: &str, function: TSType) -> Self {
         Self::NamedFunctionDecl {
-            name: name.to_owned(),
+            name: name.into(),
             function: Box::from(function),
         }
     }
@@ -414,7 +412,7 @@ impl TSType {
 
     pub fn into_typedecl(self, name: &str) -> Self {
         Self::TypeDecl {
-            name: name.to_owned(),
+            name: name.into(),
             definition: Box::from(self),
         }
     }
