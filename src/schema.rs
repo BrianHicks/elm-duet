@@ -141,7 +141,7 @@ impl Schema {
 
     pub fn to_elm(&self) -> Result<BTreeMap<PathBuf, String>> {
         let globals = self.globals()?;
-        let mut modules = BTreeMap::new();
+        let mut files = BTreeMap::new();
 
         for (name, module) in &self.modules {
             let name_base: Vec<String> = name.split(".").map(|s| s.to_owned()).collect();
@@ -152,15 +152,16 @@ impl Schema {
                 flags_name.extend(name_base.clone());
                 flags_name.push("Flags".into());
 
-                let flags_module = elm::Module::from_schema(
-                    flags_name,
-                    jtd::Schema::from_serde_schema(flags.clone())?,
-                    Some("Flags".to_string()),
-                    &globals,
-                )
-                .wrap_err("could not convert flags type to Elm module")?;
+                let mut flags_module = elm::Module::new(flags_name);
+                flags_module
+                    .insert_from_schema(
+                        jtd::Schema::from_serde_schema(flags.clone())?,
+                        Some("Flags".to_string()),
+                        &globals,
+                    )
+                    .wrap_err("could not convert flags type to Elm module")?;
 
-                modules.insert(
+                files.insert(
                     format!("{}.elm", flags_module.name.join("/")).into(),
                     flags_module
                         .to_source()
@@ -171,6 +172,6 @@ impl Schema {
             // generate ports
         }
 
-        Ok(modules)
+        Ok(files)
     }
 }

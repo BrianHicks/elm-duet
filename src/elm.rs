@@ -333,17 +333,26 @@ pub struct Module {
 }
 
 impl Module {
-    pub fn from_schema(
-        name: Vec<String>,
+    pub fn new(name: Vec<String>) -> Self {
+        Self {
+            name,
+            decls: Vec::new(),
+        }
+    }
+
+    pub fn insert_from_schema(
+        &mut self,
         schema: Schema,
         name_suggestion: Option<String>,
         globals: &BTreeMap<String, Schema>,
-    ) -> Result<Self> {
-        let (type_, mut decls) = Type::from_schema(schema, name_suggestion.clone(), globals)?;
+    ) -> Result<()> {
+        let (type_, decls) = Type::from_schema(schema, name_suggestion.clone(), globals)?;
+
+        self.decls.extend(decls);
 
         match type_ {
             Type::Ref(_) => (),
-            otherwise => decls.push(Decl::TypeAlias {
+            otherwise => self.decls.push(Decl::TypeAlias {
                 name: name_suggestion
                     .ok_or(eyre!("need a name suggestion to create a top-level definition from an unnamed type"))
                     ?.into(),
@@ -351,7 +360,7 @@ impl Module {
             }),
         };
 
-        Ok(Self { name, decls })
+        Ok(())
     }
 
     pub fn to_source(&self) -> Result<String> {
@@ -749,13 +758,13 @@ mod tests {
         }
 
         fn from_schema(value: Value, name_suggestion: Option<String>) -> Module {
-            Module::from_schema(
-                Vec::from(["Main".into()]),
-                from_json(value),
-                name_suggestion,
-                &BTreeMap::new(),
-            )
-            .expect("valid schema from JSON value")
+            let mut module = Module::new(Vec::from(["Main".into()]));
+
+            module
+                .insert_from_schema(from_json(value), name_suggestion, &BTreeMap::new())
+                .expect("valid schema from JSON value");
+
+            module
         }
 
         #[test]
