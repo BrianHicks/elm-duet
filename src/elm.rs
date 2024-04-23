@@ -1,5 +1,5 @@
 use crate::inflected_string::InflectedString;
-use eyre::{bail, Result, WrapErr};
+use eyre::{bail, eyre, Result, WrapErr};
 use jtd::Schema;
 use std::collections::BTreeMap;
 
@@ -228,12 +228,19 @@ impl Module {
         name_suggestion: Option<String>,
         globals: &BTreeMap<String, Schema>,
     ) -> Result<Self> {
-        let (type_, decls) = Type::from_schema(schema, name_suggestion, globals)?;
+        let (type_, mut decls) = Type::from_schema(schema, name_suggestion.clone(), globals)?;
 
         match type_ {
-            Type::Ref(_) => Ok(Self { name, decls }),
-            otherwise => bail!("I can only convert a ref to a module, but I got a {otherwise:?}"),
-        }
+            Type::Ref(_) => (),
+            otherwise => decls.push(Decl::TypeAlias {
+                name: name_suggestion
+                    .ok_or(eyre!("need a name suggestion to create a top-level definition from an unnamed type"))
+                    ?.into(),
+                type_: otherwise,
+            }),
+        };
+
+        Ok(Self { name, decls })
     }
 
     pub fn to_source(&self) -> Result<String> {
@@ -611,6 +618,57 @@ mod tests {
 
     mod module {
         use super::*;
+        use serde_json::{json, Value};
+
+        fn from_json(value: Value) -> jtd::Schema {
+            let json = serde_json::from_value(value).unwrap();
+            Schema::from_serde_schema(json).unwrap()
+        }
+
+        fn from_schema(value: Value, name_suggestion: Option<String>) -> Module {
+            Module::from_schema(
+                Vec::from(["Main".into()]),
+                from_json(value),
+                name_suggestion,
+                &BTreeMap::new(),
+            )
+            .expect("valid schema from JSON value")
+        }
+
+        #[test]
+        fn from_schema_ref() {
+            let mod_ = from_schema(
+                json!({
+                    "properties": {
+                        "a": {
+                            "type": "string"
+                        }
+                    }
+                }),
+                Some("Flags".into()),
+            );
+
+            assert_eq!(
+                mod_.decls,
+                Vec::from([Decl::TypeAlias {
+                    name: "Flags".into(),
+                    type_: Type::Record(BTreeMap::from([("a".into(), Type::Scalar("String"))]))
+                }])
+            );
+        }
+
+        #[test]
+        fn from_schema_non_ref() {
+            let mod_ = from_schema(json!({"type": "string"}), Some("Flags".into()));
+
+            assert_eq!(
+                mod_.decls,
+                Vec::from([Decl::TypeAlias {
+                    name: "Flags".into(),
+                    type_: Type::Scalar("String")
+                }])
+            );
+        }
 
         #[test]
         fn error_on_no_defs_to_source() {
