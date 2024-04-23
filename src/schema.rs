@@ -163,13 +163,33 @@ impl Schema {
 
                 files.insert(
                     format!("{}.elm", flags_module.name.join("/")).into(),
-                    flags_module
-                        .to_source()
-                        .wrap_err("could not get source for {flags_name}")?,
+                    flags_module.to_source().wrap_err("could not get source")?,
                 );
             };
 
             // generate ports
+            if let Some(ports) = &module.ports {
+                let mut ports_name: Vec<String> = Vec::with_capacity(name_base.len() + 1);
+                ports_name.extend(name_base.clone());
+                ports_name.push("Ports".into());
+
+                let mut ports_module = elm::Module::new(ports_name);
+
+                for (port, port_schema) in ports {
+                    ports_module
+                        .insert_from_schema(
+                            jtd::Schema::from_serde_schema(port_schema.schema.clone())?,
+                            Some(port.into()),
+                            &globals,
+                        )
+                        .wrap_err_with(|| format!("could not convert the `{port}` port to Elm"))?;
+                }
+
+                files.insert(
+                    format!("{}.elm", ports_module.name.join("/")).into(),
+                    ports_module.to_source().wrap_err("could not get source")?,
+                );
+            }
         }
 
         Ok(files)
