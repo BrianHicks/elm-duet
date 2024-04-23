@@ -108,7 +108,7 @@ declare module Elm {
 }
 ```
 
-Here are more things you can do with the tool:
+Here's the full help to give you an idea of what you can do with the tool:
 
 ```console
 $ elm-duet --help
