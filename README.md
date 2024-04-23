@@ -51,6 +51,7 @@ You can generate code from this by calling `elm-duet path/to/your/schema.json`:
 $ elm-duet examples/jwt_schema.json --typescript-dest examples/jwt_schema.ts --elm-dest examples/jwt_schema
 wrote examples/jwt_schema.ts
 wrote examples/jwt_schema/Main/Flags.elm
+wrote examples/jwt_schema/Main/Ports.elm
 
 ```
 
