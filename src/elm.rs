@@ -47,7 +47,7 @@ impl Decl {
 
                     if let Some(case_type) = case_type_opt {
                         out.push(' ');
-                        out.push_str(&case_type.to_source());
+                        out.push_str(&case_type.to_source().replace("\n", "\n    "));
                     }
 
                     out.push('\n')
@@ -57,7 +57,7 @@ impl Decl {
                 out.push_str("type alias ");
                 out.push_str(&name.to_pascal_case());
                 out.push_str(" =\n    ");
-                out.push_str(&type_.to_source());
+                out.push_str(&type_.to_source().replace("\n", "\n    "));
             }
         }
 
@@ -315,7 +315,7 @@ impl Type {
 
                     out.push_str(&name.to_camel_case());
                     out.push_str(": ");
-                    out.push_str(&value.to_source());
+                    out.push_str(&value.to_source().replace("\n", "\n    "));
                 }
 
                 out.push_str("\n}");
