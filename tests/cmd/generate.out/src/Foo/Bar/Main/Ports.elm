@@ -27,8 +27,25 @@ type ChangeDocument
 
 
 
+type alias PingsElements =
+    { custom : Dict String String
+    , tag : Maybe String
+    , time : Int
+    , version : Int
+    }
+
+
+type alias Settings =
+    { minutesPerPing : Int
+    , version : Int
+    }
+
+
 type alias DocFromAutomerge =
-    {}
+    { pings : List PingsElements
+    , settings : Settings
+    , version : Int
+    }
 
 
 type NotificationPermission

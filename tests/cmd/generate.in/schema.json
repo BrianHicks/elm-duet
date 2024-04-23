@@ -116,7 +116,48 @@
   },
   "definitions": {
     "doc": {
-      "properties": {}
+      "properties": {
+	"version": {
+	  "type": "int32"
+	},
+	"pings": {
+	  "elements": {
+	    "ref": "ping"
+	  }
+	},
+	"settings": {
+	  "ref": "settings"
+	}
+      }
+    },
+    "settings": {
+      "properties": {
+	"version": {
+	  "type": "int32"
+	},
+	"minutesPerPing": {
+	  "type": "int32"
+	}
+      }
+    },
+    "ping": {
+      "properties": {
+	"version": {
+	  "type": "int32"
+	},
+	"time": {
+	  "type": "int32"
+	},
+	"tag": {
+	  "type": "string",
+	  "nullable": true
+	},
+	"custom": {
+	  "values": {
+	    "type": "string"
+	  }
+	}
+      }
     }
   }
 }

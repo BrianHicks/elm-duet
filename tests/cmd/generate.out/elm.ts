@@ -25,6 +25,17 @@ declare module Elm {
           };
           docFromAutomerge: {
             send: (value: {
+              pings: ({
+                custom: Record<string, string>;
+                tag: string | null;
+                time: number;
+                version: number;
+              })[];
+              settings: {
+                minutesPerPing: number;
+                version: number;
+              };
+              version: number;
             }) => void;
           };
           notificationPermission: {
