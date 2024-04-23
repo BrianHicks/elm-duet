@@ -6,6 +6,7 @@ use eyre::WrapErr;
 use serde::Deserialize;
 use std::collections::BTreeMap;
 use std::path::Path;
+use std::path::PathBuf;
 
 #[derive(Debug, Deserialize)]
 pub struct Schema {
@@ -138,8 +139,9 @@ impl Schema {
         ))
     }
 
-    pub fn to_elm(&self) -> Result<String> {
+    pub fn to_elm(&self) -> Result<BTreeMap<PathBuf, String>> {
         let globals = self.globals()?;
+        let mut modules = BTreeMap::new();
 
         for (name, module) in &self.modules {
             let name_base: Vec<String> = name.split(".").map(|s| s.to_owned()).collect();
@@ -158,12 +160,17 @@ impl Schema {
                 )
                 .wrap_err("could not convert flags type to Elm module")?;
 
-                println!("{}", flags_module.to_source()?);
+                modules.insert(
+                    format!("{}.elm", flags_module.name.join("/")).into(),
+                    flags_module
+                        .to_source()
+                        .wrap_err("could not get source for {flags_name}")?,
+                );
             };
 
             // generate ports
         }
 
-        Ok(String::new())
+        Ok(modules)
     }
 }

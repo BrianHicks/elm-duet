@@ -328,7 +328,7 @@ impl Type {
 
 #[derive(Debug)]
 pub struct Module {
-    name: Vec<String>,
+    pub name: Vec<String>,
     decls: Vec<Decl>,
 }
 

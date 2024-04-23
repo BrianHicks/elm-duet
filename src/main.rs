@@ -31,10 +31,22 @@ impl Cli {
     fn run(&self) -> Result<()> {
         let schema = schema::Schema::from_fs(&self.source).wrap_err("could not read schema")?;
 
+        // TODO: better error message in all of this
+
         std::fs::write(&self.typescript_dest, schema.flags_to_ts()?)?;
         println!("wrote {}", self.typescript_dest.display());
 
-        println!("{}", schema.to_elm()?);
+        for (name, contents) in schema.to_elm()? {
+            let dest = self.elm_dest.join(name);
+            if let Some(parent) = dest.parent() {
+                if !parent.exists() {
+                    std::fs::create_dir_all(parent)?
+                };
+            }
+
+            std::fs::write(&dest, contents)?;
+            println!("wrote {}", dest.display());
+        }
 
         Ok(())
     }
