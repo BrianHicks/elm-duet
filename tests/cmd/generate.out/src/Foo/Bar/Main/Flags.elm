@@ -13,5 +13,5 @@ type NotificationPermission
 
 type alias Flags =
     { currentTimeMillis : Float
-    , notificationPermission : notificationPermission
+    , notificationPermission : NotificationPermission
     }
