@@ -314,7 +314,7 @@ impl Type {
                     }
 
                     out.push_str(&name.to_camel_case());
-                    out.push_str(": ");
+                    out.push_str(" : ");
                     out.push_str(&value.to_source().replace("\n", "\n    "));
                 }
 

@@ -91,7 +91,7 @@ module Main.Flags exposing (..)
 -}
 
 type alias Flags =
-    { currentJwt: Maybe String
+    { currentJwt : Maybe String
     }
 ```
 
