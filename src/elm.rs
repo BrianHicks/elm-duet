@@ -302,7 +302,7 @@ impl Type {
 
                 out
             }
-            Type::Ref(ref_) => ref_.to_camel_case(),
+            Type::Ref(ref_) => ref_.to_pascal_case(),
             Type::Record(fields) => {
                 let mut out = String::new();
 
