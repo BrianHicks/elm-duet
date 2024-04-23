@@ -306,20 +306,23 @@ impl Type {
             Type::Record(fields) => {
                 let mut out = String::new();
 
-                for (i, (name, value)) in fields.iter().enumerate() {
-                    if i == 0 {
-                        out.push_str("{ ");
-                    } else {
-                        out.push_str("\n, ");
+                if fields.is_empty() {
+                    out.push_str("{}");
+                } else {
+                    for (i, (name, value)) in fields.iter().enumerate() {
+                        if i == 0 {
+                            out.push_str("{ ");
+                        } else {
+                            out.push_str("\n, ");
+                        }
+
+                        out.push_str(&name.to_camel_case());
+                        out.push_str(" : ");
+                        out.push_str(&value.to_source().replace("\n", "\n    "));
                     }
 
-                    out.push_str(&name.to_camel_case());
-                    out.push_str(" : ");
-                    out.push_str(&value.to_source().replace("\n", "\n    "));
+                    out.push_str("\n}");
                 }
-
-                out.push_str("\n}");
-
                 out
             }
         }

@@ -28,8 +28,7 @@ type ChangeDocument
 
 
 type alias DocFromAutomerge =
-    
-    }
+    {}
 
 
 type NotificationPermission
