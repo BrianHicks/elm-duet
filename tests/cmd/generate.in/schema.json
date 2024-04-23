@@ -79,9 +79,6 @@
 	  "discriminator": "tag",
 	  "mapping": {
 	    "SetMinutesPerPing": {
-	      "metadata": {
-		"name": "SetMinutesPerPing"
-	      },
 	      "properties": {
 		"value": {
 		  "type": "float32"
@@ -89,9 +86,6 @@
 	      }
 	    },
 	    "AddNewPingAt": {
-	      "metadata": {
-		"name": "AddNewPingAt"
-	      },
 	      "properties": {
 		"value": {
 		  "type": "float32"
@@ -99,9 +93,6 @@
 	      }
 	    },
 	    "SetTagForPing": {
-	      "metadata": {
-		"name": "SetTagForPing"
-	      },
 	      "properties": {
 		"index": {
 		  "type": "uint32"
