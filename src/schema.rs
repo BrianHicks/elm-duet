@@ -158,7 +158,7 @@ impl Schema {
                 )
                 .wrap_err("could not convert flags type to Elm module")?;
 
-                println!("{flags_module:#?}");
+                println!("{}", flags_module.to_source()?);
             };
 
             // generate ports
