@@ -50,33 +50,31 @@ You can generate code from this by calling `elm-duet path/to/your/schema.json`:
 ```console
 $ elm-duet examples/jwt_schema.json --typescript-dest examples/jwt_schema.ts
 wrote examples/jwt_schema.ts
-Ok(
-    (
-        Ref(
-            InflectedString(
+Module {
+    name: [
+        "Main",
+        "Flags",
+    ],
+    decls: [
+        TypeAlias {
+            name: InflectedString(
                 "Flags",
             ),
-        ),
-        [
-            TypeAlias {
-                name: InflectedString(
-                    "Flags",
-                ),
-                type_: Record(
-                    {
-                        InflectedString(
-                            "currentJwt",
-                        ): Maybe(
-                            Scalar(
-                                "String",
-                            ),
+            type_: Record(
+                {
+                    InflectedString(
+                        "currentJwt",
+                    ): Maybe(
+                        Scalar(
+                            "String",
                         ),
-                    },
-                ),
-            },
-        ],
-    ),
-)
+                    ),
+                },
+            ),
+        },
+    ],
+}
+
 
 ```
 

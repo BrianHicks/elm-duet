@@ -139,20 +139,31 @@ impl Schema {
     }
 
     pub fn to_elm(&self) -> Result<String> {
-        let module = self.modules.values().next().unwrap();
-
         let globals = self.globals()?;
 
-        Ok(match &module.flags {
-            Some(flags) => format!(
-                "{:#?}",
-                elm::Type::from_schema(
+        for (name, module) in &self.modules {
+            let name_base: Vec<String> = name.split(".").map(|s| s.to_owned()).collect();
+
+            // generate flags
+            if let Some(flags) = &module.flags {
+                let mut flags_name: Vec<String> = Vec::with_capacity(name_base.len() + 1);
+                flags_name.extend(name_base.clone());
+                flags_name.push("Flags".into());
+
+                let flags_module = elm::Module::from_schema(
+                    flags_name,
                     jtd::Schema::from_serde_schema(flags.clone())?,
                     Some("Flags".to_string()),
-                    &globals
+                    &globals,
                 )
-            ),
-            None => "no flags, oh well".to_string(),
-        })
+                .wrap_err("could not convert flags type to Elm module")?;
+
+                println!("{flags_module:#?}");
+            };
+
+            // generate ports
+        }
+
+        Ok(String::new())
     }
 }

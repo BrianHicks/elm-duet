@@ -5,53 +5,53 @@ You can generate TypeScript types like this:
 ```console
 $ elm-duet schema.json
 wrote elm.ts
-Ok(
-    (
-        Ref(
-            InflectedString(
+Module {
+    name: [
+        "Foo",
+        "Bar",
+        "Main",
+        "Flags",
+    ],
+    decls: [
+        CustomTypeEnum {
+            name: InflectedString(
+                "NotificationPermission",
+            ),
+            cases: {
+                InflectedString(
+                    "default",
+                ): None,
+                InflectedString(
+                    "denied",
+                ): None,
+                InflectedString(
+                    "granted",
+                ): None,
+            },
+        },
+        TypeAlias {
+            name: InflectedString(
                 "Flags",
             ),
-        ),
-        [
-            CustomTypeEnum {
-                name: InflectedString(
-                    "NotificationPermission",
-                ),
-                cases: {
+            type_: Record(
+                {
                     InflectedString(
-                        "default",
-                    ): None,
+                        "currentTimeMillis",
+                    ): Scalar(
+                        "Float",
+                    ),
                     InflectedString(
-                        "denied",
-                    ): None,
-                    InflectedString(
-                        "granted",
-                    ): None,
+                        "notificationPermission",
+                    ): Ref(
+                        InflectedString(
+                            "NotificationPermission",
+                        ),
+                    ),
                 },
-            },
-            TypeAlias {
-                name: InflectedString(
-                    "Flags",
-                ),
-                type_: Record(
-                    {
-                        InflectedString(
-                            "currentTimeMillis",
-                        ): Scalar(
-                            "Float",
-                        ),
-                        InflectedString(
-                            "notificationPermission",
-                        ): Ref(
-                            InflectedString(
-                                "NotificationPermission",
-                            ),
-                        ),
-                    },
-                ),
-            },
-        ],
-    ),
-)
+            ),
+        },
+    ],
+}
+
 
 ```

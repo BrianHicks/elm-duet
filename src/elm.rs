@@ -215,23 +215,38 @@ impl Type {
     }
 }
 
-// pub struct Module {
-//     name: Vec<String>,
-//     defs: Vec<()>,
-// }
-//
-// impl Module {
-//     pub fn to_source(&self) -> Result<String> {
-//         if self.defs.is_empty() {
-//             eyre::bail!(
-//                 "Module {} didn't contain any definitions",
-//                 self.name.join(".")
-//             )
-//         }
-//
-//         Ok(String::new())
-//     }
-// }
+#[derive(Debug)]
+pub struct Module {
+    name: Vec<String>,
+    decls: Vec<Decl>,
+}
+
+impl Module {
+    pub fn from_schema(
+        name: Vec<String>,
+        schema: Schema,
+        name_suggestion: Option<String>,
+        globals: &BTreeMap<String, Schema>,
+    ) -> Result<Self> {
+        let (type_, decls) = Type::from_schema(schema, name_suggestion, globals)?;
+
+        match type_ {
+            Type::Ref(_) => Ok(Self { name, decls }),
+            otherwise => bail!("I can only convert a ref to a module, but I got a {otherwise:?}"),
+        }
+    }
+
+    pub fn to_source(&self) -> Result<String> {
+        if self.decls.is_empty() {
+            eyre::bail!(
+                "Module {} didn't contain any definitions",
+                self.name.join(".")
+            )
+        }
+
+        Ok(String::new())
+    }
+}
 
 #[cfg(test)]
 mod tests {
@@ -594,22 +609,22 @@ mod tests {
         }
     }
 
-    // mod module {
-    //     use super::*;
-    //
-    //     #[test]
-    //     fn error_on_no_defs_to_source() {
-    //         let m = Module {
-    //             name: Vec::from(["A".to_string(), "B".to_string()]),
-    //             defs: Vec::new(),
-    //         };
-    //
-    //         let err = m.to_source().unwrap_err();
-    //
-    //         assert_eq!(
-    //             err.to_string(),
-    //             "Module A.B didn't contain any definitions".to_string()
-    //         )
-    //     }
-    // }
+    mod module {
+        use super::*;
+
+        #[test]
+        fn error_on_no_defs_to_source() {
+            let m = Module {
+                name: Vec::from(["A".to_string(), "B".to_string()]),
+                decls: Vec::new(),
+            };
+
+            let err = m.to_source().unwrap_err();
+
+            assert_eq!(
+                err.to_string(),
+                "Module A.B didn't contain any definitions".to_string()
+            )
+        }
+    }
 }
