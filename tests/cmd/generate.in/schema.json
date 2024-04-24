@@ -116,6 +116,9 @@
   },
   "definitions": {
     "doc": {
+      "metadata": {
+	"constructorPrefix": "doc"
+      },
       "discriminator": "version",
       "mapping": {
 	"v1": {
@@ -136,6 +139,9 @@
       }
     },
     "settings": {
+      "metadata": {
+	"constructorPrefix": "settings"
+      },
       "discriminator": "version",
       "mapping": {
 	"v1": {
@@ -151,6 +157,9 @@
       }
     },
     "ping": {
+      "metadata": {
+	"constructorPrefix": "ping"
+      },
       "discriminator": "version",
       "mapping": {
 	"v1": {

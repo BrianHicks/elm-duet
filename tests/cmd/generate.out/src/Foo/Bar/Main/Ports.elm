@@ -35,7 +35,7 @@ type alias PingV1 =
 
 
 type PingsElements
-    = V1 PingV1
+    = PingV1 PingV1
 
 
 
@@ -45,7 +45,7 @@ type alias SettingsV1 =
 
 
 type Settings
-    = V1 SettingsV1
+    = SettingsV1 SettingsV1
 
 
 
@@ -56,7 +56,7 @@ type alias DocV1 =
 
 
 type DocFromAutomerge
-    = V1 DocV1
+    = DocV1 DocV1
 
 
 
