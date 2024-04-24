@@ -119,6 +119,9 @@
       "discriminator": "version",
       "mapping": {
 	"v1": {
+	  "metadata": {
+	    "name": "DocV1"
+	  },
 	  "properties": {
 	    "pings": {
 	      "elements": {
@@ -136,6 +139,9 @@
       "discriminator": "version",
       "mapping": {
 	"v1": {
+	  "metadata": {
+	    "name": "SettingsV1"
+	  },
 	  "properties": {
 	    "minutesPerPing": {
 	      "type": "int32"
@@ -148,6 +154,9 @@
       "discriminator": "version",
       "mapping": {
 	"v1": {
+	  "metadata": {
+	    "name": "PingV1"
+	  },
 	  "properties": {
 	    "time": {
 	      "type": "int32"
