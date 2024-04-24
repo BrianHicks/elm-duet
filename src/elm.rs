@@ -110,7 +110,22 @@ impl Decl {
                     out.push_str("\" ->\n                    ");
 
                     match case_type_opt {
-                        Some(_) => out.push_str("Decode.fail \"TODO\""),
+                        Some(type_) => {
+                            let sub_decoder = type_.to_decoder_source()?;
+
+                            out.push_str("Decode.map ");
+                            out.push_str(&constructor_prefix.to_pascal_case()?);
+                            out.push_str(&case.to_pascal_case()?);
+                            if sub_decoder.contains("\n") {
+                                out.push_str("\n                        ");
+                                out.push_str(
+                                    &sub_decoder.replace('\n', "\n                        "),
+                                );
+                            } else {
+                                out.push(' ');
+                                out.push_str(&sub_decoder);
+                            }
+                        }
                         None => {
                             out.push_str("Decode.succeed ");
                             out.push_str(&constructor_prefix.to_pascal_case()?);
@@ -410,6 +425,10 @@ impl Type {
                 out
             }
         })
+    }
+
+    fn to_decoder_source(&self) -> Result<String> {
+        Ok(String::from("(Decode.fail \"TODO\")"))
     }
 }
 
