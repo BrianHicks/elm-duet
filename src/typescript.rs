@@ -173,7 +173,7 @@ impl TSType {
         }
     }
 
-    pub fn to_source(&self, is_toplevel: bool) -> String {
+    pub fn to_source(&self, is_toplevel: bool) -> Result<String> {
         let mut out = String::new();
 
         match self {
@@ -184,9 +184,9 @@ impl TSType {
                 out.push_str("{\n");
                 for (name, value) in properties {
                     out.push_str("  ");
-                    out.push_str(&name.to_camel_case());
+                    out.push_str(&name.to_camel_case()?);
                     out.push_str(": ");
-                    out.push_str(&value.to_source(false).replace('\n', "\n  "));
+                    out.push_str(&value.to_source(false)?.replace('\n', "\n  "));
                     out.push_str(";\n");
                 }
                 out.push('}');
@@ -198,7 +198,7 @@ impl TSType {
             Self::NeverObject => out.push_str("Record<string, never>"),
             Self::Record { values, nullable } => {
                 out.push_str("Record<string, ");
-                out.push_str(&values.to_source(false));
+                out.push_str(&values.to_source(false)?);
                 out.push('>');
 
                 if *nullable {
@@ -222,7 +222,7 @@ impl TSType {
                     if i != 0 {
                         out.push_str(" | ");
                     }
-                    out.push_str(&type_.to_source(false))
+                    out.push_str(&type_.to_source(false)?)
                 }
 
                 if *nullable {
@@ -230,7 +230,7 @@ impl TSType {
                 }
             }
             Self::List { elements, nullable } => {
-                let elements_source = elements.to_source(false);
+                let elements_source = elements.to_source(false)?;
 
                 if elements_source.contains(' ') {
                     out.push('(');
@@ -251,59 +251,59 @@ impl TSType {
                     if i != 0 {
                         out.push_str(", ");
                     }
-                    out.push_str(&name.to_camel_case());
+                    out.push_str(&name.to_camel_case()?);
                     out.push_str(": ");
-                    out.push_str(&type_.to_source(false));
+                    out.push_str(&type_.to_source(false)?);
                 }
                 if is_toplevel {
                     out.push_str("): ");
                 } else {
                     out.push_str(") => ");
                 }
-                out.push_str(&returning.to_source(false));
+                out.push_str(&returning.to_source(false)?);
             }
             Self::TypeDecl { name, definition } => {
                 out.push_str("type ");
-                out.push_str(&name.to_pascal_case());
+                out.push_str(&name.to_pascal_case()?);
                 out.push_str(" = ");
-                out.push_str(&definition.to_source(false));
+                out.push_str(&definition.to_source(false)?);
             }
             Self::ModuleDecl { name, members } => {
                 out.push_str("declare module ");
-                out.push_str(&name.to_pascal_case());
+                out.push_str(&name.to_pascal_case()?);
                 out.push_str(" {\n");
                 for (i, member) in members.iter().enumerate() {
                     if i > 0 {
                         out.push('\n');
                     }
                     out.push_str("  ");
-                    out.push_str(&member.to_source(true).replace('\n', "\n  "));
+                    out.push_str(&member.to_source(true)?.replace('\n', "\n  "));
                     out.push('\n');
                 }
                 out.push('}');
             }
             Self::NamespaceDecl { name, members } => {
                 out.push_str("namespace ");
-                out.push_str(&name.to_pascal_case());
+                out.push_str(&name.to_pascal_case()?);
                 out.push_str(" {\n");
                 for (i, member) in members.iter().enumerate() {
                     if i > 0 {
                         out.push('\n');
                     }
                     out.push_str("  ");
-                    out.push_str(&member.to_source(true).replace('\n', "\n  "));
+                    out.push_str(&member.to_source(true)?.replace('\n', "\n  "));
                     out.push('\n');
                 }
                 out.push('}');
             }
             Self::NamedFunctionDecl { name, function } => {
                 out.push_str("function ");
-                out.push_str(&name.to_camel_case());
-                out.push_str(&function.to_source(true));
+                out.push_str(&name.to_camel_case()?);
+                out.push_str(&function.to_source(true)?);
             }
         }
 
-        out
+        Ok(out)
     }
 
     pub fn new_object(properties: BTreeMap<&str, TSType>) -> Self {
@@ -599,14 +599,14 @@ mod tests {
     fn interprets_string() {
         let type_ = from_schema(json!({"type": "string"}));
 
-        assert_eq!(type_.to_source(true), "string".to_string())
+        assert_eq!(type_.to_source(true).unwrap(), "string".to_string())
     }
 
     #[test]
     fn interprets_boolean() {
         let type_ = from_schema(json!({"type": "boolean"}));
 
-        assert_eq!(type_.to_source(true), "bool".to_string())
+        assert_eq!(type_.to_source(true).unwrap(), "bool".to_string())
     }
 
     #[test]
@@ -617,14 +617,17 @@ mod tests {
             }
         }));
 
-        assert_eq!(type_.to_source(true), "{\n  a: number;\n}".to_string())
+        assert_eq!(
+            type_.to_source(true).unwrap(),
+            "{\n  a: number;\n}".to_string()
+        )
     }
 
     #[test]
     fn interprets_enum() {
         let type_ = from_schema(json!({"enum": ["a", "b"]}));
 
-        assert_eq!(type_.to_source(true), "\"a\" | \"b\"".to_string())
+        assert_eq!(type_.to_source(true).unwrap(), "\"a\" | \"b\"".to_string())
     }
 
     #[test]
@@ -788,14 +791,14 @@ mod tests {
     fn scalar_to_source() {
         let type_ = from_schema(json!({"type": "string"}));
 
-        assert_eq!(type_.to_source(true), "string".to_string());
+        assert_eq!(type_.to_source(true).unwrap(), "string".to_string());
     }
 
     #[test]
     fn nullable_scalar_to_source() {
         let type_ = from_schema(json!({"type": "string", "nullable": true}));
 
-        assert_eq!(type_.to_source(true), "string | null".to_string());
+        assert_eq!(type_.to_source(true).unwrap(), "string | null".to_string());
     }
 
     #[test]
@@ -824,7 +827,7 @@ mod tests {
         );
 
         assert_eq!(
-            type_.to_source(true),
+            type_.to_source(true).unwrap(),
             "(one: number, two: string): string".to_string()
         )
     }
@@ -855,7 +858,7 @@ mod tests {
         );
 
         assert_eq!(
-            type_.to_source(false),
+            type_.to_source(false).unwrap(),
             "(one: number, two: string) => string".to_string()
         )
     }
@@ -866,7 +869,7 @@ mod tests {
             from_schema(json!({"properties": {"a": {"type": "string"}}})).into_typedecl("Flags");
 
         assert_eq!(
-            type_.to_source(true),
+            type_.to_source(true).unwrap(),
             "type Flags = {\n  a: string;\n}".to_string(),
         )
     }
@@ -884,7 +887,10 @@ mod tests {
             ),
         );
 
-        assert_eq!(method.to_source(true), "function init(): void".to_string());
+        assert_eq!(
+            method.to_source(true).unwrap(),
+            "function init(): void".to_string()
+        );
     }
 
     #[test]
@@ -895,7 +901,7 @@ mod tests {
         );
 
         assert_eq!(
-            namespace.to_source(true),
+            namespace.to_source(true).unwrap(),
             "declare module Elm {\n  namespace Main {\n  }\n}".to_string()
         );
     }
@@ -904,28 +910,37 @@ mod tests {
     fn namespace_to_source() {
         let namespace = TSType::new_namespace("Main", Vec::from([]));
 
-        assert_eq!(namespace.to_source(true), "namespace Main {\n}".to_string());
+        assert_eq!(
+            namespace.to_source(true).unwrap(),
+            "namespace Main {\n}".to_string()
+        );
     }
 
     #[test]
     fn list_to_source() {
         let type_ = from_schema(json!({"elements": {"type": "string"}}));
 
-        assert_eq!(type_.to_source(true), "string[]".to_string());
+        assert_eq!(type_.to_source(true).unwrap(), "string[]".to_string());
     }
 
     #[test]
     fn list_to_source_space() {
         let type_ = from_schema(json!({"elements": {"enum": ["a", "b"]}}));
 
-        assert_eq!(type_.to_source(true), "(\"a\" | \"b\")[]".to_string());
+        assert_eq!(
+            type_.to_source(true).unwrap(),
+            "(\"a\" | \"b\")[]".to_string()
+        );
     }
 
     #[test]
     fn values_to_source_space() {
         let type_ = from_schema(json!({"values": {"type": "string"}}));
 
-        assert_eq!(type_.to_source(true), "Record<string, string>".to_string());
+        assert_eq!(
+            type_.to_source(true).unwrap(),
+            "Record<string, string>".to_string()
+        );
     }
 
     #[test]
@@ -951,7 +966,7 @@ mod tests {
         }));
 
         assert_eq!(
-            type_.to_source(true),
+            type_.to_source(true).unwrap(),
             "{\n  a: number;\n  tag: \"one\";\n} | {\n  b: string;\n  tag: \"two\";\n}".to_string()
         );
     }

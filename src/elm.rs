@@ -27,13 +27,13 @@ pub enum Decl {
 }
 
 impl Decl {
-    fn to_source(&self) -> String {
+    fn to_source(&self) -> Result<String> {
         let mut out = String::new();
 
         match self {
             Decl::CustomTypeEnum { name, cases } => {
                 out.push_str("type ");
-                out.push_str(&name.to_pascal_case());
+                out.push_str(&name.to_pascal_case()?);
                 out.push_str("\n");
 
                 for (i, (case_name, case_type_opt)) in cases.iter().enumerate() {
@@ -43,11 +43,11 @@ impl Decl {
                         out.push_str("    | ");
                     }
 
-                    out.push_str(&case_name.to_pascal_case());
+                    out.push_str(&case_name.to_pascal_case()?);
 
                     if let Some(case_type) = case_type_opt {
                         out.push(' ');
-                        out.push_str(&case_type.to_source().replace("\n", "\n    "));
+                        out.push_str(&case_type.to_source()?.replace("\n", "\n    "));
                     }
 
                     out.push('\n')
@@ -55,13 +55,13 @@ impl Decl {
             }
             Decl::TypeAlias { name, type_ } => {
                 out.push_str("type alias ");
-                out.push_str(&name.to_pascal_case());
+                out.push_str(&name.to_pascal_case()?);
                 out.push_str(" =\n    ");
-                out.push_str(&type_.to_source().replace("\n", "\n    "));
+                out.push_str(&type_.to_source()?.replace("\n", "\n    "));
             }
         }
 
-        out
+        Ok(out)
     }
 }
 
@@ -253,13 +253,13 @@ impl Type {
         ))
     }
 
-    fn to_source(&self) -> String {
-        match self {
+    fn to_source(&self) -> Result<String> {
+        Ok(match self {
             Type::Scalar(scalar) => scalar.to_string(),
             Type::Maybe(inner) => {
                 let mut out = String::from("Maybe ");
 
-                let inner_source = inner.to_source();
+                let inner_source = inner.to_source()?;
 
                 if inner_source.contains(" ") {
                     out.push('(');
@@ -275,7 +275,7 @@ impl Type {
             Type::DictWithStringKeys(inner) => {
                 let mut out = String::from("Dict String ");
 
-                let inner_source = inner.to_source();
+                let inner_source = inner.to_source()?;
 
                 if inner_source.contains(" ") {
                     out.push('(');
@@ -290,7 +290,7 @@ impl Type {
             Type::List(inner) => {
                 let mut out = String::from("List ");
 
-                let inner_source = inner.to_source();
+                let inner_source = inner.to_source()?;
 
                 if inner_source.contains(" ") {
                     out.push('(');
@@ -302,7 +302,7 @@ impl Type {
 
                 out
             }
-            Type::Ref(ref_) => ref_.to_pascal_case(),
+            Type::Ref(ref_) => ref_.to_pascal_case()?,
             Type::Record(fields) => {
                 let mut out = String::new();
 
@@ -316,16 +316,16 @@ impl Type {
                             out.push_str("\n, ");
                         }
 
-                        out.push_str(&name.to_camel_case());
+                        out.push_str(&name.to_camel_case()?);
                         out.push_str(" : ");
-                        out.push_str(&value.to_source().replace("\n", "\n    "));
+                        out.push_str(&value.to_source()?.replace("\n", "\n    "));
                     }
 
                     out.push_str("\n}");
                 }
                 out
             }
-        }
+        })
     }
 }
 
@@ -382,7 +382,7 @@ impl Module {
 
         for decl in &self.decls {
             out.push_str("\n\n");
-            out.push_str(&decl.to_source());
+            out.push_str(&decl.to_source()?);
             out.push('\n');
         }
 
