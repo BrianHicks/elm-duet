@@ -29,6 +29,19 @@ notificationPermissionDecoder =
         Decode.string
 
 
+encodeNotificationPermission : NotificationPermission -> Encode.Value
+encodeNotificationPermission notificationPermission =
+    case notificationPermission of
+        Default ->
+            Encode.string "default"
+
+        Denied ->
+            Encode.string "denied"
+
+        Granted ->
+            Encode.string "granted"
+
+
 type alias Flags =
     { currentTimeMillis : Float
     , notificationPermission : NotificationPermission
@@ -40,3 +53,8 @@ flagsDecoder =
     Decode.map2 Flags
         (Decode.field "currentTimeMillis" Decode.float)
         (Decode.field "notificationPermission" notificationPermissionDecoder)
+
+
+encodeFlags : Flags -> Encode.Value
+encodeFlags flags =
+    {- TODO -}

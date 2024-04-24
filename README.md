@@ -102,6 +102,11 @@ flagsDecoder =
     Decode.map Flags
         (Decode.field "currentJwt" (Decode.nullable Decode.string))
 
+
+encodeFlags : Flags -> Encode.Value
+encodeFlags flags =
+    {- TODO -}
+
 ```
 
 And these for the ports:
@@ -122,6 +127,11 @@ logoutDecoder =
     Decode.null ()
 
 
+encodeLogout : Logout -> Encode.Value
+encodeLogout logout =
+    {- TODO -}
+
+
 type alias NewJwt =
     String
 
@@ -129,6 +139,11 @@ type alias NewJwt =
 newJwtDecoder : Decoder NewJwt
 newJwtDecoder =
     Decode.string
+
+
+encodeNewJwt : NewJwt -> Encode.Value
+encodeNewJwt newJwt =
+    {- TODO -}
 
 ```
 

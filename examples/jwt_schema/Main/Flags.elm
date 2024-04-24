@@ -13,3 +13,8 @@ flagsDecoder : Decoder Flags
 flagsDecoder =
     Decode.map Flags
         (Decode.field "currentJwt" (Decode.nullable Decode.string))
+
+
+encodeFlags : Flags -> Encode.Value
+encodeFlags flags =
+    {- TODO -}

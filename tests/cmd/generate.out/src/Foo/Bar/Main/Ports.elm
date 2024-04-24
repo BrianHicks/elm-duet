@@ -15,6 +15,11 @@ addNewPingAtDecoder =
         (Decode.field "value" Decode.float)
 
 
+encodeAddNewPingAt : AddNewPingAt -> Encode.Value
+encodeAddNewPingAt addNewPingAt =
+    {- TODO -}
+
+
 type alias SetMinutesPerPing =
     { value : Float
     }
@@ -24,6 +29,11 @@ setMinutesPerPingDecoder : Decoder SetMinutesPerPing
 setMinutesPerPingDecoder =
     Decode.map SetMinutesPerPing
         (Decode.field "value" Decode.float)
+
+
+encodeSetMinutesPerPing : SetMinutesPerPing -> Encode.Value
+encodeSetMinutesPerPing setMinutesPerPing =
+    {- TODO -}
 
 
 type alias SetTagForPing =
@@ -37,6 +47,11 @@ setTagForPingDecoder =
     Decode.map2 SetTagForPing
         (Decode.field "index" Decode.float)
         (Decode.field "value" (Decode.nullable Decode.string))
+
+
+encodeSetTagForPing : SetTagForPing -> Encode.Value
+encodeSetTagForPing setTagForPing =
+    {- TODO -}
 
 
 type ChangeDocument
@@ -64,6 +79,19 @@ changeDocumentDecoder =
         (Decode.field "tag" Decode.string)
 
 
+encodeChangeDocument : ChangeDocument -> Encode.Value
+encodeChangeDocument changeDocument =
+    case changeDocument of
+        AddNewPingAt addNewPingAt ->
+            {- TODO -}
+
+        SetMinutesPerPing setMinutesPerPing ->
+            {- TODO -}
+
+        SetTagForPing setTagForPing ->
+            {- TODO -}
+
+
 type alias PingV1 =
     { custom : Dict String String
     , tag : Maybe String
@@ -77,6 +105,11 @@ pingV1Decoder =
         (Decode.field "custom" (Decode.dict Decode.string))
         (Decode.field "tag" (Decode.nullable Decode.string))
         (Decode.field "time" Decode.int)
+
+
+encodePingV1 : PingV1 -> Encode.Value
+encodePingV1 pingV1 =
+    {- TODO -}
 
 
 type PingsElements
@@ -96,6 +129,13 @@ pingsElementsDecoder =
         (Decode.field "version" Decode.string)
 
 
+encodePingsElements : PingsElements -> Encode.Value
+encodePingsElements pingsElements =
+    case pingsElements of
+        PingV1 pingV1 ->
+            {- TODO -}
+
+
 type alias SettingsV1 =
     { minutesPerPing : Int
     }
@@ -105,6 +145,11 @@ settingsV1Decoder : Decoder SettingsV1
 settingsV1Decoder =
     Decode.map SettingsV1
         (Decode.field "minutesPerPing" Decode.int)
+
+
+encodeSettingsV1 : SettingsV1 -> Encode.Value
+encodeSettingsV1 settingsV1 =
+    {- TODO -}
 
 
 type Settings
@@ -124,6 +169,13 @@ settingsDecoder =
         (Decode.field "version" Decode.string)
 
 
+encodeSettings : Settings -> Encode.Value
+encodeSettings settings =
+    case settings of
+        SettingsV1 settingsV1 ->
+            {- TODO -}
+
+
 type alias DocV1 =
     { pings : List PingsElements
     , settings : Settings
@@ -135,6 +187,11 @@ docV1Decoder =
     Decode.map2 DocV1
         (Decode.field "pings" (Decode.list pingsElementsDecoder))
         (Decode.field "settings" settingsDecoder)
+
+
+encodeDocV1 : DocV1 -> Encode.Value
+encodeDocV1 docV1 =
+    {- TODO -}
 
 
 type DocFromAutomerge
@@ -152,6 +209,13 @@ docFromAutomergeDecoder =
 
         )
         (Decode.field "version" Decode.string)
+
+
+encodeDocFromAutomerge : DocFromAutomerge -> Encode.Value
+encodeDocFromAutomerge docFromAutomerge =
+    case docFromAutomerge of
+        DocV1 docV1 ->
+            {- TODO -}
 
 
 type NotificationPermission
@@ -179,6 +243,19 @@ notificationPermissionDecoder =
         Decode.string
 
 
+encodeNotificationPermission : NotificationPermission -> Encode.Value
+encodeNotificationPermission notificationPermission =
+    case notificationPermission of
+        Default ->
+            Encode.string "default"
+
+        Denied ->
+            Encode.string "denied"
+
+        Granted ->
+            Encode.string "granted"
+
+
 type alias RequestNotificationPermission =
     ()
 
@@ -186,6 +263,11 @@ type alias RequestNotificationPermission =
 requestNotificationPermissionDecoder : Decoder RequestNotificationPermission
 requestNotificationPermissionDecoder =
     Decode.null ()
+
+
+encodeRequestNotificationPermission : RequestNotificationPermission -> Encode.Value
+encodeRequestNotificationPermission requestNotificationPermission =
+    {- TODO -}
 
 
 type alias NotificationOptions =
@@ -211,6 +293,11 @@ notificationOptionsDecoder =
         (Decode.field "tag" (Decode.nullable Decode.string))
 
 
+encodeNotificationOptions : NotificationOptions -> Encode.Value
+encodeNotificationOptions notificationOptions =
+    {- TODO -}
+
+
 type alias SendNotification =
     { options : NotificationOptions
     , title : String
@@ -222,3 +309,8 @@ sendNotificationDecoder =
     Decode.map2 SendNotification
         (Decode.field "options" notificationOptionsDecoder)
         (Decode.field "title" Decode.string)
+
+
+encodeSendNotification : SendNotification -> Encode.Value
+encodeSendNotification sendNotification =
+    {- TODO -}
