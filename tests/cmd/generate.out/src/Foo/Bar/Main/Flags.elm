@@ -37,4 +37,4 @@ type alias Flags =
 
 flagsDecoder : Decoder Flags
 flagsDecoder =
-    (Decode.fail "TODO")
+    Decode.fail "TODO: record"

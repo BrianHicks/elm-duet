@@ -10,7 +10,7 @@ type alias Logout =
 
 logoutDecoder : Decoder Logout
 logoutDecoder =
-    (Decode.fail "TODO")
+    Decode.null ()
 
 
 type alias NewJwt =
@@ -19,4 +19,4 @@ type alias NewJwt =
 
 newJwtDecoder : Decoder NewJwt
 newJwtDecoder =
-    (Decode.fail "TODO")
+    Decode.string
