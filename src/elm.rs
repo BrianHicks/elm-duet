@@ -145,7 +145,10 @@ impl Decl {
                     }
                 }
             }
-            Decl::TypeAlias { type_, .. } => out.push_str("    Decode.todo \"type alias\""),
+            Decl::TypeAlias { type_, .. } => {
+                out.push_str("    ");
+                out.push_str(&type_.to_decoder_source()?.replace('\n', "\n    "));
+            }
         }
 
         Ok(out)
