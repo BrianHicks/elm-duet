@@ -11,7 +11,7 @@ type alias AddNewPingAt =
 
 addNewPingAtDecoder : Decoder AddNewPingAt
 addNewPingAtDecoder =
-    Decode.todo "type alias"
+    (Decode.fail "TODO")
 
 
 type alias SetMinutesPerPing =
@@ -21,7 +21,7 @@ type alias SetMinutesPerPing =
 
 setMinutesPerPingDecoder : Decoder SetMinutesPerPing
 setMinutesPerPingDecoder =
-    Decode.todo "type alias"
+    (Decode.fail "TODO")
 
 
 type alias SetTagForPing =
@@ -32,7 +32,7 @@ type alias SetTagForPing =
 
 setTagForPingDecoder : Decoder SetTagForPing
 setTagForPingDecoder =
-    Decode.todo "type alias"
+    (Decode.fail "TODO")
 
 
 type ChangeDocument
@@ -48,13 +48,13 @@ changeDocumentDecoder =
         (/tag ->
             case tag of
                 "AddNewPingAt" ->
-                    Decode.fail "TODO"
+                    Decode.map AddNewPingAt (Decode.fail "TODO")
 
                 "SetMinutesPerPing" ->
-                    Decode.fail "TODO"
+                    Decode.map SetMinutesPerPing (Decode.fail "TODO")
 
                 "SetTagForPing" ->
-                    Decode.fail "TODO"
+                    Decode.map SetTagForPing (Decode.fail "TODO")
 
         )
         (Decode.field "tag" Decode.string)
@@ -69,7 +69,7 @@ type alias PingV1 =
 
 pingV1Decoder : Decoder PingV1
 pingV1Decoder =
-    Decode.todo "type alias"
+    (Decode.fail "TODO")
 
 
 type PingsElements
@@ -83,7 +83,7 @@ pingsElementsDecoder =
         (/tag ->
             case tag of
                 "v1" ->
-                    Decode.fail "TODO"
+                    Decode.map PingV1 (Decode.fail "TODO")
 
         )
         (Decode.field "version" Decode.string)
@@ -96,7 +96,7 @@ type alias SettingsV1 =
 
 settingsV1Decoder : Decoder SettingsV1
 settingsV1Decoder =
-    Decode.todo "type alias"
+    (Decode.fail "TODO")
 
 
 type Settings
@@ -110,7 +110,7 @@ settingsDecoder =
         (/tag ->
             case tag of
                 "v1" ->
-                    Decode.fail "TODO"
+                    Decode.map SettingsV1 (Decode.fail "TODO")
 
         )
         (Decode.field "version" Decode.string)
@@ -124,7 +124,7 @@ type alias DocV1 =
 
 docV1Decoder : Decoder DocV1
 docV1Decoder =
-    Decode.todo "type alias"
+    (Decode.fail "TODO")
 
 
 type DocFromAutomerge
@@ -138,7 +138,7 @@ docFromAutomergeDecoder =
         (/tag ->
             case tag of
                 "v1" ->
-                    Decode.fail "TODO"
+                    Decode.map DocV1 (Decode.fail "TODO")
 
         )
         (Decode.field "version" Decode.string)
@@ -175,7 +175,7 @@ type alias RequestNotificationPermission =
 
 requestNotificationPermissionDecoder : Decoder RequestNotificationPermission
 requestNotificationPermissionDecoder =
-    Decode.todo "type alias"
+    (Decode.fail "TODO")
 
 
 type alias NotificationOptions =
@@ -191,7 +191,7 @@ type alias NotificationOptions =
 
 notificationOptionsDecoder : Decoder NotificationOptions
 notificationOptionsDecoder =
-    Decode.todo "type alias"
+    (Decode.fail "TODO")
 
 
 type alias SendNotification =
@@ -202,4 +202,4 @@ type alias SendNotification =
 
 sendNotificationDecoder : Decoder SendNotification
 sendNotificationDecoder =
-    Decode.todo "type alias"
+    (Decode.fail "TODO")

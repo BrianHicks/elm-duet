@@ -11,4 +11,4 @@ type alias Flags =
 
 flagsDecoder : Decoder Flags
 flagsDecoder =
-    Decode.todo "type alias"
+    (Decode.fail "TODO")
