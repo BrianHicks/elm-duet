@@ -69,6 +69,27 @@ impl Decl {
 
         Ok(out)
     }
+
+    fn name(&self) -> &InflectedString {
+        match self {
+            Decl::CustomTypeEnum { name, .. } => name,
+            Decl::TypeAlias { name, .. } => name,
+        }
+    }
+
+    fn to_decoder_source(&self) -> Result<String> {
+        let mut out = String::new();
+
+        let name = self.name();
+        out.push_str(&name.to_camel_case()?);
+        out.push_str("Decoder : Decoder ");
+        out.push_str(&name.to_pascal_case()?);
+        out.push('\n');
+        out.push_str(&name.to_camel_case()?);
+        out.push_str("decoder =\n    Debug.todo \"DECODER\"");
+
+        Ok(out)
+    }
 }
 
 impl Type {
@@ -399,6 +420,8 @@ impl Module {
         for decl in &self.decls {
             out.push_str("\n\n");
             out.push_str(&decl.to_source()?);
+            out.push_str("\n\n\n");
+            out.push_str(&decl.to_decoder_source()?);
             out.push('\n');
         }
 
