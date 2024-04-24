@@ -21,10 +21,6 @@ struct Cli {
     /// Destination for Elm types
     #[clap(long, default_value = "src/")]
     elm_dest: PathBuf,
-
-    /// Prefix for Elm module path
-    #[clap(long, default_value = "Interop")]
-    elm_prefix: String,
 }
 
 impl Cli {

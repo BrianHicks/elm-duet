@@ -170,7 +170,6 @@ Arguments:
 Options:
       --typescript-dest <TYPESCRIPT_DEST>  Destination for TypeScript types [default: elm.ts]
       --elm-dest <ELM_DEST>                Destination for Elm types [default: src/]
-      --elm-prefix <ELM_PREFIX>            Prefix for Elm module path [default: Interop]
   -h, --help                               Print help
   -V, --version                            Print version
 
