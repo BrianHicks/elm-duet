@@ -6,6 +6,10 @@ use inflector::Inflector;
 pub struct InflectedString(String);
 
 impl InflectedString {
+    pub fn orig(&self) -> &str {
+        &self.0
+    }
+
     fn sanitized(&self) -> Result<&str> {
         if self.0.starts_with(char::is_numeric) {
             bail!("identifier `{}` cannot start with a digit", self.0)
