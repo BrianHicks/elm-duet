@@ -11,7 +11,7 @@ impl InflectedString {
             bail!("identifier `{}` cannot start with a digit", self.0)
         }
 
-        return Ok(&self.0);
+        Ok(&self.0)
     }
 
     pub fn to_pascal_case(&self) -> Result<String> {

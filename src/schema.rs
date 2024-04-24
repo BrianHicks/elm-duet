@@ -144,7 +144,7 @@ impl Schema {
         let mut files = BTreeMap::new();
 
         for (name, module) in &self.modules {
-            let name_base: Vec<String> = name.split(".").map(|s| s.to_owned()).collect();
+            let name_base: Vec<String> = name.split('.').map(|s| s.to_owned()).collect();
 
             // generate flags
             if let Some(flags) = &module.flags {
