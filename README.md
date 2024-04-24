@@ -99,7 +99,8 @@ type alias Flags =
 
 flagsDecoder : Decoder Flags
 flagsDecoder =
-    Decode.fail "TODO: record"
+    Decode.map Flags
+        (Decode.field "currentJwt" (Decode.nullable Decode.string))
 
 ```
 

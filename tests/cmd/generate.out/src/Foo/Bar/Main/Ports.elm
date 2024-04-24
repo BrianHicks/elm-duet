@@ -11,7 +11,8 @@ type alias AddNewPingAt =
 
 addNewPingAtDecoder : Decoder AddNewPingAt
 addNewPingAtDecoder =
-    Decode.fail "TODO: record"
+    Decode.map AddNewPingAt
+        (Decode.field "value" Decode.float)
 
 
 type alias SetMinutesPerPing =
@@ -21,7 +22,8 @@ type alias SetMinutesPerPing =
 
 setMinutesPerPingDecoder : Decoder SetMinutesPerPing
 setMinutesPerPingDecoder =
-    Decode.fail "TODO: record"
+    Decode.map SetMinutesPerPing
+        (Decode.field "value" Decode.float)
 
 
 type alias SetTagForPing =
@@ -32,7 +34,9 @@ type alias SetTagForPing =
 
 setTagForPingDecoder : Decoder SetTagForPing
 setTagForPingDecoder =
-    Decode.fail "TODO: record"
+    Decode.map2 SetTagForPing
+        (Decode.field "index" Decode.float)
+        (Decode.field "value" (Decode.nullable Decode.string))
 
 
 type ChangeDocument
@@ -69,7 +73,10 @@ type alias PingV1 =
 
 pingV1Decoder : Decoder PingV1
 pingV1Decoder =
-    Decode.fail "TODO: record"
+    Decode.map3 PingV1
+        (Decode.field "custom" (Decode.dict Decode.string))
+        (Decode.field "tag" (Decode.nullable Decode.string))
+        (Decode.field "time" Decode.int)
 
 
 type PingsElements
@@ -96,7 +103,8 @@ type alias SettingsV1 =
 
 settingsV1Decoder : Decoder SettingsV1
 settingsV1Decoder =
-    Decode.fail "TODO: record"
+    Decode.map SettingsV1
+        (Decode.field "minutesPerPing" Decode.int)
 
 
 type Settings
@@ -124,7 +132,9 @@ type alias DocV1 =
 
 docV1Decoder : Decoder DocV1
 docV1Decoder =
-    Decode.fail "TODO: record"
+    Decode.map2 DocV1
+        (Decode.field "pings" (Decode.list pingsElementsDecoder))
+        (Decode.field "settings" settingsDecoder)
 
 
 type DocFromAutomerge
@@ -191,7 +201,14 @@ type alias NotificationOptions =
 
 notificationOptionsDecoder : Decoder NotificationOptions
 notificationOptionsDecoder =
-    Decode.fail "TODO: record"
+    Decode.map7 NotificationOptions
+        (Decode.field "badge" (Decode.nullable Decode.string))
+        (Decode.field "body" (Decode.nullable Decode.string))
+        (Decode.field "icon" (Decode.nullable Decode.string))
+        (Decode.field "lang" (Decode.nullable Decode.string))
+        (Decode.field "requireInteraction" (Decode.nullable Decode.bool))
+        (Decode.field "silent" (Decode.nullable Decode.bool))
+        (Decode.field "tag" (Decode.nullable Decode.string))
 
 
 type alias SendNotification =
@@ -202,4 +219,6 @@ type alias SendNotification =
 
 sendNotificationDecoder : Decoder SendNotification
 sendNotificationDecoder =
-    Decode.fail "TODO: record"
+    Decode.map2 SendNotification
+        (Decode.field "options" notificationOptionsDecoder)
+        (Decode.field "title" Decode.string)

@@ -37,4 +37,6 @@ type alias Flags =
 
 flagsDecoder : Decoder Flags
 flagsDecoder =
-    Decode.fail "TODO: record"
+    Decode.map2 Flags
+        (Decode.field "currentTimeMillis" Decode.float)
+        (Decode.field "notificationPermission" notificationPermissionDecoder)
