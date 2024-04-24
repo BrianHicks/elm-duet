@@ -18,6 +18,7 @@ pub enum Type {
 pub enum Decl {
     CustomTypeEnum {
         name: InflectedString,
+        constructor_prefix: InflectedString,
         cases: BTreeMap<InflectedString, Option<Type>>,
     },
     TypeAlias {
@@ -31,7 +32,11 @@ impl Decl {
         let mut out = String::new();
 
         match self {
-            Decl::CustomTypeEnum { name, cases } => {
+            Decl::CustomTypeEnum {
+                name,
+                constructor_prefix,
+                cases,
+            } => {
                 out.push_str("type ");
                 out.push_str(&name.to_pascal_case()?);
                 out.push_str("\n");
@@ -43,6 +48,7 @@ impl Decl {
                         out.push_str("    | ");
                     }
 
+                    out.push_str(&constructor_prefix.to_pascal_case()?);
                     out.push_str(&case_name.to_pascal_case()?);
 
                     if let Some(case_type) = case_type_opt {
@@ -134,6 +140,11 @@ impl Type {
 
                     decls.push(Decl::CustomTypeEnum {
                         name: name.into(),
+                        constructor_prefix: metadata
+                            .get("constructorPrefix")
+                            .and_then(|n| n.as_str())
+                            .unwrap_or("")
+                            .into(),
                         cases,
                     });
 
@@ -234,6 +245,11 @@ impl Type {
                     }
                     decls.push(Decl::CustomTypeEnum {
                         name: name.into(),
+                        constructor_prefix: metadata
+                            .get("constructorPrefix")
+                            .and_then(|n| n.as_str())
+                            .unwrap_or("")
+                            .into(),
                         cases,
                     });
 
@@ -589,6 +605,7 @@ mod tests {
                 decls,
                 Vec::from([Decl::CustomTypeEnum {
                     name: "Foo".into(),
+                    constructor_prefix: "".into(),
                     cases: BTreeMap::from([("a".into(), None), ("b".into(), None)]),
                 }])
             );
@@ -690,6 +707,7 @@ mod tests {
                     },
                     Decl::CustomTypeEnum {
                         name: "Foo".into(),
+                        constructor_prefix: "".into(),
                         cases: BTreeMap::from([
                             ("a".into(), Some(Type::Ref("a".into()))),
                             ("b".into(), Some(Type::Ref("b".into()))),
