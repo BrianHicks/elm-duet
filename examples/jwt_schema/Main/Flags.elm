@@ -17,4 +17,13 @@ flagsDecoder =
 
 encodeFlags : Flags -> Encode.Value
 encodeFlags flags =
-    {- TODO -}
+    Encode.object
+        [ ( "currentJwt"
+          , case flags.currentJwt of
+                Just value ->
+                    Encode.string value
+            
+                Nothing ->
+                    Encode.null
+          )
+        ]

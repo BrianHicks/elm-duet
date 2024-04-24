@@ -15,7 +15,7 @@ logoutDecoder =
 
 encodeLogout : Logout -> Encode.Value
 encodeLogout logout =
-    {- TODO -}
+    Encode.null
 
 
 type alias NewJwt =
@@ -29,4 +29,4 @@ newJwtDecoder =
 
 encodeNewJwt : NewJwt -> Encode.Value
 encodeNewJwt newJwt =
-    {- TODO -}
+    Encode.string newJwt

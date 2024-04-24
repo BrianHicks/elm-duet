@@ -105,7 +105,16 @@ flagsDecoder =
 
 encodeFlags : Flags -> Encode.Value
 encodeFlags flags =
-    {- TODO -}
+    Encode.object
+        [ ( "currentJwt"
+          , case flags.currentJwt of
+                Just value ->
+                    Encode.string value
+            
+                Nothing ->
+                    Encode.null
+          )
+        ]
 
 ```
 
@@ -129,7 +138,7 @@ logoutDecoder =
 
 encodeLogout : Logout -> Encode.Value
 encodeLogout logout =
-    {- TODO -}
+    Encode.null
 
 
 type alias NewJwt =
@@ -143,7 +152,7 @@ newJwtDecoder =
 
 encodeNewJwt : NewJwt -> Encode.Value
 encodeNewJwt newJwt =
-    {- TODO -}
+    Encode.string newJwt
 
 ```
 

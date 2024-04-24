@@ -57,4 +57,7 @@ flagsDecoder =
 
 encodeFlags : Flags -> Encode.Value
 encodeFlags flags =
-    {- TODO -}
+    Encode.object
+        [ ( "currentTimeMillis", Encode.float flags.currentTimeMillis )
+        , ( "notificationPermission", encodeNotificationPermission flags.notificationPermission )
+        ]

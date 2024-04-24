@@ -17,7 +17,9 @@ addNewPingAtDecoder =
 
 encodeAddNewPingAt : AddNewPingAt -> Encode.Value
 encodeAddNewPingAt addNewPingAt =
-    {- TODO -}
+    Encode.object
+        [ ( "value", Encode.float addNewPingAt.value )
+        ]
 
 
 type alias SetMinutesPerPing =
@@ -33,7 +35,9 @@ setMinutesPerPingDecoder =
 
 encodeSetMinutesPerPing : SetMinutesPerPing -> Encode.Value
 encodeSetMinutesPerPing setMinutesPerPing =
-    {- TODO -}
+    Encode.object
+        [ ( "value", Encode.float setMinutesPerPing.value )
+        ]
 
 
 type alias SetTagForPing =
@@ -51,7 +55,17 @@ setTagForPingDecoder =
 
 encodeSetTagForPing : SetTagForPing -> Encode.Value
 encodeSetTagForPing setTagForPing =
-    {- TODO -}
+    Encode.object
+        [ ( "index", Encode.float setTagForPing.index )
+        , ( "value"
+          , case setTagForPing.value of
+                Just value ->
+                    Encode.string value
+            
+                Nothing ->
+                    Encode.null
+          )
+        ]
 
 
 type ChangeDocument
@@ -83,13 +97,13 @@ encodeChangeDocument : ChangeDocument -> Encode.Value
 encodeChangeDocument changeDocument =
     case changeDocument of
         AddNewPingAt addNewPingAt ->
-            {- TODO -}
+            encodeAddNewPingAt addNewPingAt
 
         SetMinutesPerPing setMinutesPerPing ->
-            {- TODO -}
+            encodeSetMinutesPerPing setMinutesPerPing
 
         SetTagForPing setTagForPing ->
-            {- TODO -}
+            encodeSetTagForPing setTagForPing
 
 
 type alias PingV1 =
@@ -109,7 +123,18 @@ pingV1Decoder =
 
 encodePingV1 : PingV1 -> Encode.Value
 encodePingV1 pingV1 =
-    {- TODO -}
+    Encode.object
+        [ ( "custom", Encode.dict identity (/value -> Encode.string value) pingV1.custom )
+        , ( "tag"
+          , case pingV1.tag of
+                Just value ->
+                    Encode.string value
+            
+                Nothing ->
+                    Encode.null
+          )
+        , ( "time", Encode.int pingV1.time )
+        ]
 
 
 type PingsElements
@@ -133,7 +158,7 @@ encodePingsElements : PingsElements -> Encode.Value
 encodePingsElements pingsElements =
     case pingsElements of
         PingV1 pingV1 ->
-            {- TODO -}
+            encodePingV1 pingV1
 
 
 type alias SettingsV1 =
@@ -149,7 +174,9 @@ settingsV1Decoder =
 
 encodeSettingsV1 : SettingsV1 -> Encode.Value
 encodeSettingsV1 settingsV1 =
-    {- TODO -}
+    Encode.object
+        [ ( "minutesPerPing", Encode.int settingsV1.minutesPerPing )
+        ]
 
 
 type Settings
@@ -173,7 +200,7 @@ encodeSettings : Settings -> Encode.Value
 encodeSettings settings =
     case settings of
         SettingsV1 settingsV1 ->
-            {- TODO -}
+            encodeSettingsV1 settingsV1
 
 
 type alias DocV1 =
@@ -191,7 +218,10 @@ docV1Decoder =
 
 encodeDocV1 : DocV1 -> Encode.Value
 encodeDocV1 docV1 =
-    {- TODO -}
+    Encode.object
+        [ ( "pings", Encode.list (/value -> encodePingsElements value) docV1.pings )
+        , ( "settings", encodeSettings docV1.settings )
+        ]
 
 
 type DocFromAutomerge
@@ -215,7 +245,7 @@ encodeDocFromAutomerge : DocFromAutomerge -> Encode.Value
 encodeDocFromAutomerge docFromAutomerge =
     case docFromAutomerge of
         DocV1 docV1 ->
-            {- TODO -}
+            encodeDocV1 docV1
 
 
 type NotificationPermission
@@ -267,7 +297,7 @@ requestNotificationPermissionDecoder =
 
 encodeRequestNotificationPermission : RequestNotificationPermission -> Encode.Value
 encodeRequestNotificationPermission requestNotificationPermission =
-    {- TODO -}
+    Encode.null
 
 
 type alias NotificationOptions =
@@ -295,7 +325,64 @@ notificationOptionsDecoder =
 
 encodeNotificationOptions : NotificationOptions -> Encode.Value
 encodeNotificationOptions notificationOptions =
-    {- TODO -}
+    Encode.object
+        [ ( "badge"
+          , case notificationOptions.badge of
+                Just value ->
+                    Encode.string value
+            
+                Nothing ->
+                    Encode.null
+          )
+        , ( "body"
+          , case notificationOptions.body of
+                Just value ->
+                    Encode.string value
+            
+                Nothing ->
+                    Encode.null
+          )
+        , ( "icon"
+          , case notificationOptions.icon of
+                Just value ->
+                    Encode.string value
+            
+                Nothing ->
+                    Encode.null
+          )
+        , ( "lang"
+          , case notificationOptions.lang of
+                Just value ->
+                    Encode.string value
+            
+                Nothing ->
+                    Encode.null
+          )
+        , ( "requireInteraction"
+          , case notificationOptions.requireInteraction of
+                Just value ->
+                    Encode.bool value
+            
+                Nothing ->
+                    Encode.null
+          )
+        , ( "silent"
+          , case notificationOptions.silent of
+                Just value ->
+                    Encode.bool value
+            
+                Nothing ->
+                    Encode.null
+          )
+        , ( "tag"
+          , case notificationOptions.tag of
+                Just value ->
+                    Encode.string value
+            
+                Nothing ->
+                    Encode.null
+          )
+        ]
 
 
 type alias SendNotification =
@@ -313,4 +400,7 @@ sendNotificationDecoder =
 
 encodeSendNotification : SendNotification -> Encode.Value
 encodeSendNotification sendNotification =
-    {- TODO -}
+    Encode.object
+        [ ( "options", encodeNotificationOptions sendNotification.options )
+        , ( "title", Encode.string sendNotification.title )
+        ]
