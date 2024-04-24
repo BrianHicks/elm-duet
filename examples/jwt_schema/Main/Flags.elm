@@ -10,5 +10,5 @@ type alias Flags =
 
 
 flagsDecoder : Decoder Flags
-flagsdecoder =
-    Debug.todo "DECODER"
+flagsDecoder =
+    Decode.todo "type alias"

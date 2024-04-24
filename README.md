@@ -98,8 +98,8 @@ type alias Flags =
 
 
 flagsDecoder : Decoder Flags
-flagsdecoder =
-    Debug.todo "DECODER"
+flagsDecoder =
+    Decode.todo "type alias"
 
 ```
 
@@ -117,8 +117,8 @@ type alias Logout =
 
 
 logoutDecoder : Decoder Logout
-logoutdecoder =
-    Debug.todo "DECODER"
+logoutDecoder =
+    Decode.todo "type alias"
 
 
 type alias NewJwt =
@@ -126,8 +126,8 @@ type alias NewJwt =
 
 
 newJwtDecoder : Decoder NewJwt
-newJwtdecoder =
-    Debug.todo "DECODER"
+newJwtDecoder =
+    Decode.todo "type alias"
 
 ```
 

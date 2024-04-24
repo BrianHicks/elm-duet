@@ -12,8 +12,21 @@ type NotificationPermission
 
 
 notificationPermissionDecoder : Decoder NotificationPermission
-notificationPermissiondecoder =
-    Debug.todo "DECODER"
+notificationPermissionDecoder =
+    Decode.andThen
+        (/tag ->
+            case tag of
+                "default" ->
+                    Decode.succeed Default
+
+                "denied" ->
+                    Decode.succeed Denied
+
+                "granted" ->
+                    Decode.succeed Granted
+
+        )
+        Decode.string
 
 
 type alias Flags =
@@ -23,5 +36,5 @@ type alias Flags =
 
 
 flagsDecoder : Decoder Flags
-flagsdecoder =
-    Debug.todo "DECODER"
+flagsDecoder =
+    Decode.todo "type alias"
