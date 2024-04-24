@@ -110,7 +110,7 @@ impl Decl {
 
                 for (case, case_type_opt) in cases {
                     out.push_str("                \"");
-                    out.push_str(&case.orig());
+                    out.push_str(case.orig());
                     out.push_str("\" ->\n                    ");
 
                     match case_type_opt {
@@ -120,7 +120,7 @@ impl Decl {
                             out.push_str("Decode.map ");
                             out.push_str(&constructor_prefix.to_pascal_case()?);
                             out.push_str(&case.to_pascal_case()?);
-                            if sub_decoder.contains("\n") {
+                            if sub_decoder.contains('\n') {
                                 out.push_str("\n                        ");
                                 out.push_str(
                                     &sub_decoder.replace('\n', "\n                        "),
@@ -492,25 +492,25 @@ impl Type {
                     out.push_str(&fields.len().to_string()); // TODO: fix for >9
                 }
                 out.push(' ');
-                out.push_str(&dest_type);
+                out.push_str(dest_type);
 
                 for (name, field_type) in fields {
                     let sub_decoder = field_type.to_decoder_source(dest_type)?;
 
                     out.push_str("\n    ");
                     out.push_str("(Decode.field \"");
-                    out.push_str(&name.orig());
+                    out.push_str(name.orig());
                     out.push_str("\" ");
 
-                    if sub_decoder.contains(" ") {
-                        out.push_str("(");
+                    if sub_decoder.contains(' ') {
+                        out.push('(');
                         out.push_str(&sub_decoder);
-                        out.push_str(")");
+                        out.push(')');
                     } else {
                         out.push_str(&sub_decoder);
                     }
 
-                    out.push_str(")");
+                    out.push(')');
                 }
             }
         }
