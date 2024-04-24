@@ -118,7 +118,7 @@
     "doc": {
       "discriminator": "version",
       "mapping": {
-	"1": {
+	"v1": {
 	  "properties": {
 	    "pings": {
 	      "elements": {
@@ -135,7 +135,7 @@
     "settings": {
       "discriminator": "version",
       "mapping": {
-	"1": {
+	"v1": {
 	  "properties": {
 	    "minutesPerPing": {
 	      "type": "int32"
@@ -147,7 +147,7 @@
     "ping": {
       "discriminator": "version",
       "mapping": {
-	"1": {
+	"v1": {
 	  "properties": {
 	    "time": {
 	      "type": "int32"

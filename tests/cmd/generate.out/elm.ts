@@ -29,13 +29,13 @@ declare module Elm {
                 custom: Record<string, string>;
                 tag: string | null;
                 time: number;
-                version: number;
+                version: "v1";
               })[];
               settings: {
                 minutesPerPing: number;
-                version: number;
+                version: "v1";
               };
-              version: number;
+              version: "v1";
             }) => void;
           };
           notificationPermission: {
