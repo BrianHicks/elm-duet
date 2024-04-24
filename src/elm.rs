@@ -91,9 +91,10 @@ impl Decl {
 
         let name = self.name();
         let decoder_name = self.decoder_name()?;
+        let type_name = name.to_pascal_case()?;
         out.push_str(&decoder_name);
         out.push_str(" : Decoder ");
-        out.push_str(&name.to_pascal_case()?);
+        out.push_str(&type_name);
         out.push('\n');
         out.push_str(&decoder_name);
         out.push_str(" =\n");
@@ -114,7 +115,7 @@ impl Decl {
 
                     match case_type_opt {
                         Some(type_) => {
-                            let sub_decoder = type_.to_decoder_source()?;
+                            let sub_decoder = type_.to_decoder_source(&type_name)?;
 
                             out.push_str("Decode.map ");
                             out.push_str(&constructor_prefix.to_pascal_case()?);
@@ -150,7 +151,7 @@ impl Decl {
             }
             Decl::TypeAlias { type_, .. } => {
                 out.push_str("    ");
-                out.push_str(&type_.to_decoder_source()?.replace('\n', "\n    "));
+                out.push_str(&type_.to_decoder_source(&type_name)?.replace('\n', "\n    "));
             }
         }
 
@@ -436,7 +437,7 @@ impl Type {
         })
     }
 
-    fn to_decoder_source(&self) -> Result<String> {
+    fn to_decoder_source(&self, dest_type: &str) -> Result<String> {
         let mut out = String::new();
 
         match self {
@@ -445,7 +446,7 @@ impl Type {
             Type::Bool => out.push_str("Decode.bool"),
             Type::String => out.push_str("Decode.string"),
             Type::Maybe(type_) => {
-                let sub_decoder = type_.to_decoder_source()?;
+                let sub_decoder = type_.to_decoder_source(dest_type)?;
                 out.push_str("Decode.nullable ");
 
                 if sub_decoder.contains(' ') {
@@ -458,7 +459,7 @@ impl Type {
             }
             Type::Unit => out.push_str("Decode.null ()"),
             Type::DictWithStringKeys(type_) => {
-                let sub_decoder = type_.to_decoder_source()?;
+                let sub_decoder = type_.to_decoder_source(dest_type)?;
                 out.push_str("Decode.dict ");
 
                 if sub_decoder.contains(' ') {
@@ -470,7 +471,7 @@ impl Type {
                 }
             }
             Type::List(type_) => {
-                let sub_decoder = type_.to_decoder_source()?;
+                let sub_decoder = type_.to_decoder_source(dest_type)?;
                 out.push_str("Decode.list ");
 
                 if sub_decoder.contains(' ') {
@@ -485,7 +486,33 @@ impl Type {
                 out.push_str(&name.to_camel_case()?);
                 out.push_str("Decoder");
             }
-            Type::Record(_) => out.push_str("Decode.fail \"TODO: record\""),
+            Type::Record(fields) => {
+                out.push_str("Decode.map");
+                if fields.len() > 1 {
+                    out.push_str(&fields.len().to_string()); // TODO: fix for >9
+                }
+                out.push(' ');
+                out.push_str(&dest_type);
+
+                for (name, field_type) in fields {
+                    let sub_decoder = field_type.to_decoder_source(dest_type)?;
+
+                    out.push_str("\n    ");
+                    out.push_str("(Decode.field \"");
+                    out.push_str(&name.orig());
+                    out.push_str("\" ");
+
+                    if sub_decoder.contains(" ") {
+                        out.push_str("(");
+                        out.push_str(&sub_decoder);
+                        out.push_str(")");
+                    } else {
+                        out.push_str(&sub_decoder);
+                    }
+
+                    out.push_str(")");
+                }
+            }
         }
 
         Ok(out)
