@@ -116,45 +116,51 @@
   },
   "definitions": {
     "doc": {
-      "properties": {
-	"version": {
-	  "type": "int32"
-	},
-	"pings": {
-	  "elements": {
-	    "ref": "ping"
+      "discriminator": "version",
+      "mapping": {
+	"1": {
+	  "properties": {
+	    "pings": {
+	      "elements": {
+		"ref": "ping"
+	      }
+	    },
+	    "settings": {
+	      "ref": "settings"
+	    }
 	  }
-	},
-	"settings": {
-	  "ref": "settings"
 	}
       }
     },
     "settings": {
-      "properties": {
-	"version": {
-	  "type": "int32"
-	},
-	"minutesPerPing": {
-	  "type": "int32"
+      "discriminator": "version",
+      "mapping": {
+	"1": {
+	  "properties": {
+	    "minutesPerPing": {
+	      "type": "int32"
+	    }
+	  }
 	}
       }
     },
     "ping": {
-      "properties": {
-	"version": {
-	  "type": "int32"
-	},
-	"time": {
-	  "type": "int32"
-	},
-	"tag": {
-	  "type": "string",
-	  "nullable": true
-	},
-	"custom": {
-	  "values": {
-	    "type": "string"
+      "discriminator": "version",
+      "mapping": {
+	"1": {
+	  "properties": {
+	    "time": {
+	      "type": "int32"
+	    },
+	    "tag": {
+	      "type": "string",
+	      "nullable": true
+	    },
+	    "custom": {
+	      "values": {
+		"type": "string"
+	      }
+	    }
 	  }
 	}
       }
