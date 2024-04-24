@@ -86,6 +86,10 @@ impl Decl {
         Ok(format!("{}Decoder", self.name().to_camel_case()?))
     }
 
+    fn encoder_name(&self) -> Result<String> {
+        Ok(format!("encode{}", self.name().to_pascal_case()?))
+    }
+
     fn to_decoder_source(&self) -> Result<String> {
         let mut out = String::new();
 
@@ -152,6 +156,82 @@ impl Decl {
             Decl::TypeAlias { type_, .. } => {
                 out.push_str("    ");
                 out.push_str(&type_.to_decoder_source(&type_name)?.replace('\n', "\n    "));
+            }
+        }
+
+        Ok(out)
+    }
+
+    fn to_encoder_source(&self) -> Result<String> {
+        let mut out = String::new();
+
+        let name = self.name();
+        let decoder_name = self.encoder_name()?;
+        let type_name = name.to_pascal_case()?;
+        let variable_name = name.to_camel_case()?;
+
+        out.push_str(&decoder_name);
+        out.push_str(" : ");
+        out.push_str(&type_name);
+        out.push_str(" -> Encode.Value\n");
+        out.push_str(&decoder_name);
+        out.push(' ');
+        out.push_str(&variable_name);
+        out.push_str(" =\n");
+
+        match &self {
+            Decl::CustomTypeEnum {
+                discriminator,
+                constructor_prefix,
+                cases,
+                ..
+            } => {
+                out.push_str("    case ");
+                out.push_str(&variable_name);
+                out.push_str(" of\n");
+
+                for (i, (case, case_type_opt)) in cases.iter().enumerate() {
+                    if i > 0 {
+                        out.push_str("\n\n")
+                    }
+
+                    let case_name = InflectedString::from(format!(
+                        "{}{}",
+                        constructor_prefix.to_pascal_case()?,
+                        case.to_pascal_case()?
+                    ));
+
+                    out.push_str("        ");
+                    out.push_str(&case_name.to_pascal_case()?);
+
+                    if case_type_opt.is_some() {
+                        out.push(' ');
+                        out.push_str(&case_name.to_camel_case()?);
+                    }
+
+                    out.push_str(" ->\n            ");
+
+                    match case_type_opt {
+                        Some(case_type) => out.push_str(
+                            &case_type
+                                .to_encoder_source(&variable_name)?
+                                .replace("\n", "\n            "),
+                        ),
+                        None => {
+                            out.push_str("Encode.string \"");
+                            out.push_str(case.orig());
+                            out.push('"');
+                        }
+                    }
+                }
+            }
+            Decl::TypeAlias { type_, .. } => {
+                out.push_str("    ");
+                out.push_str(
+                    &type_
+                        .to_encoder_source(&variable_name)?
+                        .replace('\n', "\n    "),
+                );
             }
         }
 
@@ -517,6 +597,10 @@ impl Type {
 
         Ok(out)
     }
+
+    fn to_encoder_source(&self, source_var: &str) -> Result<String> {
+        Ok(String::from("{- TODO -}"))
+    }
 }
 
 #[derive(Debug)]
@@ -575,6 +659,8 @@ impl Module {
             out.push_str(&decl.to_source()?);
             out.push_str("\n\n\n");
             out.push_str(&decl.to_decoder_source()?);
+            out.push_str("\n\n\n");
+            out.push_str(&decl.to_encoder_source()?);
             out.push('\n');
         }
 
