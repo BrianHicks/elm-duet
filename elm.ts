@@ -20,22 +20,11 @@ declare module Elm {
             } | {
               index: number;
               tag: "SetTagForPing";
-              value: string | null;
+              value: string;
             }) => void) => void;
           };
           docFromAutomerge: {
             send: (value: {
-              pings: ({
-                custom: Record<string, string>;
-                tag: string | null;
-                time: number;
-                version: "v1";
-              })[];
-              settings: {
-                minutesPerPing: number;
-                version: "v1";
-              };
-              version: "v1";
             }) => void;
           };
           notificationPermission: {

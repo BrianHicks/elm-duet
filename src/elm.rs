@@ -1,11 +1,14 @@
 use crate::inflected_string::InflectedString;
-use eyre::{bail, Result, WrapErr};
+use eyre::{bail, eyre, Result, WrapErr};
 use jtd::Schema;
 use std::collections::BTreeMap;
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum Type {
-    Scalar(&'static str),
+    Int,
+    Float,
+    Bool,
+    String,
     Maybe(Box<Type>),
     Unit,
     DictWithStringKeys(Box<Type>),
@@ -18,12 +21,142 @@ pub enum Type {
 pub enum Decl {
     CustomTypeEnum {
         name: InflectedString,
+        discriminator: Option<String>,
+        constructor_prefix: InflectedString,
         cases: BTreeMap<InflectedString, Option<Type>>,
     },
     TypeAlias {
         name: InflectedString,
         type_: Type,
     },
+}
+
+impl Decl {
+    fn to_source(&self) -> Result<String> {
+        let mut out = String::new();
+
+        match self {
+            Decl::CustomTypeEnum {
+                name,
+                constructor_prefix,
+                cases,
+                ..
+            } => {
+                out.push_str("type ");
+                out.push_str(&name.to_pascal_case()?);
+                out.push('\n');
+
+                for (i, (case_name, case_type_opt)) in cases.iter().enumerate() {
+                    if i == 0 {
+                        out.push_str("    = ");
+                    } else {
+                        out.push_str("    | ");
+                    }
+
+                    out.push_str(&constructor_prefix.to_pascal_case()?);
+                    out.push_str(&case_name.to_pascal_case()?);
+
+                    if let Some(case_type) = case_type_opt {
+                        out.push(' ');
+                        out.push_str(&case_type.to_source()?.replace('\n', "\n    "));
+                    }
+
+                    out.push('\n')
+                }
+            }
+            Decl::TypeAlias { name, type_ } => {
+                out.push_str("type alias ");
+                out.push_str(&name.to_pascal_case()?);
+                out.push_str(" =\n    ");
+                out.push_str(&type_.to_source()?.replace('\n', "\n    "));
+            }
+        }
+
+        Ok(out)
+    }
+
+    fn name(&self) -> &InflectedString {
+        match self {
+            Decl::CustomTypeEnum { name, .. } => name,
+            Decl::TypeAlias { name, .. } => name,
+        }
+    }
+
+    fn decoder_name(&self) -> Result<String> {
+        Ok(format!("{}Decoder", self.name().to_camel_case()?))
+    }
+
+    fn to_decoder_source(&self) -> Result<String> {
+        let mut out = String::new();
+
+        let name = self.name();
+        let decoder_name = self.decoder_name()?;
+        let type_name = name.to_pascal_case()?;
+        out.push_str(&decoder_name);
+        out.push_str(" : Decoder ");
+        out.push_str(&type_name);
+        out.push('\n');
+        out.push_str(&decoder_name);
+        out.push_str(" =\n");
+
+        match &self {
+            Decl::CustomTypeEnum {
+                constructor_prefix,
+                discriminator,
+                cases,
+                ..
+            } => {
+                out.push_str("    Decode.andThen\n        (\\tag ->\n            case tag of\n");
+
+                for (case, case_type_opt) in cases {
+                    out.push_str("                \"");
+                    out.push_str(case.orig());
+                    out.push_str("\" ->\n                    ");
+
+                    match case_type_opt {
+                        Some(type_) => {
+                            let sub_decoder = type_.to_decoder_source(&type_name)?;
+
+                            out.push_str("Decode.map ");
+                            out.push_str(&constructor_prefix.to_pascal_case()?);
+                            out.push_str(&case.to_pascal_case()?);
+                            if sub_decoder.contains('\n') {
+                                out.push_str("\n                        ");
+                                out.push_str(
+                                    &sub_decoder.replace('\n', "\n                        "),
+                                );
+                            } else {
+                                out.push(' ');
+                                out.push_str(&sub_decoder);
+                            }
+                        }
+                        None => {
+                            out.push_str("Decode.succeed ");
+                            out.push_str(&constructor_prefix.to_pascal_case()?);
+                            out.push_str(&case.to_pascal_case()?);
+                        }
+                    }
+                    out.push_str("\n\n");
+                }
+
+                out.push_str("        )\n        ");
+                match discriminator {
+                    None => out.push_str("Decode.string"),
+                    Some(name) => {
+                        out.push_str("(Decode.field \"");
+                        out.push_str(name);
+                        out.push_str("\" Decode.string)");
+                    }
+                }
+            }
+            Decl::TypeAlias { type_, .. } => {
+                out.push_str("    ");
+                out.push_str(&type_.to_decoder_source(&type_name)?.replace('\n', "\n    "));
+            }
+        }
+
+        Ok(out)
+    }
 }
 
 impl Type {
@@ -64,15 +197,15 @@ impl Type {
                 is_nullable = nullable;
 
                 match type_ {
-                    jtd::Type::Boolean => Self::Scalar("Bool"),
+                    jtd::Type::Boolean => Self::Bool,
                     jtd::Type::Int8
                     | jtd::Type::Uint8
                     | jtd::Type::Int16
                     | jtd::Type::Uint16
                     | jtd::Type::Int32
-                    | jtd::Type::Uint32 => Self::Scalar("Int"),
-                    jtd::Type::Float32 | jtd::Type::Float64 => Self::Scalar("Float"),
-                    jtd::Type::String | jtd::Type::Timestamp => Self::Scalar("String"),
+                    | jtd::Type::Uint32 => Self::Int,
+                    jtd::Type::Float32 | jtd::Type::Float64 => Self::Float,
+                    jtd::Type::String | jtd::Type::Timestamp => Self::String,
                 }
             }
             Schema::Enum {
@@ -95,6 +228,12 @@ impl Type {
 
                     decls.push(Decl::CustomTypeEnum {
                         name: name.into(),
+                        discriminator: None,
+                        constructor_prefix: metadata
+                            .get("constructorPrefix")
+                            .and_then(|n| n.as_str())
+                            .unwrap_or("")
+                            .into(),
                         cases,
                     });
 
@@ -172,7 +311,7 @@ impl Type {
                 metadata,
                 nullable,
                 mapping,
-                discriminator: _,
+                discriminator,
                 ..
             } => match metadata
                 .get("name")
@@ -195,6 +334,12 @@ impl Type {
                     }
                     decls.push(Decl::CustomTypeEnum {
                         name: name.into(),
+                        discriminator: Some(discriminator),
+                        constructor_prefix: metadata
+                            .get("constructorPrefix")
+                            .and_then(|n| n.as_str())
+                            .unwrap_or("")
+                            .into(),
                         cases,
                     });
 
@@ -213,25 +358,229 @@ impl Type {
             decls,
         ))
     }
+
+    fn to_source(&self) -> Result<String> {
+        Ok(match self {
+            Type::Bool => String::from("Bool"),
+            Type::Int => String::from("Int"),
+            Type::Float => String::from("Float"),
+            Type::String => String::from("String"),
+            Type::Maybe(inner) => {
+                let mut out = String::from("Maybe ");
+
+                let inner_source = inner.to_source()?;
+
+                if inner_source.contains(' ') {
+                    out.push('(');
+                    out.push_str(&inner_source);
+                    out.push(')');
+                } else {
+                    out.push_str(&inner_source);
+                }
+
+                out
+            }
+            Type::Unit => "()".to_string(),
+            Type::DictWithStringKeys(inner) => {
+                let mut out = String::from("Dict String ");
+
+                let inner_source = inner.to_source()?;
+
+                if inner_source.contains(' ') {
+                    out.push('(');
+                    out.push_str(&inner_source);
+                    out.push(')');
+                } else {
+                    out.push_str(&inner_source);
+                }
+
+                out
+            }
+            Type::List(inner) => {
+                let mut out = String::from("List ");
+
+                let inner_source = inner.to_source()?;
+
+                if inner_source.contains(' ') {
+                    out.push('(');
+                    out.push_str(&inner_source);
+                    out.push(')');
+                } else {
+                    out.push_str(&inner_source);
+                }
+
+                out
+            }
+            Type::Ref(ref_) => ref_.to_pascal_case()?,
+            Type::Record(fields) => {
+                let mut out = String::new();
+
+                if fields.is_empty() {
+                    out.push_str("{}");
+                } else {
+                    for (i, (name, value)) in fields.iter().enumerate() {
+                        if i == 0 {
+                            out.push_str("{ ");
+                        } else {
+                            out.push_str("\n, ");
+                        }
+
+                        out.push_str(&name.to_camel_case()?);
+                        out.push_str(" : ");
+                        out.push_str(&value.to_source()?.replace('\n', "\n    "));
+                    }
+
+                    out.push_str("\n}");
+                }
+                out
+            }
+        })
+    }
+
+    fn to_decoder_source(&self, dest_type: &str) -> Result<String> {
+        let mut out = String::new();
+
+        match self {
+            Type::Int => out.push_str("Decode.int"),
+            Type::Float => out.push_str("Decode.float"),
+            Type::Bool => out.push_str("Decode.bool"),
+            Type::String => out.push_str("Decode.string"),
+            Type::Maybe(type_) => {
+                let sub_decoder = type_.to_decoder_source(dest_type)?;
+                out.push_str("Decode.nullable ");
+
+                if sub_decoder.contains(' ') {
+                    out.push('(');
+                    out.push_str(&sub_decoder);
+                    out.push(')');
+                } else {
+                    out.push_str(&sub_decoder);
+                }
+            }
+            Type::Unit => out.push_str("Decode.null ()"),
+            Type::DictWithStringKeys(type_) => {
+                let sub_decoder = type_.to_decoder_source(dest_type)?;
+                out.push_str("Decode.dict ");
+
+                if sub_decoder.contains(' ') {
+                    out.push('(');
+                    out.push_str(&sub_decoder);
+                    out.push(')');
+                } else {
+                    out.push_str(&sub_decoder);
+                }
+            }
+            Type::List(type_) => {
+                let sub_decoder = type_.to_decoder_source(dest_type)?;
+                out.push_str("Decode.list ");
+
+                if sub_decoder.contains(' ') {
+                    out.push('(');
+                    out.push_str(&sub_decoder);
+                    out.push(')');
+                } else {
+                    out.push_str(&sub_decoder);
+                }
+            }
+            Type::Ref(name) => {
+                out.push_str(&name.to_camel_case()?);
+                out.push_str("Decoder");
+            }
+            Type::Record(fields) => {
+                out.push_str("Decode.map");
+                if fields.len() > 1 {
+                    out.push_str(&fields.len().to_string()); // TODO: fix for >9
+                }
+                out.push(' ');
+                out.push_str(dest_type);
+
+                for (name, field_type) in fields {
+                    let sub_decoder = field_type.to_decoder_source(dest_type)?;
+
+                    out.push_str("\n    ");
+                    out.push_str("(Decode.field \"");
+                    out.push_str(name.orig());
+                    out.push_str("\" ");
+
+                    if sub_decoder.contains(' ') {
+                        out.push('(');
+                        out.push_str(&sub_decoder);
+                        out.push(')');
+                    } else {
+                        out.push_str(&sub_decoder);
+                    }
+
+                    out.push(')');
+                }
+            }
+        }
+
+        Ok(out)
+    }
 }
 
-// pub struct Module {
-//     name: Vec<String>,
-//     defs: Vec<()>,
-// }
-//
-// impl Module {
-//     pub fn to_source(&self) -> Result<String> {
-//         if self.defs.is_empty() {
-//             eyre::bail!(
-//                 "Module {} didn't contain any definitions",
-//                 self.name.join(".")
-//             )
-//         }
-//
-//         Ok(String::new())
-//     }
-// }
+#[derive(Debug)]
+pub struct Module {
+    pub name: Vec<String>,
+    decls: Vec<Decl>,
+}
+
+impl Module {
+    pub fn new(name: Vec<String>) -> Self {
+        Self {
+            name,
+            decls: Vec::new(),
+        }
+    }
+
+    pub fn insert_from_schema(
+        &mut self,
+        schema: Schema,
+        name_suggestion: Option<String>,
+        globals: &BTreeMap<String, Schema>,
+    ) -> Result<()> {
+        let (type_, decls) = Type::from_schema(schema, name_suggestion.clone(), globals)?;
+
+        self.decls.extend(decls);
+
+        match type_ {
+            Type::Ref(_) => (),
+            otherwise => self.decls.push(Decl::TypeAlias {
+                name: name_suggestion
+                    .ok_or(eyre!("need a name suggestion to create a top-level definition from an unnamed type"))
+                    ?.into(),
+                type_: otherwise,
+            }),
+        };
+
+        Ok(())
+    }
+
+    pub fn to_source(&self) -> Result<String> {
+        if self.decls.is_empty() {
+            eyre::bail!(
+                "Module {} didn't contain any definitions",
+                self.name.join(".")
+            )
+        }
+
+        let mut out = String::new();
+
+        out.push_str("module ");
+        out.push_str(&self.name.join("."));
+        out.push_str(" exposing (..)\n\n{-| Warning: this file is automatically generated. Don't edit by hand!\n-}\n"); // TODO: expose exactly the things we need?
+
+        for decl in &self.decls {
+            out.push_str("\n\n");
+            out.push_str(&decl.to_source()?);
+            out.push_str("\n\n\n");
+            out.push_str(&decl.to_decoder_source()?);
+            out.push('\n');
+        }
+
+        Ok(out)
+    }
+}
 
 #[cfg(test)]
 mod tests {
@@ -256,84 +605,84 @@ mod tests {
         fn interprets_int8() {
             let (type_, _) = from_schema(json!({"type": "int8"}));
 
-            assert_eq!(type_, Type::Scalar("Int"));
+            assert_eq!(type_, Type::Int);
         }
 
         #[test]
         fn interprets_int16() {
             let (type_, _) = from_schema(json!({"type": "int16"}));
 
-            assert_eq!(type_, Type::Scalar("Int"));
+            assert_eq!(type_, Type::Int);
         }
 
         #[test]
         fn interprets_int32() {
             let (type_, _) = from_schema(json!({"type": "int32"}));
 
-            assert_eq!(type_, Type::Scalar("Int"));
+            assert_eq!(type_, Type::Int);
         }
 
         #[test]
         fn interprets_uint8() {
             let (type_, _) = from_schema(json!({"type": "uint8"}));
 
-            assert_eq!(type_, Type::Scalar("Int"));
+            assert_eq!(type_, Type::Int);
         }
 
         #[test]
         fn interprets_uint16() {
             let (type_, _) = from_schema(json!({"type": "uint16"}));
 
-            assert_eq!(type_, Type::Scalar("Int"));
+            assert_eq!(type_, Type::Int);
         }
 
         #[test]
         fn interprets_uint32() {
             let (type_, _) = from_schema(json!({"type": "uint32"}));
 
-            assert_eq!(type_, Type::Scalar("Int"));
+            assert_eq!(type_, Type::Int);
         }
 
         #[test]
         fn interprets_float32() {
             let (type_, _) = from_schema(json!({"type": "float32"}));
 
-            assert_eq!(type_, Type::Scalar("Float"));
+            assert_eq!(type_, Type::Float);
         }
 
         #[test]
         fn interprets_float64() {
             let (type_, _) = from_schema(json!({"type": "float64"}));
 
-            assert_eq!(type_, Type::Scalar("Float"));
+            assert_eq!(type_, Type::Float);
         }
 
         #[test]
         fn interprets_string() {
             let (type_, _) = from_schema(json!({"type": "string"}));
 
-            assert_eq!(type_, Type::Scalar("String"));
+            assert_eq!(type_, Type::String);
         }
 
         #[test]
         fn interprets_timestamp() {
             let (type_, _) = from_schema(json!({"type": "timestamp"}));
 
-            assert_eq!(type_, Type::Scalar("String"));
+            assert_eq!(type_, Type::String);
         }
 
         #[test]
         fn interprets_boolean() {
             let (type_, _) = from_schema(json!({"type": "boolean"}));
 
-            assert_eq!(type_, Type::Scalar("Bool"));
+            assert_eq!(type_, Type::Bool);
         }
 
         #[test]
         fn interprets_nullable_type() {
             let (type_, _) = from_schema(json!({"type": "string", "nullable": true}));
 
-            assert_eq!(type_, Type::Maybe(Box::new(Type::Scalar("String"))));
+            assert_eq!(type_, Type::Maybe(Box::new(Type::String)));
         }
 
         #[test]
@@ -351,10 +700,7 @@ mod tests {
                 },
             }));
 
-            assert_eq!(
-                type_,
-                Type::DictWithStringKeys(Box::new(Type::Scalar("String")))
-            );
+            assert_eq!(type_, Type::DictWithStringKeys(Box::new(Type::String)));
         }
 
         #[test]
@@ -368,9 +714,7 @@ mod tests {
 
             assert_eq!(
                 type_,
-                Type::Maybe(Box::new(Type::DictWithStringKeys(Box::new(Type::Scalar(
-                    "String"
-                )))))
+                Type::Maybe(Box::new(Type::DictWithStringKeys(Box::new(Type::String))))
             );
         }
 
@@ -382,7 +726,7 @@ mod tests {
                 },
             }));
 
-            assert_eq!(type_, Type::List(Box::new(Type::Scalar("String"))));
+            assert_eq!(type_, Type::List(Box::new(Type::String)));
         }
 
         #[test]
@@ -396,7 +740,7 @@ mod tests {
 
             assert_eq!(
                 type_,
-                Type::Maybe(Box::new(Type::List(Box::new(Type::Scalar("String")))))
+                Type::Maybe(Box::new(Type::List(Box::new(Type::String))))
             );
         }
 
@@ -432,6 +776,8 @@ mod tests {
                 decls,
                 Vec::from([Decl::CustomTypeEnum {
                     name: "Foo".into(),
+                    discriminator: None,
+                    constructor_prefix: "".into(),
                     cases: BTreeMap::from([("a".into(), None), ("b".into(), None)]),
                 }])
             );
@@ -519,20 +865,16 @@ mod tests {
                 Vec::from([
                     Decl::TypeAlias {
                         name: "a".into(),
-                        type_: Type::Record(BTreeMap::from([(
-                            "value".into(),
-                            Type::Scalar("String")
-                        )]))
+                        type_: Type::Record(BTreeMap::from([("value".into(), Type::String)]))
                     },
                     Decl::TypeAlias {
                         name: "b".into(),
-                        type_: Type::Record(BTreeMap::from([(
-                            "value".into(),
-                            Type::Scalar("Float")
-                        )]))
+                        type_: Type::Record(BTreeMap::from([("value".into(), Type::Float)]))
                     },
                     Decl::CustomTypeEnum {
                         name: "Foo".into(),
+                        discriminator: Some("tag".to_string()),
+                        constructor_prefix: "".into(),
                         cases: BTreeMap::from([
                             ("a".into(), Some(Type::Ref("a".into()))),
                             ("b".into(), Some(Type::Ref("b".into()))),
@@ -553,7 +895,7 @@ mod tests {
                 "ref": "foo",
             }));
 
-            assert_eq!(type_, Type::Scalar("String"));
+            assert_eq!(type_, Type::String);
             assert_eq!(decls, Vec::new());
         }
 
@@ -568,7 +910,7 @@ mod tests {
             )
             .unwrap();
 
-            assert_eq!(type_, Type::Scalar("String"));
+            assert_eq!(type_, Type::String);
             assert_eq!(decls, Vec::new());
         }
 
@@ -594,22 +936,73 @@ mod tests {
         }
     }
 
-    // mod module {
-    //     use super::*;
-    //
-    //     #[test]
-    //     fn error_on_no_defs_to_source() {
-    //         let m = Module {
-    //             name: Vec::from(["A".to_string(), "B".to_string()]),
-    //             defs: Vec::new(),
-    //         };
-    //
-    //         let err = m.to_source().unwrap_err();
-    //
-    //         assert_eq!(
-    //             err.to_string(),
-    //             "Module A.B didn't contain any definitions".to_string()
-    //         )
-    //     }
-    // }
+    mod module {
+        use super::*;
+        use serde_json::{json, Value};
+
+        fn from_json(value: Value) -> jtd::Schema {
+            let json = serde_json::from_value(value).unwrap();
+            Schema::from_serde_schema(json).unwrap()
+        }
+
+        fn from_schema(value: Value, name_suggestion: Option<String>) -> Module {
+            let mut module = Module::new(Vec::from(["Main".into()]));
+
+            module
+                .insert_from_schema(from_json(value), name_suggestion, &BTreeMap::new())
+                .expect("valid schema from JSON value");
+
+            module
+        }
+
+        #[test]
+        fn from_schema_ref() {
+            let mod_ = from_schema(
+                json!({
+                    "properties": {
+                        "a": {
+                            "type": "string"
+                        }
+                    }
+                }),
+                Some("Flags".into()),
+            );
+
+            assert_eq!(
+                mod_.decls,
+                Vec::from([Decl::TypeAlias {
+                    name: "Flags".into(),
+                    type_: Type::Record(BTreeMap::from([("a".into(), Type::String)]))
+                }])
+            );
+        }
+
+        #[test]
+        fn from_schema_non_ref() {
+            let mod_ = from_schema(json!({"type": "string"}), Some("Flags".into()));
+
+            assert_eq!(
+                mod_.decls,
+                Vec::from([Decl::TypeAlias {
+                    name: "Flags".into(),
+                    type_: Type::String
+                }])
+            );
+        }
+
+        #[test]
+        fn error_on_no_defs_to_source() {
+            let m = Module {
+                name: Vec::from(["A".to_string(), "B".to_string()]),
+                decls: Vec::new(),
+            };
+
+            let err = m.to_source().unwrap_err();
+
+            assert_eq!(
+                err.to_string(),
+                "Module A.B didn't contain any definitions".to_string()
+            )
+        }
+    }
 }

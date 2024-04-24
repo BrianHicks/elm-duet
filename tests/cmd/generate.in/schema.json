@@ -79,35 +79,27 @@
 	  "discriminator": "tag",
 	  "mapping": {
 	    "SetMinutesPerPing": {
-	      "metadata": {
-		"name": "SetMinutesPerPing"
-	      },
 	      "properties": {
 		"value": {
-		  "type": "float32"
+		  "type": "float64"
 		}
 	      }
 	    },
 	    "AddNewPingAt": {
-	      "metadata": {
-		"name": "AddNewPingAt"
-	      },
 	      "properties": {
 		"value": {
-		  "type": "float32"
+		  "type": "float64"
 		}
 	      }
 	    },
 	    "SetTagForPing": {
-	      "metadata": {
-		"name": "SetTagForPing"
-	      },
 	      "properties": {
 		"index": {
-		  "type": "uint32"
+		  "type": "float64"
 		},
 		"value": {
-		  "type": "string"
+		  "type": "string",
+		  "nullable": true
 		}
 	      }
 	    }
@@ -124,7 +116,72 @@
   },
   "definitions": {
     "doc": {
-      "properties": {}
+      "metadata": {
+	"constructorPrefix": "doc"
+      },
+      "discriminator": "version",
+      "mapping": {
+	"v1": {
+	  "metadata": {
+	    "name": "DocV1"
+	  },
+	  "properties": {
+	    "pings": {
+	      "elements": {
+		"ref": "ping"
+	      }
+	    },
+	    "settings": {
+	      "ref": "settings"
+	    }
+	  }
+	}
+      }
+    },
+    "settings": {
+      "metadata": {
+	"constructorPrefix": "settings"
+      },
+      "discriminator": "version",
+      "mapping": {
+	"v1": {
+	  "metadata": {
+	    "name": "SettingsV1"
+	  },
+	  "properties": {
+	    "minutesPerPing": {
+	      "type": "int32"
+	    }
+	  }
+	}
+      }
+    },
+    "ping": {
+      "metadata": {
+	"constructorPrefix": "ping"
+      },
+      "discriminator": "version",
+      "mapping": {
+	"v1": {
+	  "metadata": {
+	    "name": "PingV1"
+	  },
+	  "properties": {
+	    "time": {
+	      "type": "int32"
+	    },
+	    "tag": {
+	      "type": "string",
+	      "nullable": true
+	    },
+	    "custom": {
+	      "values": {
+		"type": "string"
+	      }
+	    }
+	  }
+	}
+      }
     }
   }
 }
