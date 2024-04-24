@@ -437,19 +437,55 @@ impl Type {
     }
 
     fn to_decoder_source(&self) -> Result<String> {
-        let out = String::new();
+        let mut out = String::new();
 
         match self {
-            Type::Int => todo!(),
-            Type::Float => todo!(),
-            Type::Bool => todo!(),
-            Type::String => todo!(),
-            Type::Maybe(_) => todo!(),
-            Type::Unit => todo!(),
-            Type::DictWithStringKeys(_) => todo!(),
-            Type::List(_) => todo!(),
-            Type::Ref(_) => todo!(),
-            Type::Record(_) => todo!(),
+            Type::Int => out.push_str("Decode.int"),
+            Type::Float => out.push_str("Decode.float"),
+            Type::Bool => out.push_str("Decode.bool"),
+            Type::String => out.push_str("Decode.string"),
+            Type::Maybe(type_) => {
+                let sub_decoder = type_.to_decoder_source()?;
+                out.push_str("Decode.nullable ");
+
+                if sub_decoder.contains(' ') {
+                    out.push('(');
+                    out.push_str(&sub_decoder);
+                    out.push(')');
+                } else {
+                    out.push_str(&sub_decoder);
+                }
+            }
+            Type::Unit => out.push_str("Decode.null ()"),
+            Type::DictWithStringKeys(type_) => {
+                let sub_decoder = type_.to_decoder_source()?;
+                out.push_str("Decode.dict ");
+
+                if sub_decoder.contains(' ') {
+                    out.push('(');
+                    out.push_str(&sub_decoder);
+                    out.push(')');
+                } else {
+                    out.push_str(&sub_decoder);
+                }
+            }
+            Type::List(type_) => {
+                let sub_decoder = type_.to_decoder_source()?;
+                out.push_str("Decode.list ");
+
+                if sub_decoder.contains(' ') {
+                    out.push('(');
+                    out.push_str(&sub_decoder);
+                    out.push(')');
+                } else {
+                    out.push_str(&sub_decoder);
+                }
+            }
+            Type::Ref(name) => {
+                out.push_str(&name.to_camel_case()?);
+                out.push_str("Decoder");
+            }
+            Type::Record(_) => out.push_str("Decode.fail \"TODO: record\""),
         }
 
         Ok(out)
