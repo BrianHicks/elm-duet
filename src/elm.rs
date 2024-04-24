@@ -5,7 +5,10 @@ use std::collections::BTreeMap;
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum Type {
-    Scalar(&'static str),
+    Int,
+    Float,
+    Bool,
+    String,
     Maybe(Box<Type>),
     Unit,
     DictWithStringKeys(Box<Type>),
@@ -193,15 +196,15 @@ impl Type {
                 is_nullable = nullable;
 
                 match type_ {
-                    jtd::Type::Boolean => Self::Scalar("Bool"),
+                    jtd::Type::Boolean => Self::Bool,
                     jtd::Type::Int8
                     | jtd::Type::Uint8
                     | jtd::Type::Int16
                     | jtd::Type::Uint16
                     | jtd::Type::Int32
-                    | jtd::Type::Uint32 => Self::Scalar("Int"),
-                    jtd::Type::Float32 | jtd::Type::Float64 => Self::Scalar("Float"),
-                    jtd::Type::String | jtd::Type::Timestamp => Self::Scalar("String"),
+                    | jtd::Type::Uint32 => Self::Int,
+                    jtd::Type::Float32 | jtd::Type::Float64 => Self::Float,
+                    jtd::Type::String | jtd::Type::Timestamp => Self::String,
                 }
             }
             Schema::Enum {
@@ -357,7 +360,10 @@ impl Type {
 
     fn to_source(&self) -> Result<String> {
         Ok(match self {
-            Type::Scalar(scalar) => scalar.to_string(),
+            Type::Bool => String::from("Bool"),
+            Type::Int => String::from("Int"),
+            Type::Float => String::from("Float"),
+            Type::String => String::from("String"),
             Type::Maybe(inner) => {
                 let mut out = String::from("Maybe ");
 
@@ -431,7 +437,22 @@ impl Type {
     }
 
     fn to_decoder_source(&self) -> Result<String> {
-        Ok(String::from("(Decode.fail \"TODO\")"))
+        let out = String::new();
+
+        match self {
+            Type::Int => todo!(),
+            Type::Float => todo!(),
+            Type::Bool => todo!(),
+            Type::String => todo!(),
+            Type::Maybe(_) => todo!(),
+            Type::Unit => todo!(),
+            Type::DictWithStringKeys(_) => todo!(),
+            Type::List(_) => todo!(),
+            Type::Ref(_) => todo!(),
+            Type::Record(_) => todo!(),
+        }
+
+        Ok(out)
     }
 }
 
@@ -521,84 +542,84 @@ mod tests {
         fn interprets_int8() {
             let (type_, _) = from_schema(json!({"type": "int8"}));
 
-            assert_eq!(type_, Type::Scalar("Int"));
+            assert_eq!(type_, Type::Int);
         }
 
         #[test]
         fn interprets_int16() {
             let (type_, _) = from_schema(json!({"type": "int16"}));
 
-            assert_eq!(type_, Type::Scalar("Int"));
+            assert_eq!(type_, Type::Int);
         }
 
         #[test]
         fn interprets_int32() {
             let (type_, _) = from_schema(json!({"type": "int32"}));
 
-            assert_eq!(type_, Type::Scalar("Int"));
+            assert_eq!(type_, Type::Int);
         }
 
         #[test]
         fn interprets_uint8() {
             let (type_, _) = from_schema(json!({"type": "uint8"}));
 
-            assert_eq!(type_, Type::Scalar("Int"));
+            assert_eq!(type_, Type::Int);
         }
 
         #[test]
         fn interprets_uint16() {
             let (type_, _) = from_schema(json!({"type": "uint16"}));
 
-            assert_eq!(type_, Type::Scalar("Int"));
+            assert_eq!(type_, Type::Int);
         }
 
         #[test]
         fn interprets_uint32() {
             let (type_, _) = from_schema(json!({"type": "uint32"}));
 
-            assert_eq!(type_, Type::Scalar("Int"));
+            assert_eq!(type_, Type::Int);
         }
 
         #[test]
         fn interprets_float32() {
             let (type_, _) = from_schema(json!({"type": "float32"}));
 
-            assert_eq!(type_, Type::Scalar("Float"));
+            assert_eq!(type_, Type::Float);
         }
 
         #[test]
         fn interprets_float64() {
             let (type_, _) = from_schema(json!({"type": "float64"}));
 
-            assert_eq!(type_, Type::Scalar("Float"));
+            assert_eq!(type_, Type::Float);
         }
 
         #[test]
         fn interprets_string() {
             let (type_, _) = from_schema(json!({"type": "string"}));
 
-            assert_eq!(type_, Type::Scalar("String"));
+            assert_eq!(type_, Type::String);
         }
 
         #[test]
         fn interprets_timestamp() {
             let (type_, _) = from_schema(json!({"type": "timestamp"}));
 
-            assert_eq!(type_, Type::Scalar("String"));
+            assert_eq!(type_, Type::String);
         }
 
         #[test]
         fn interprets_boolean() {
             let (type_, _) = from_schema(json!({"type": "boolean"}));
 
-            assert_eq!(type_, Type::Scalar("Bool"));
+            assert_eq!(type_, Type::Bool);
         }
 
         #[test]
         fn interprets_nullable_type() {
             let (type_, _) = from_schema(json!({"type": "string", "nullable": true}));
 
-            assert_eq!(type_, Type::Maybe(Box::new(Type::Scalar("String"))));
+            assert_eq!(type_, Type::Maybe(Box::new(Type::String)));
         }
 
         #[test]
@@ -616,10 +637,7 @@ mod tests {
                 },
             }));
 
-            assert_eq!(
-                type_,
-                Type::DictWithStringKeys(Box::new(Type::Scalar("String")))
-            );
+            assert_eq!(type_, Type::DictWithStringKeys(Box::new(Type::String)));
         }
 
         #[test]
@@ -633,9 +651,7 @@ mod tests {
 
             assert_eq!(
                 type_,
-                Type::Maybe(Box::new(Type::DictWithStringKeys(Box::new(Type::Scalar(
-                    "String"
-                )))))
+                Type::Maybe(Box::new(Type::DictWithStringKeys(Box::new(Type::String))))
             );
         }
 
@@ -647,7 +663,7 @@ mod tests {
                 },
             }));
 
-            assert_eq!(type_, Type::List(Box::new(Type::Scalar("String"))));
+            assert_eq!(type_, Type::List(Box::new(Type::String)));
         }
 
         #[test]
@@ -661,7 +677,7 @@ mod tests {
 
             assert_eq!(
                 type_,
-                Type::Maybe(Box::new(Type::List(Box::new(Type::Scalar("String")))))
+                Type::Maybe(Box::new(Type::List(Box::new(Type::String))))
             );
         }
 
@@ -786,17 +802,11 @@ mod tests {
                 Vec::from([
                     Decl::TypeAlias {
                         name: "a".into(),
-                        type_: Type::Record(BTreeMap::from([(
-                            "value".into(),
-                            Type::Scalar("String")
-                        )]))
+                        type_: Type::Record(BTreeMap::from([("value".into(), Type::String)]))
                     },
                     Decl::TypeAlias {
                         name: "b".into(),
-                        type_: Type::Record(BTreeMap::from([(
-                            "value".into(),
-                            Type::Scalar("Float")
-                        )]))
+                        type_: Type::Record(BTreeMap::from([("value".into(), Type::Float)]))
                     },
                     Decl::CustomTypeEnum {
                         name: "Foo".into(),
@@ -822,7 +832,7 @@ mod tests {
                 "ref": "foo",
             }));
 
-            assert_eq!(type_, Type::Scalar("String"));
+            assert_eq!(type_, Type::String);
             assert_eq!(decls, Vec::new());
         }
 
@@ -837,7 +847,7 @@ mod tests {
             )
             .unwrap();
 
-            assert_eq!(type_, Type::Scalar("String"));
+            assert_eq!(type_, Type::String);
             assert_eq!(decls, Vec::new());
         }
 
@@ -899,7 +909,7 @@ mod tests {
                 mod_.decls,
                 Vec::from([Decl::TypeAlias {
                     name: "Flags".into(),
-                    type_: Type::Record(BTreeMap::from([("a".into(), Type::Scalar("String"))]))
+                    type_: Type::Record(BTreeMap::from([("a".into(), Type::String)]))
                 }])
             );
         }
@@ -912,7 +922,7 @@ mod tests {
                 mod_.decls,
                 Vec::from([Decl::TypeAlias {
                     name: "Flags".into(),
-                    type_: Type::Scalar("String")
+                    type_: Type::String
                 }])
             );
         }
