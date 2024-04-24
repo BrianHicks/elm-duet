@@ -96,6 +96,11 @@ type alias Flags =
     { currentJwt : Maybe String
     }
 
+
+flagsDecoder : Decoder Flags
+flagsdecoder =
+    Debug.todo "DECODER"
+
 ```
 
 And these for the ports:
@@ -111,8 +116,18 @@ type alias Logout =
     ()
 
 
+logoutDecoder : Decoder Logout
+logoutdecoder =
+    Debug.todo "DECODER"
+
+
 type alias NewJwt =
     String
+
+
+newJwtDecoder : Decoder NewJwt
+newJwtdecoder =
+    Debug.todo "DECODER"
 
 ```
 

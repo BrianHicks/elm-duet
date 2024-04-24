@@ -7,3 +7,8 @@ module Main.Flags exposing (..)
 type alias Flags =
     { currentJwt : Maybe String
     }
+
+
+flagsDecoder : Decoder Flags
+flagsdecoder =
+    Debug.todo "DECODER"

@@ -11,7 +11,17 @@ type NotificationPermission
 
 
 
+notificationPermissionDecoder : Decoder NotificationPermission
+notificationPermissiondecoder =
+    Debug.todo "DECODER"
+
+
 type alias Flags =
     { currentTimeMillis : Float
     , notificationPermission : NotificationPermission
     }
+
+
+flagsDecoder : Decoder Flags
+flagsdecoder =
+    Debug.todo "DECODER"

@@ -9,15 +9,30 @@ type alias AddNewPingAt =
     }
 
 
+addNewPingAtDecoder : Decoder AddNewPingAt
+addNewPingAtdecoder =
+    Debug.todo "DECODER"
+
+
 type alias SetMinutesPerPing =
     { value : Float
     }
+
+
+setMinutesPerPingDecoder : Decoder SetMinutesPerPing
+setMinutesPerPingdecoder =
+    Debug.todo "DECODER"
 
 
 type alias SetTagForPing =
     { index : Float
     , value : Maybe String
     }
+
+
+setTagForPingDecoder : Decoder SetTagForPing
+setTagForPingdecoder =
+    Debug.todo "DECODER"
 
 
 type ChangeDocument
@@ -27,6 +42,11 @@ type ChangeDocument
 
 
 
+changeDocumentDecoder : Decoder ChangeDocument
+changeDocumentdecoder =
+    Debug.todo "DECODER"
+
+
 type alias PingV1 =
     { custom : Dict String String
     , tag : Maybe String
@@ -34,9 +54,19 @@ type alias PingV1 =
     }
 
 
+pingV1Decoder : Decoder PingV1
+pingV1decoder =
+    Debug.todo "DECODER"
+
+
 type PingsElements
     = PingV1 PingV1
 
+
+
+pingsElementsDecoder : Decoder PingsElements
+pingsElementsdecoder =
+    Debug.todo "DECODER"
 
 
 type alias SettingsV1 =
@@ -44,9 +74,19 @@ type alias SettingsV1 =
     }
 
 
+settingsV1Decoder : Decoder SettingsV1
+settingsV1decoder =
+    Debug.todo "DECODER"
+
+
 type Settings
     = SettingsV1 SettingsV1
 
+
+
+settingsDecoder : Decoder Settings
+settingsdecoder =
+    Debug.todo "DECODER"
 
 
 type alias DocV1 =
@@ -55,9 +95,19 @@ type alias DocV1 =
     }
 
 
+docV1Decoder : Decoder DocV1
+docV1decoder =
+    Debug.todo "DECODER"
+
+
 type DocFromAutomerge
     = DocV1 DocV1
 
+
+
+docFromAutomergeDecoder : Decoder DocFromAutomerge
+docFromAutomergedecoder =
+    Debug.todo "DECODER"
 
 
 type NotificationPermission
@@ -67,8 +117,18 @@ type NotificationPermission
 
 
 
+notificationPermissionDecoder : Decoder NotificationPermission
+notificationPermissiondecoder =
+    Debug.todo "DECODER"
+
+
 type alias RequestNotificationPermission =
     ()
+
+
+requestNotificationPermissionDecoder : Decoder RequestNotificationPermission
+requestNotificationPermissiondecoder =
+    Debug.todo "DECODER"
 
 
 type alias NotificationOptions =
@@ -82,7 +142,17 @@ type alias NotificationOptions =
     }
 
 
+notificationOptionsDecoder : Decoder NotificationOptions
+notificationOptionsdecoder =
+    Debug.todo "DECODER"
+
+
 type alias SendNotification =
     { options : NotificationOptions
     , title : String
     }
+
+
+sendNotificationDecoder : Decoder SendNotification
+sendNotificationdecoder =
+    Debug.todo "DECODER"
