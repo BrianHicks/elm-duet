@@ -1,0 +1,29 @@
+{
+    "modules": {
+	"Main": {
+	    "ports": {
+		"elmToJs": {
+		    "metadata": {
+			"direction": "ElmToJs"
+		    },
+		    "ref": "roundTripper"
+		},
+		"jsToElm": {
+		    "metadata": {
+			"direction": "JsToElm"
+		    },
+		    "ref": "roundTripper"
+		}
+	    }
+	}
+    },
+    "definitions": {
+	"roundTripper": {
+	    "properties": {
+		"a": {
+		    "type": "string"
+		}
+	    }
+	}
+    }
+}
