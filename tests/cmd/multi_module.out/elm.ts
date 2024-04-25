@@ -9,7 +9,9 @@ declare module Elm {
     function init(config: {
       flags: Flags;
       node: HTMLElement;
-    }): void
+    }): {
+      ports: Ports;
+    }
   }
 
   namespace B {
@@ -20,7 +22,9 @@ declare module Elm {
     function init(config: {
       flags: Flags;
       node: HTMLElement;
-    }): void
+    }): {
+      ports: Ports;
+    }
   
     namespace B2 {
       type Flags = string
@@ -30,7 +34,9 @@ declare module Elm {
       function init(config: {
         flags: Flags;
         node: HTMLElement;
-      }): void
+      }): {
+        ports: Ports;
+      }
     }
   }
 }

@@ -22,6 +22,8 @@ declare module Elm {
     function init(config: {
       flags: Flags;
       node: HTMLElement;
-    }): void
+    }): {
+      ports: Ports;
+    }
   }
 }

@@ -362,7 +362,7 @@ impl TSType {
                         ("flags", flags),
                     ])),
                 )]),
-                Self::new_void(),
+                Self::new_singleton_object("ports", Self::new_ref("Ports")),
             ),
         )
     }
