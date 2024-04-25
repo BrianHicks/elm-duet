@@ -28,7 +28,6 @@ notificationPermissionDecoder =
 
                 "granted" ->
                     Json.Decode.succeed Granted
-
         )
         Json.Decode.string
 

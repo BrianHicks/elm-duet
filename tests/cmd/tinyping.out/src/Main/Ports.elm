@@ -95,7 +95,6 @@ changeDocumentDecoder =
 
                 "SetTagForPing" ->
                     Json.Decode.map SetTagForPing setTagForPingDecoder
-
         )
         (Json.Decode.field "tag" Json.Decode.string)
 
@@ -157,7 +156,6 @@ pingsElementsDecoder =
             case tag of
                 "v1" ->
                     Json.Decode.map PingV1 pingV1Decoder
-
         )
         (Json.Decode.field "version" Json.Decode.string)
 
@@ -200,7 +198,6 @@ settingsDecoder =
             case tag of
                 "v1" ->
                     Json.Decode.map SettingsV1 settingsV1Decoder
-
         )
         (Json.Decode.field "version" Json.Decode.string)
 
@@ -246,7 +243,6 @@ docFromAutomergeDecoder =
             case tag of
                 "v1" ->
                     Json.Decode.map DocV1 docV1Decoder
-
         )
         (Json.Decode.field "version" Json.Decode.string)
 
@@ -278,7 +274,6 @@ notificationPermissionDecoder =
 
                 "granted" ->
                     Json.Decode.succeed Granted
-
         )
         Json.Decode.string
 
