@@ -222,7 +222,7 @@ impl Decl {
                     match case_type_opt {
                         Some(case_type) => out.push_str(
                             &case_type
-                                .to_encoder_source(&case_name.to_camel_case()?)?
+                                .to_encoder_source(&case_name.to_camel_case()?, &None)?
                                 .replace('\n', "\n            "),
                         ),
                         None => {
@@ -233,20 +233,39 @@ impl Decl {
                     }
                 }
             }
-            Decl::TypeAlias { type_, .. } => {
+            Decl::TypeAlias {
+                type_,
+                discriminator,
+                ..
+            } => {
+                let discriminator_variable_name_opt = discriminator.as_ref().map(|name| {
+                    if *name == variable_name {
+                        format!("{name}Discriminator")
+                    } else {
+                        name.to_owned()
+                    }
+                });
+
                 out.push_str(&decoder_name);
                 out.push_str(" : ");
+                if discriminator.is_some() {
+                    out.push_str("String -> ");
+                }
                 out.push_str(&type_name);
                 out.push_str(" -> Encode.Value\n");
                 out.push_str(&decoder_name);
                 out.push(' ');
+                if let Some(discriminator_variable_name) = &discriminator_variable_name_opt {
+                    out.push_str(discriminator_variable_name);
+                    out.push(' ');
+                }
                 out.push_str(&variable_name);
                 out.push_str(" =\n");
 
                 out.push_str("    ");
                 out.push_str(
                     &type_
-                        .to_encoder_source(&variable_name)?
+                        .to_encoder_source(&variable_name, &discriminator_variable_name_opt)?
                         .replace('\n', "\n    "),
                 );
             }
@@ -636,7 +655,11 @@ impl Type {
         Ok(out)
     }
 
-    fn to_encoder_source(&self, source_var: &str) -> Result<String> {
+    fn to_encoder_source(
+        &self,
+        source_var: &str,
+        discriminator_var_opt: &Option<String>,
+    ) -> Result<String> {
         let mut out = String::new();
 
         match self {
@@ -660,19 +683,23 @@ impl Type {
                 out.push_str("case ");
                 out.push_str(source_var);
                 out.push_str(" of\n    Just value ->\n        ");
-                out.push_str(&type_.to_encoder_source("value")?.replace('\n', "\n       "));
+                out.push_str(
+                    &type_
+                        .to_encoder_source("value", discriminator_var_opt)?
+                        .replace('\n', "\n       "),
+                );
                 out.push_str("\n\n    Nothing ->\n        Encode.null");
             }
             Type::Unit => out.push_str("Encode.null"),
             Type::DictWithStringKeys(values) => {
                 out.push_str("Encode.dict identity (\\value -> ");
-                out.push_str(&values.to_encoder_source("value")?);
+                out.push_str(&values.to_encoder_source("value", discriminator_var_opt)?);
                 out.push_str(") ");
                 out.push_str(source_var);
             }
             Type::List(values) => {
                 out.push_str("Encode.list (\\value -> ");
-                out.push_str(&values.to_encoder_source("value")?);
+                out.push_str(&values.to_encoder_source("value", discriminator_var_opt)?);
                 out.push_str(") ");
                 out.push_str(source_var);
             }
@@ -694,11 +721,10 @@ impl Type {
                     out.push_str(name.orig());
                     out.push('"');
 
-                    let field_encoder = field_type.to_encoder_source(&format!(
-                        "{}.{}",
-                        source_var,
-                        name.to_camel_case()?
-                    ))?;
+                    let field_encoder = field_type.to_encoder_source(
+                        &format!("{}.{}", source_var, name.to_camel_case()?),
+                        discriminator_var_opt,
+                    )?;
 
                     if field_encoder.contains('\n') {
                         out.push_str("\n      , ");
@@ -711,6 +737,15 @@ impl Type {
 
                     out.push_str(" )\n");
                 }
+
+                if let Some(discriminator_var) = discriminator_var_opt {
+                    out.push_str("    , ( \"");
+                    out.push_str(discriminator_var); // TODO: this probably should be inflected
+                    out.push_str("\", Encode.string ");
+                    out.push_str(discriminator_var);
+                    out.push_str(" )\n");
+                }
+
                 out.push_str("    ]");
             }
         }
