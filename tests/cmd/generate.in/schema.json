@@ -7,9 +7,6 @@
 	    "type": "float32"
 	  },
 	  "notificationPermission": {
-	    "metadata": {
-	      "name": "NotificationPermission"
-	    },
 	    "enum": ["default", "granted", "denied"]
 	  }
 	}
@@ -28,8 +25,7 @@
 	},
 	"sendNotification": {
 	  "metadata": {
-	    "direction": "ElmToJs",
-	    "name": "Notification"
+	    "direction": "ElmToJs"
 	  },
 	  "properties": {
 	    "title": {
