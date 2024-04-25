@@ -439,7 +439,7 @@ notificationPermission_ toMsg =
 port requestNotificationPermission : Value -> Cmd msg
 
 
-requestNotificationPermission_ : TODO -> Cmd msg
+requestNotificationPermission_ : RequestNotificationPermission -> Cmd msg
 requestNotificationPermission_ value =
     Debug.todo "send"
 

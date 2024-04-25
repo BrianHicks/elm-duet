@@ -35,7 +35,7 @@ encodeNewJwt newJwt =
 port logout : Value -> Cmd msg
 
 
-logout_ : TODO -> Cmd msg
+logout_ : Logout -> Cmd msg
 logout_ value =
     Debug.todo "send"
 
@@ -43,6 +43,6 @@ logout_ value =
 port newJwt : Value -> Cmd msg
 
 
-newJwt_ : TODO -> Cmd msg
+newJwt_ : NewJwt -> Cmd msg
 newJwt_ value =
     Debug.todo "send"
