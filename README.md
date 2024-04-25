@@ -154,6 +154,12 @@ encodeNewJwt : NewJwt -> Encode.Value
 encodeNewJwt newJwt =
     Encode.string newJwt
 
+
+port logout : Unit -> Cmd msg
+
+
+port newJwt : String -> Cmd msg
+
 ```
 
 Here's the full help to give you an idea of what you can do with the tool:

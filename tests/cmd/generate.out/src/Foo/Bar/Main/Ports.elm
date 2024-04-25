@@ -410,3 +410,18 @@ encodeSendNotification sendNotification =
         [ ( "options", encodeNotificationOptions sendNotification.options )
         , ( "title", Encode.string sendNotification.title )
         ]
+
+
+port changeDocument : Ref(InflectedString("changeDocument")) -> Cmd msg
+
+
+port docFromAutomerge : (Ref(InflectedString("docFromAutomerge")) -> msg) -> Sub msg
+
+
+port notificationPermission : (Ref(InflectedString("notificationPermission")) -> msg) -> Sub msg
+
+
+port requestNotificationPermission : Unit -> Cmd msg
+
+
+port sendNotification : Ref(InflectedString("sendNotification")) -> Cmd msg

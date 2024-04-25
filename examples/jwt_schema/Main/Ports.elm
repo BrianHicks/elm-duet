@@ -30,3 +30,9 @@ newJwtDecoder =
 encodeNewJwt : NewJwt -> Encode.Value
 encodeNewJwt newJwt =
     Encode.string newJwt
+
+
+port logout : Unit -> Cmd msg
+
+
+port newJwt : String -> Cmd msg
