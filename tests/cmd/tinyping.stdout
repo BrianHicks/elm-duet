@@ -1,3 +1,3 @@
 wrote elm.ts
-wrote src/Foo/Bar/Main/Flags.elm
-wrote src/Foo/Bar/Main/Ports.elm
+wrote src/Main/Flags.elm
+wrote src/Main/Ports.elm
