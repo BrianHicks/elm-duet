@@ -29,7 +29,7 @@ pub enum Decl {
         name: InflectedString,
         type_: Type,
 
-        // a bit of a hack, but we need to add disciminators specifically to records in order ot
+        // a bit of a hack, but we need to add disciminators specifically to records in order to
         // make the decoders and encoders round-trip properly.
         discriminator: Option<(String, String)>,
     },
