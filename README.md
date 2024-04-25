@@ -99,20 +99,20 @@ type alias Flags =
 
 flagsDecoder : Decoder Flags
 flagsDecoder =
-    Decode.map Flags
-        (Decode.field "currentJwt" (Decode.nullable Decode.string))
+    Json.Decode.map Flags
+        (Json.Decode.field "currentJwt" (Json.Decode.nullable Json.Decode.string))
 
 
-encodeFlags : Flags -> Encode.Value
+encodeFlags : Flags -> Json.Encode.Value
 encodeFlags flags =
-    Encode.object
+    Json.Encode.object
         [ ( "currentJwt"
           , case flags.currentJwt of
                 Just value ->
-                    Encode.string value
+                    Json.Encode.string value
             
                 Nothing ->
-                    Encode.null
+                    Json.Encode.null
           )
         ]
 
@@ -133,12 +133,12 @@ type alias Logout =
 
 logoutDecoder : Decoder Logout
 logoutDecoder =
-    Decode.null ()
+    Json.Decode.null ()
 
 
-encodeLogout : Logout -> Encode.Value
+encodeLogout : Logout -> Json.Encode.Value
 encodeLogout logout =
-    Encode.null
+    Json.Encode.null
 
 
 type alias NewJwt =
@@ -147,12 +147,12 @@ type alias NewJwt =
 
 newJwtDecoder : Decoder NewJwt
 newJwtDecoder =
-    Decode.string
+    Json.Decode.string
 
 
-encodeNewJwt : NewJwt -> Encode.Value
+encodeNewJwt : NewJwt -> Json.Encode.Value
 encodeNewJwt newJwt =
-    Encode.string newJwt
+    Json.Encode.string newJwt
 
 
 port logout : Value -> Cmd msg

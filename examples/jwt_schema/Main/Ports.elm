@@ -10,12 +10,12 @@ type alias Logout =
 
 logoutDecoder : Decoder Logout
 logoutDecoder =
-    Decode.null ()
+    Json.Decode.null ()
 
 
-encodeLogout : Logout -> Encode.Value
+encodeLogout : Logout -> Json.Encode.Value
 encodeLogout logout =
-    Encode.null
+    Json.Encode.null
 
 
 type alias NewJwt =
@@ -24,12 +24,12 @@ type alias NewJwt =
 
 newJwtDecoder : Decoder NewJwt
 newJwtDecoder =
-    Decode.string
+    Json.Decode.string
 
 
-encodeNewJwt : NewJwt -> Encode.Value
+encodeNewJwt : NewJwt -> Json.Encode.Value
 encodeNewJwt newJwt =
-    Encode.string newJwt
+    Json.Encode.string newJwt
 
 
 port logout : Value -> Cmd msg

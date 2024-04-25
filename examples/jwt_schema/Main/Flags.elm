@@ -11,19 +11,19 @@ type alias Flags =
 
 flagsDecoder : Decoder Flags
 flagsDecoder =
-    Decode.map Flags
-        (Decode.field "currentJwt" (Decode.nullable Decode.string))
+    Json.Decode.map Flags
+        (Json.Decode.field "currentJwt" (Json.Decode.nullable Json.Decode.string))
 
 
-encodeFlags : Flags -> Encode.Value
+encodeFlags : Flags -> Json.Encode.Value
 encodeFlags flags =
-    Encode.object
+    Json.Encode.object
         [ ( "currentJwt"
           , case flags.currentJwt of
                 Just value ->
-                    Encode.string value
+                    Json.Encode.string value
             
                 Nothing ->
-                    Encode.null
+                    Json.Encode.null
           )
         ]

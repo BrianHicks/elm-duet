@@ -11,15 +11,15 @@ type alias AddNewPingAt =
 
 addNewPingAtDecoder : Decoder AddNewPingAt
 addNewPingAtDecoder =
-    Decode.map AddNewPingAt
-        (Decode.field "value" Decode.float)
+    Json.Decode.map AddNewPingAt
+        (Json.Decode.field "value" Json.Decode.float)
 
 
-encodeAddNewPingAt : AddNewPingAt -> Encode.Value
+encodeAddNewPingAt : AddNewPingAt -> Json.Encode.Value
 encodeAddNewPingAt addNewPingAt =
-    Encode.object
-        [ ( "value", Encode.float addNewPingAt.value )
-        , ( "tag", Encode.string "AddNewPingAt" )
+    Json.Encode.object
+        [ ( "value", Json.Encode.float addNewPingAt.value )
+        , ( "tag", Json.Encode.string "AddNewPingAt" )
         ]
 
 
@@ -30,15 +30,15 @@ type alias SetMinutesPerPing =
 
 setMinutesPerPingDecoder : Decoder SetMinutesPerPing
 setMinutesPerPingDecoder =
-    Decode.map SetMinutesPerPing
-        (Decode.field "value" Decode.float)
+    Json.Decode.map SetMinutesPerPing
+        (Json.Decode.field "value" Json.Decode.float)
 
 
-encodeSetMinutesPerPing : SetMinutesPerPing -> Encode.Value
+encodeSetMinutesPerPing : SetMinutesPerPing -> Json.Encode.Value
 encodeSetMinutesPerPing setMinutesPerPing =
-    Encode.object
-        [ ( "value", Encode.float setMinutesPerPing.value )
-        , ( "tag", Encode.string "SetMinutesPerPing" )
+    Json.Encode.object
+        [ ( "value", Json.Encode.float setMinutesPerPing.value )
+        , ( "tag", Json.Encode.string "SetMinutesPerPing" )
         ]
 
 
@@ -50,24 +50,24 @@ type alias SetTagForPing =
 
 setTagForPingDecoder : Decoder SetTagForPing
 setTagForPingDecoder =
-    Decode.map2 SetTagForPing
-        (Decode.field "index" Decode.float)
-        (Decode.field "value" (Decode.nullable Decode.string))
+    Json.Decode.map2 SetTagForPing
+        (Json.Decode.field "index" Json.Decode.float)
+        (Json.Decode.field "value" (Json.Decode.nullable Json.Decode.string))
 
 
-encodeSetTagForPing : SetTagForPing -> Encode.Value
+encodeSetTagForPing : SetTagForPing -> Json.Encode.Value
 encodeSetTagForPing setTagForPing =
-    Encode.object
-        [ ( "index", Encode.float setTagForPing.index )
+    Json.Encode.object
+        [ ( "index", Json.Encode.float setTagForPing.index )
         , ( "value"
           , case setTagForPing.value of
                 Just value ->
-                    Encode.string value
+                    Json.Encode.string value
             
                 Nothing ->
-                    Encode.null
+                    Json.Encode.null
           )
-        , ( "tag", Encode.string "SetTagForPing" )
+        , ( "tag", Json.Encode.string "SetTagForPing" )
         ]
 
 
@@ -80,23 +80,23 @@ type ChangeDocument
 
 changeDocumentDecoder : Decoder ChangeDocument
 changeDocumentDecoder =
-    Decode.andThen
+    Json.Decode.andThen
         (/tag ->
             case tag of
                 "AddNewPingAt" ->
-                    Decode.map AddNewPingAt addNewPingAtDecoder
+                    Json.Decode.map AddNewPingAt addNewPingAtDecoder
 
                 "SetMinutesPerPing" ->
-                    Decode.map SetMinutesPerPing setMinutesPerPingDecoder
+                    Json.Decode.map SetMinutesPerPing setMinutesPerPingDecoder
 
                 "SetTagForPing" ->
-                    Decode.map SetTagForPing setTagForPingDecoder
+                    Json.Decode.map SetTagForPing setTagForPingDecoder
 
         )
-        (Decode.field "tag" Decode.string)
+        (Json.Decode.field "tag" Json.Decode.string)
 
 
-encodeChangeDocument : ChangeDocument -> Encode.Value
+encodeChangeDocument : ChangeDocument -> Json.Encode.Value
 encodeChangeDocument changeDocument =
     case changeDocument of
         AddNewPingAt addNewPingAt ->
@@ -118,26 +118,26 @@ type alias PingV1 =
 
 pingV1Decoder : Decoder PingV1
 pingV1Decoder =
-    Decode.map3 PingV1
-        (Decode.field "custom" (Decode.dict Decode.string))
-        (Decode.field "tag" (Decode.nullable Decode.string))
-        (Decode.field "time" Decode.int)
+    Json.Decode.map3 PingV1
+        (Json.Decode.field "custom" (Json.Decode.dict Json.Decode.string))
+        (Json.Decode.field "tag" (Json.Decode.nullable Json.Decode.string))
+        (Json.Decode.field "time" Json.Decode.int)
 
 
-encodePingV1 : PingV1 -> Encode.Value
+encodePingV1 : PingV1 -> Json.Encode.Value
 encodePingV1 pingV1 =
-    Encode.object
-        [ ( "custom", Encode.dict identity (/value -> Encode.string value) pingV1.custom )
+    Json.Encode.object
+        [ ( "custom", Json.Encode.dict identity (/value -> Json.Encode.string value) pingV1.custom )
         , ( "tag"
           , case pingV1.tag of
                 Just value ->
-                    Encode.string value
+                    Json.Encode.string value
             
                 Nothing ->
-                    Encode.null
+                    Json.Encode.null
           )
-        , ( "time", Encode.int pingV1.time )
-        , ( "version", Encode.string "v1" )
+        , ( "time", Json.Encode.int pingV1.time )
+        , ( "version", Json.Encode.string "v1" )
         ]
 
 
@@ -148,17 +148,17 @@ type PingsElements
 
 pingsElementsDecoder : Decoder PingsElements
 pingsElementsDecoder =
-    Decode.andThen
+    Json.Decode.andThen
         (/tag ->
             case tag of
                 "v1" ->
-                    Decode.map PingV1 pingV1Decoder
+                    Json.Decode.map PingV1 pingV1Decoder
 
         )
-        (Decode.field "version" Decode.string)
+        (Json.Decode.field "version" Json.Decode.string)
 
 
-encodePingsElements : PingsElements -> Encode.Value
+encodePingsElements : PingsElements -> Json.Encode.Value
 encodePingsElements pingsElements =
     case pingsElements of
         PingV1 pingV1 ->
@@ -172,15 +172,15 @@ type alias SettingsV1 =
 
 settingsV1Decoder : Decoder SettingsV1
 settingsV1Decoder =
-    Decode.map SettingsV1
-        (Decode.field "minutesPerPing" Decode.int)
+    Json.Decode.map SettingsV1
+        (Json.Decode.field "minutesPerPing" Json.Decode.int)
 
 
-encodeSettingsV1 : SettingsV1 -> Encode.Value
+encodeSettingsV1 : SettingsV1 -> Json.Encode.Value
 encodeSettingsV1 settingsV1 =
-    Encode.object
-        [ ( "minutesPerPing", Encode.int settingsV1.minutesPerPing )
-        , ( "version", Encode.string "v1" )
+    Json.Encode.object
+        [ ( "minutesPerPing", Json.Encode.int settingsV1.minutesPerPing )
+        , ( "version", Json.Encode.string "v1" )
         ]
 
 
@@ -191,17 +191,17 @@ type Settings
 
 settingsDecoder : Decoder Settings
 settingsDecoder =
-    Decode.andThen
+    Json.Decode.andThen
         (/tag ->
             case tag of
                 "v1" ->
-                    Decode.map SettingsV1 settingsV1Decoder
+                    Json.Decode.map SettingsV1 settingsV1Decoder
 
         )
-        (Decode.field "version" Decode.string)
+        (Json.Decode.field "version" Json.Decode.string)
 
 
-encodeSettings : Settings -> Encode.Value
+encodeSettings : Settings -> Json.Encode.Value
 encodeSettings settings =
     case settings of
         SettingsV1 settingsV1 ->
@@ -216,17 +216,17 @@ type alias DocV1 =
 
 docV1Decoder : Decoder DocV1
 docV1Decoder =
-    Decode.map2 DocV1
-        (Decode.field "pings" (Decode.list pingsElementsDecoder))
-        (Decode.field "settings" settingsDecoder)
+    Json.Decode.map2 DocV1
+        (Json.Decode.field "pings" (Json.Decode.list pingsElementsDecoder))
+        (Json.Decode.field "settings" settingsDecoder)
 
 
-encodeDocV1 : DocV1 -> Encode.Value
+encodeDocV1 : DocV1 -> Json.Encode.Value
 encodeDocV1 docV1 =
-    Encode.object
-        [ ( "pings", Encode.list (/value -> encodePingsElements value) docV1.pings )
+    Json.Encode.object
+        [ ( "pings", Json.Encode.list (/value -> encodePingsElements value) docV1.pings )
         , ( "settings", encodeSettings docV1.settings )
-        , ( "version", Encode.string "v1" )
+        , ( "version", Json.Encode.string "v1" )
         ]
 
 
@@ -237,17 +237,17 @@ type DocFromAutomerge
 
 docFromAutomergeDecoder : Decoder DocFromAutomerge
 docFromAutomergeDecoder =
-    Decode.andThen
+    Json.Decode.andThen
         (/tag ->
             case tag of
                 "v1" ->
-                    Decode.map DocV1 docV1Decoder
+                    Json.Decode.map DocV1 docV1Decoder
 
         )
-        (Decode.field "version" Decode.string)
+        (Json.Decode.field "version" Json.Decode.string)
 
 
-encodeDocFromAutomerge : DocFromAutomerge -> Encode.Value
+encodeDocFromAutomerge : DocFromAutomerge -> Json.Encode.Value
 encodeDocFromAutomerge docFromAutomerge =
     case docFromAutomerge of
         DocV1 docV1 ->
@@ -263,33 +263,33 @@ type NotificationPermission
 
 notificationPermissionDecoder : Decoder NotificationPermission
 notificationPermissionDecoder =
-    Decode.andThen
+    Json.Decode.andThen
         (/tag ->
             case tag of
                 "default" ->
-                    Decode.succeed Default
+                    Json.Decode.succeed Default
 
                 "denied" ->
-                    Decode.succeed Denied
+                    Json.Decode.succeed Denied
 
                 "granted" ->
-                    Decode.succeed Granted
+                    Json.Decode.succeed Granted
 
         )
-        Decode.string
+        Json.Decode.string
 
 
-encodeNotificationPermission : NotificationPermission -> Encode.Value
+encodeNotificationPermission : NotificationPermission -> Json.Encode.Value
 encodeNotificationPermission notificationPermission =
     case notificationPermission of
         Default ->
-            Encode.string "default"
+            Json.Encode.string "default"
 
         Denied ->
-            Encode.string "denied"
+            Json.Encode.string "denied"
 
         Granted ->
-            Encode.string "granted"
+            Json.Encode.string "granted"
 
 
 type alias RequestNotificationPermission =
@@ -298,12 +298,12 @@ type alias RequestNotificationPermission =
 
 requestNotificationPermissionDecoder : Decoder RequestNotificationPermission
 requestNotificationPermissionDecoder =
-    Decode.null ()
+    Json.Decode.null ()
 
 
-encodeRequestNotificationPermission : RequestNotificationPermission -> Encode.Value
+encodeRequestNotificationPermission : RequestNotificationPermission -> Json.Encode.Value
 encodeRequestNotificationPermission requestNotificationPermission =
-    Encode.null
+    Json.Encode.null
 
 
 type alias NotificationOptions =
@@ -319,74 +319,74 @@ type alias NotificationOptions =
 
 notificationOptionsDecoder : Decoder NotificationOptions
 notificationOptionsDecoder =
-    Decode.map7 NotificationOptions
-        (Decode.field "badge" (Decode.nullable Decode.string))
-        (Decode.field "body" (Decode.nullable Decode.string))
-        (Decode.field "icon" (Decode.nullable Decode.string))
-        (Decode.field "lang" (Decode.nullable Decode.string))
-        (Decode.field "requireInteraction" (Decode.nullable Decode.bool))
-        (Decode.field "silent" (Decode.nullable Decode.bool))
-        (Decode.field "tag" (Decode.nullable Decode.string))
+    Json.Decode.map7 NotificationOptions
+        (Json.Decode.field "badge" (Json.Decode.nullable Json.Decode.string))
+        (Json.Decode.field "body" (Json.Decode.nullable Json.Decode.string))
+        (Json.Decode.field "icon" (Json.Decode.nullable Json.Decode.string))
+        (Json.Decode.field "lang" (Json.Decode.nullable Json.Decode.string))
+        (Json.Decode.field "requireInteraction" (Json.Decode.nullable Json.Decode.bool))
+        (Json.Decode.field "silent" (Json.Decode.nullable Json.Decode.bool))
+        (Json.Decode.field "tag" (Json.Decode.nullable Json.Decode.string))
 
 
-encodeNotificationOptions : NotificationOptions -> Encode.Value
+encodeNotificationOptions : NotificationOptions -> Json.Encode.Value
 encodeNotificationOptions notificationOptions =
-    Encode.object
+    Json.Encode.object
         [ ( "badge"
           , case notificationOptions.badge of
                 Just value ->
-                    Encode.string value
+                    Json.Encode.string value
             
                 Nothing ->
-                    Encode.null
+                    Json.Encode.null
           )
         , ( "body"
           , case notificationOptions.body of
                 Just value ->
-                    Encode.string value
+                    Json.Encode.string value
             
                 Nothing ->
-                    Encode.null
+                    Json.Encode.null
           )
         , ( "icon"
           , case notificationOptions.icon of
                 Just value ->
-                    Encode.string value
+                    Json.Encode.string value
             
                 Nothing ->
-                    Encode.null
+                    Json.Encode.null
           )
         , ( "lang"
           , case notificationOptions.lang of
                 Just value ->
-                    Encode.string value
+                    Json.Encode.string value
             
                 Nothing ->
-                    Encode.null
+                    Json.Encode.null
           )
         , ( "requireInteraction"
           , case notificationOptions.requireInteraction of
                 Just value ->
-                    Encode.bool value
+                    Json.Encode.bool value
             
                 Nothing ->
-                    Encode.null
+                    Json.Encode.null
           )
         , ( "silent"
           , case notificationOptions.silent of
                 Just value ->
-                    Encode.bool value
+                    Json.Encode.bool value
             
                 Nothing ->
-                    Encode.null
+                    Json.Encode.null
           )
         , ( "tag"
           , case notificationOptions.tag of
                 Just value ->
-                    Encode.string value
+                    Json.Encode.string value
             
                 Nothing ->
-                    Encode.null
+                    Json.Encode.null
           )
         ]
 
@@ -399,16 +399,16 @@ type alias SendNotification =
 
 sendNotificationDecoder : Decoder SendNotification
 sendNotificationDecoder =
-    Decode.map2 SendNotification
-        (Decode.field "options" notificationOptionsDecoder)
-        (Decode.field "title" Decode.string)
+    Json.Decode.map2 SendNotification
+        (Json.Decode.field "options" notificationOptionsDecoder)
+        (Json.Decode.field "title" Json.Decode.string)
 
 
-encodeSendNotification : SendNotification -> Encode.Value
+encodeSendNotification : SendNotification -> Json.Encode.Value
 encodeSendNotification sendNotification =
-    Encode.object
+    Json.Encode.object
         [ ( "options", encodeNotificationOptions sendNotification.options )
-        , ( "title", Encode.string sendNotification.title )
+        , ( "title", Json.Encode.string sendNotification.title )
         ]
 
 

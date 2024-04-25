@@ -13,33 +13,33 @@ type NotificationPermission
 
 notificationPermissionDecoder : Decoder NotificationPermission
 notificationPermissionDecoder =
-    Decode.andThen
+    Json.Decode.andThen
         (/tag ->
             case tag of
                 "default" ->
-                    Decode.succeed Default
+                    Json.Decode.succeed Default
 
                 "denied" ->
-                    Decode.succeed Denied
+                    Json.Decode.succeed Denied
 
                 "granted" ->
-                    Decode.succeed Granted
+                    Json.Decode.succeed Granted
 
         )
-        Decode.string
+        Json.Decode.string
 
 
-encodeNotificationPermission : NotificationPermission -> Encode.Value
+encodeNotificationPermission : NotificationPermission -> Json.Encode.Value
 encodeNotificationPermission notificationPermission =
     case notificationPermission of
         Default ->
-            Encode.string "default"
+            Json.Encode.string "default"
 
         Denied ->
-            Encode.string "denied"
+            Json.Encode.string "denied"
 
         Granted ->
-            Encode.string "granted"
+            Json.Encode.string "granted"
 
 
 type alias Flags =
@@ -50,14 +50,14 @@ type alias Flags =
 
 flagsDecoder : Decoder Flags
 flagsDecoder =
-    Decode.map2 Flags
-        (Decode.field "currentTimeMillis" Decode.float)
-        (Decode.field "notificationPermission" notificationPermissionDecoder)
+    Json.Decode.map2 Flags
+        (Json.Decode.field "currentTimeMillis" Json.Decode.float)
+        (Json.Decode.field "notificationPermission" notificationPermissionDecoder)
 
 
-encodeFlags : Flags -> Encode.Value
+encodeFlags : Flags -> Json.Encode.Value
 encodeFlags flags =
-    Encode.object
-        [ ( "currentTimeMillis", Encode.float flags.currentTimeMillis )
+    Json.Encode.object
+        [ ( "currentTimeMillis", Json.Encode.float flags.currentTimeMillis )
         , ( "notificationPermission", encodeNotificationPermission flags.notificationPermission )
         ]
