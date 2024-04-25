@@ -114,7 +114,9 @@ impl Decl {
                 cases,
                 ..
             } => {
-                out.push_str("    Decode.andThen\n        (\\tag ->\n            case tag of\n");
+                out.push_str(
+                    "    Json.Decode.andThen\n        (\\tag ->\n            case tag of\n",
+                );
 
                 for (case, case_type_opt) in cases {
                     out.push_str("                \"");
@@ -125,7 +127,7 @@ impl Decl {
                         Some(type_) => {
                             let sub_decoder = type_.to_decoder_source(&type_name)?;
 
-                            out.push_str("Decode.map ");
+                            out.push_str("Json.Decode.map ");
                             out.push_str(&constructor_prefix.to_pascal_case()?);
                             out.push_str(&case.to_pascal_case()?);
                             if sub_decoder.contains('\n') {
@@ -139,7 +141,7 @@ impl Decl {
                             }
                         }
                         None => {
-                            out.push_str("Decode.succeed ");
+                            out.push_str("Json.Decode.succeed ");
                             out.push_str(&constructor_prefix.to_pascal_case()?);
                             out.push_str(&case.to_pascal_case()?);
                         }
@@ -149,11 +151,11 @@ impl Decl {
 
                 out.push_str("        )\n        ");
                 match discriminator {
-                    None => out.push_str("Decode.string"),
+                    None => out.push_str("Json.Decode.string"),
                     Some(name) => {
-                        out.push_str("(Decode.field \"");
+                        out.push_str("(Json.Decode.field \"");
                         out.push_str(name);
-                        out.push_str("\" Decode.string)");
+                        out.push_str("\" Json.Decode.string)");
                     }
                 }
             }
@@ -177,7 +179,7 @@ impl Decl {
         out.push_str(&decoder_name);
         out.push_str(" : ");
         out.push_str(&type_name);
-        out.push_str(" -> Encode.Value\n");
+        out.push_str(" -> Json.Encode.Value\n");
         out.push_str(&decoder_name);
         out.push(' ');
         out.push_str(&variable_name);
@@ -221,7 +223,7 @@ impl Decl {
                                 .replace('\n', "\n            "),
                         ),
                         None => {
-                            out.push_str("Encode.string \"");
+                            out.push_str("Json.Encode.string \"");
                             out.push_str(case.orig());
                             out.push('"');
                         }
@@ -549,13 +551,13 @@ impl Type {
         let mut out = String::new();
 
         match self {
-            Type::Int => out.push_str("Decode.int"),
-            Type::Float => out.push_str("Decode.float"),
-            Type::Bool => out.push_str("Decode.bool"),
-            Type::String => out.push_str("Decode.string"),
+            Type::Int => out.push_str("Json.Decode.int"),
+            Type::Float => out.push_str("Json.Decode.float"),
+            Type::Bool => out.push_str("Json.Decode.bool"),
+            Type::String => out.push_str("Json.Decode.string"),
             Type::Maybe(type_) => {
                 let sub_decoder = type_.to_decoder_source(dest_type)?;
-                out.push_str("Decode.nullable ");
+                out.push_str("Json.Decode.nullable ");
 
                 if sub_decoder.contains(' ') {
                     out.push('(');
@@ -565,10 +567,10 @@ impl Type {
                     out.push_str(&sub_decoder);
                 }
             }
-            Type::Unit => out.push_str("Decode.null ()"),
+            Type::Unit => out.push_str("Json.Decode.null ()"),
             Type::DictWithStringKeys(type_) => {
                 let sub_decoder = type_.to_decoder_source(dest_type)?;
-                out.push_str("Decode.dict ");
+                out.push_str("Json.Decode.dict ");
 
                 if sub_decoder.contains(' ') {
                     out.push('(');
@@ -580,7 +582,7 @@ impl Type {
             }
             Type::List(type_) => {
                 let sub_decoder = type_.to_decoder_source(dest_type)?;
-                out.push_str("Decode.list ");
+                out.push_str("Json.Decode.list ");
 
                 if sub_decoder.contains(' ') {
                     out.push('(');
@@ -595,7 +597,7 @@ impl Type {
                 out.push_str("Decoder");
             }
             Type::Record(fields) => {
-                out.push_str("Decode.map");
+                out.push_str("Json.Decode.map");
                 if fields.len() > 1 {
                     out.push_str(&fields.len().to_string()); // TODO: fix for >9
                 }
@@ -606,7 +608,7 @@ impl Type {
                     let sub_decoder = field_type.to_decoder_source(dest_type)?;
 
                     out.push_str("\n    ");
-                    out.push_str("(Decode.field \"");
+                    out.push_str("(Json.Decode.field \"");
                     out.push_str(name.orig());
                     out.push_str("\" ");
 
@@ -635,19 +637,19 @@ impl Type {
 
         match self {
             Type::Int => {
-                out.push_str("Encode.int ");
+                out.push_str("Json.Encode.int ");
                 out.push_str(source_var);
             }
             Type::Float => {
-                out.push_str("Encode.float ");
+                out.push_str("Json.Encode.float ");
                 out.push_str(source_var);
             }
             Type::Bool => {
-                out.push_str("Encode.bool ");
+                out.push_str("Json.Encode.bool ");
                 out.push_str(source_var);
             }
             Type::String => {
-                out.push_str("Encode.string ");
+                out.push_str("Json.Encode.string ");
                 out.push_str(source_var);
             }
             Type::Maybe(type_) => {
@@ -659,17 +661,17 @@ impl Type {
                         .to_encoder_source("value", discriminator_field_opt)?
                         .replace('\n', "\n       "),
                 );
-                out.push_str("\n\n    Nothing ->\n        Encode.null");
+                out.push_str("\n\n    Nothing ->\n        Json.Encode.null");
             }
-            Type::Unit => out.push_str("Encode.null"),
+            Type::Unit => out.push_str("Json.Encode.null"),
             Type::DictWithStringKeys(values) => {
-                out.push_str("Encode.dict identity (\\value -> ");
+                out.push_str("Json.Encode.dict identity (\\value -> ");
                 out.push_str(&values.to_encoder_source("value", discriminator_field_opt)?);
                 out.push_str(") ");
                 out.push_str(source_var);
             }
             Type::List(values) => {
-                out.push_str("Encode.list (\\value -> ");
+                out.push_str("Json.Encode.list (\\value -> ");
                 out.push_str(&values.to_encoder_source("value", discriminator_field_opt)?);
                 out.push_str(") ");
                 out.push_str(source_var);
@@ -681,7 +683,7 @@ impl Type {
                 out.push_str(source_var);
             }
             Type::Record(fields) => {
-                out.push_str("Encode.object\n");
+                out.push_str("Json.Encode.object\n");
                 for (i, (name, field_type)) in fields.iter().enumerate() {
                     if i == 0 {
                         out.push_str("    [ ( \"");
@@ -712,7 +714,7 @@ impl Type {
                 if let Some((discriminator_name, discriminator_value)) = discriminator_field_opt {
                     out.push_str("    , ( \"");
                     out.push_str(discriminator_name); // TODO: this probably should be inflected
-                    out.push_str("\", Encode.string \"");
+                    out.push_str("\", Json.Encode.string \"");
                     out.push_str(discriminator_value);
                     out.push_str("\" )\n");
                 }
