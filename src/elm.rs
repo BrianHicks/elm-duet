@@ -178,15 +178,6 @@ impl Decl {
         let type_name = name.to_pascal_case()?;
         let variable_name = name.to_camel_case()?;
 
-        out.push_str(&decoder_name);
-        out.push_str(" : ");
-        out.push_str(&type_name);
-        out.push_str(" -> Encode.Value\n");
-        out.push_str(&decoder_name);
-        out.push(' ');
-        out.push_str(&variable_name);
-        out.push_str(" =\n");
-
         match &self {
             Decl::CustomTypeEnum {
                 discriminator,
@@ -194,6 +185,15 @@ impl Decl {
                 cases,
                 ..
             } => {
+                out.push_str(&decoder_name);
+                out.push_str(" : ");
+                out.push_str(&type_name);
+                out.push_str(" -> Encode.Value\n");
+                out.push_str(&decoder_name);
+                out.push(' ');
+                out.push_str(&variable_name);
+                out.push_str(" =\n");
+
                 out.push_str("    case ");
                 out.push_str(&variable_name);
                 out.push_str(" of\n");
@@ -234,6 +234,15 @@ impl Decl {
                 }
             }
             Decl::TypeAlias { type_, .. } => {
+                out.push_str(&decoder_name);
+                out.push_str(" : ");
+                out.push_str(&type_name);
+                out.push_str(" -> Encode.Value\n");
+                out.push_str(&decoder_name);
+                out.push(' ');
+                out.push_str(&variable_name);
+                out.push_str(" =\n");
+
                 out.push_str("    ");
                 out.push_str(
                     &type_
