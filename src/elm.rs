@@ -31,7 +31,7 @@ pub enum Decl {
 
         // a bit of a hack, but we need to add disciminators specifically to records in order ot
         // make the decoders and encoders round-trip properly.
-        discriminator: Option<String>,
+        discriminator: Option<(String, String)>,
     },
 }
 
@@ -174,21 +174,21 @@ impl Decl {
         let type_name = name.to_pascal_case()?;
         let variable_name = name.to_camel_case()?;
 
+        out.push_str(&decoder_name);
+        out.push_str(" : ");
+        out.push_str(&type_name);
+        out.push_str(" -> Encode.Value\n");
+        out.push_str(&decoder_name);
+        out.push(' ');
+        out.push_str(&variable_name);
+        out.push_str(" =\n");
+
         match &self {
             Decl::CustomTypeEnum {
                 constructor_prefix,
                 cases,
                 ..
             } => {
-                out.push_str(&decoder_name);
-                out.push_str(" : ");
-                out.push_str(&type_name);
-                out.push_str(" -> Encode.Value\n");
-                out.push_str(&decoder_name);
-                out.push(' ');
-                out.push_str(&variable_name);
-                out.push_str(" =\n");
-
                 out.push_str("    case ");
                 out.push_str(&variable_name);
                 out.push_str(" of\n");
@@ -233,34 +233,10 @@ impl Decl {
                 discriminator,
                 ..
             } => {
-                let discriminator_variable_name_opt = discriminator.as_ref().map(|name| {
-                    if *name == variable_name {
-                        format!("{name}Discriminator")
-                    } else {
-                        name.to_owned()
-                    }
-                });
-
-                out.push_str(&decoder_name);
-                out.push_str(" : ");
-                if discriminator.is_some() {
-                    out.push_str("String -> ");
-                }
-                out.push_str(&type_name);
-                out.push_str(" -> Encode.Value\n");
-                out.push_str(&decoder_name);
-                out.push(' ');
-                if let Some(discriminator_variable_name) = &discriminator_variable_name_opt {
-                    out.push_str(discriminator_variable_name);
-                    out.push(' ');
-                }
-                out.push_str(&variable_name);
-                out.push_str(" =\n");
-
                 out.push_str("    ");
                 out.push_str(
                     &type_
-                        .to_encoder_source(&variable_name, &discriminator_variable_name_opt)?
+                        .to_encoder_source(&variable_name, &discriminator)?
                         .replace('\n', "\n    "),
                 );
             }
@@ -269,11 +245,11 @@ impl Decl {
         Ok(out)
     }
 
-    fn add_discriminator(&mut self, new_discriminator: String) -> Result<()> {
+    fn add_discriminator(&mut self, name: String, value: String) -> Result<()> {
         match self {
             Decl::CustomTypeEnum { .. } => bail!("cannot add a discriminator to a custom type"),
             Decl::TypeAlias { discriminator, .. } => {
-                *discriminator = Some(new_discriminator);
+                *discriminator = Some((name, value));
                 Ok(())
             }
         }
@@ -456,7 +432,7 @@ impl Type {
                         if let Type::Ref(ref_name) = &value_type {
                             for decl in &mut value_decls {
                                 if decl.name() == ref_name {
-                                    decl.add_discriminator(discriminator.clone())?;
+                                    decl.add_discriminator(discriminator.clone(), tag.clone())?;
                                 }
                             }
                         }
@@ -653,7 +629,7 @@ impl Type {
     fn to_encoder_source(
         &self,
         source_var: &str,
-        discriminator_var_opt: &Option<String>,
+        discriminator_field_opt: &Option<(String, String)>,
     ) -> Result<String> {
         let mut out = String::new();
 
@@ -680,7 +656,7 @@ impl Type {
                 out.push_str(" of\n    Just value ->\n        ");
                 out.push_str(
                     &type_
-                        .to_encoder_source("value", discriminator_var_opt)?
+                        .to_encoder_source("value", discriminator_field_opt)?
                         .replace('\n', "\n       "),
                 );
                 out.push_str("\n\n    Nothing ->\n        Encode.null");
@@ -688,13 +664,13 @@ impl Type {
             Type::Unit => out.push_str("Encode.null"),
             Type::DictWithStringKeys(values) => {
                 out.push_str("Encode.dict identity (\\value -> ");
-                out.push_str(&values.to_encoder_source("value", discriminator_var_opt)?);
+                out.push_str(&values.to_encoder_source("value", discriminator_field_opt)?);
                 out.push_str(") ");
                 out.push_str(source_var);
             }
             Type::List(values) => {
                 out.push_str("Encode.list (\\value -> ");
-                out.push_str(&values.to_encoder_source("value", discriminator_var_opt)?);
+                out.push_str(&values.to_encoder_source("value", discriminator_field_opt)?);
                 out.push_str(") ");
                 out.push_str(source_var);
             }
@@ -718,7 +694,7 @@ impl Type {
 
                     let field_encoder = field_type.to_encoder_source(
                         &format!("{}.{}", source_var, name.to_camel_case()?),
-                        discriminator_var_opt,
+                        discriminator_field_opt,
                     )?;
 
                     if field_encoder.contains('\n') {
@@ -733,12 +709,12 @@ impl Type {
                     out.push_str(" )\n");
                 }
 
-                if let Some(discriminator_var) = discriminator_var_opt {
+                if let Some((discriminator_name, discriminator_value)) = discriminator_field_opt {
                     out.push_str("    , ( \"");
-                    out.push_str(discriminator_var); // TODO: this probably should be inflected
-                    out.push_str("\", Encode.string ");
-                    out.push_str(discriminator_var);
-                    out.push_str(" )\n");
+                    out.push_str(discriminator_name); // TODO: this probably should be inflected
+                    out.push_str("\", Encode.string \"");
+                    out.push_str(discriminator_value);
+                    out.push_str("\" )\n");
                 }
 
                 out.push_str("    ]");
@@ -1099,12 +1075,12 @@ mod tests {
                 Vec::from([
                     Decl::TypeAlias {
                         name: "a".into(),
-                        discriminator: Some("tag".to_string()),
+                        discriminator: Some(("tag".to_string(), "a".to_string())),
                         type_: Type::Record(BTreeMap::from([("value".into(), Type::String)]))
                     },
                     Decl::TypeAlias {
                         name: "b".into(),
-                        discriminator: Some("tag".to_string()),
+                        discriminator: Some(("tag".to_string(), "b".to_string())),
                         type_: Type::Record(BTreeMap::from([("value".into(), Type::Float)]))
                     },
                     Decl::CustomTypeEnum {
