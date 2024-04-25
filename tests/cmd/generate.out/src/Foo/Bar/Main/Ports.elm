@@ -423,17 +423,17 @@ changeDocument_ value =
 port docFromAutomerge : (Value -> msg) -> Sub msg
 
 
-docFromAutomerge_ : (DocFromAutomerge -> msg) -> Sub msg
+docFromAutomerge_ : (Result Json.Decode.Error DocFromAutomerge -> msg) -> Sub msg
 docFromAutomerge_ toMsg =
-    Debug.todo "subscribe"
+    docFromAutomerge (/value -> toMsg (Json.Decode.decodeValue value docFromAutomergeDecoder)
 
 
 port notificationPermission : (Value -> msg) -> Sub msg
 
 
-notificationPermission_ : (NotificationPermission -> msg) -> Sub msg
+notificationPermission_ : (Result Json.Decode.Error NotificationPermission -> msg) -> Sub msg
 notificationPermission_ toMsg =
-    Debug.todo "subscribe"
+    notificationPermission (/value -> toMsg (Json.Decode.decodeValue value notificationPermissionDecoder)
 
 
 port requestNotificationPermission : Value -> Cmd msg
