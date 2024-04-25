@@ -863,9 +863,9 @@ impl Module {
                 };
                 self.decls.push(top_decl.clone());
 
-                return Ok(top_decl);
+                Ok(top_decl)
             }
-        };
+        }
     }
 
     pub fn insert_port(&mut self, port: Port) {
