@@ -412,16 +412,41 @@ encodeSendNotification sendNotification =
         ]
 
 
-port changeDocument : Ref(InflectedString("changeDocument")) -> Cmd msg
+port changeDocument : Value -> Cmd msg
 
 
-port docFromAutomerge : (Ref(InflectedString("docFromAutomerge")) -> msg) -> Sub msg
+changeDocument_ : ChangeDocument -> Cmd msg
+changeDocument_ value =
+    Debug.todo "send"
 
 
-port notificationPermission : (Ref(InflectedString("notificationPermission")) -> msg) -> Sub msg
+port docFromAutomerge : (Value -> msg) -> Sub msg
 
 
-port requestNotificationPermission : Unit -> Cmd msg
+docFromAutomerge_ : (DocFromAutomerge -> msg) -> Sub msg
+docFromAutomerge_ toMsg =
+    Debug.todo "subscribe"
 
 
-port sendNotification : Ref(InflectedString("sendNotification")) -> Cmd msg
+port notificationPermission : (Value -> msg) -> Sub msg
+
+
+notificationPermission_ : (NotificationPermission -> msg) -> Sub msg
+notificationPermission_ toMsg =
+    Debug.todo "subscribe"
+
+
+port requestNotificationPermission : Value -> Cmd msg
+
+
+requestNotificationPermission_ : TODO -> Cmd msg
+requestNotificationPermission_ value =
+    Debug.todo "send"
+
+
+port sendNotification : Value -> Cmd msg
+
+
+sendNotification_ : SendNotification -> Cmd msg
+sendNotification_ value =
+    Debug.todo "send"

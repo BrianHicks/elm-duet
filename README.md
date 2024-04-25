@@ -155,10 +155,20 @@ encodeNewJwt newJwt =
     Encode.string newJwt
 
 
-port logout : Unit -> Cmd msg
+port logout : Value -> Cmd msg
 
 
-port newJwt : String -> Cmd msg
+logout_ : TODO -> Cmd msg
+logout_ value =
+    Debug.todo "send"
+
+
+port newJwt : Value -> Cmd msg
+
+
+newJwt_ : TODO -> Cmd msg
+newJwt_ value =
+    Debug.todo "send"
 
 ```
 
