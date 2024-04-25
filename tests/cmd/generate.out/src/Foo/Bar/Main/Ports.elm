@@ -417,7 +417,7 @@ port changeDocument : Value -> Cmd msg
 
 changeDocument_ : ChangeDocument -> Cmd msg
 changeDocument_ value =
-    Debug.todo "send"
+    changeDocument (encodeChangeDocument value)
 
 
 port docFromAutomerge : (Value -> msg) -> Sub msg
@@ -441,7 +441,7 @@ port requestNotificationPermission : Value -> Cmd msg
 
 requestNotificationPermission_ : RequestNotificationPermission -> Cmd msg
 requestNotificationPermission_ value =
-    Debug.todo "send"
+    requestNotificationPermission (encodeRequestNotificationPermission value)
 
 
 port sendNotification : Value -> Cmd msg
@@ -449,4 +449,4 @@ port sendNotification : Value -> Cmd msg
 
 sendNotification_ : SendNotification -> Cmd msg
 sendNotification_ value =
-    Debug.todo "send"
+    sendNotification (encodeSendNotification value)
