@@ -1,0 +1,19 @@
+{
+    "modules": {
+	"A": {
+	    "flags": {
+		"type": "string"
+	    }
+	},
+	"B": {
+	    "flags": {
+		"type": "string"
+	    }
+	},
+	"B.B2": {
+	    "flags": {
+		"type": "string"
+	    }
+	}
+    }
+}
