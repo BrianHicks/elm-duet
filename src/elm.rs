@@ -755,24 +755,46 @@ impl Port {
         }
     }
 
-    fn to_source(&self) -> String {
+    fn to_source(&self) -> Result<String> {
         let mut out = String::from("port ");
         out.push_str(&self.name);
         out.push_str(" : ");
 
         match self.direction {
+            PortDirection::Send => out.push_str("Value -> Cmd msg\n\n\n"),
+            PortDirection::Subscribe => out.push_str("(Value -> msg) -> Sub msg\n\n\n"),
+        }
+
+        out.push_str(&self.name);
+        out.push_str("_ : ");
+
+        let type_ref = if let Type::Ref(name) = &self.type_ {
+            name.to_pascal_case()?
+        } else {
+            String::from("TODO")
+        };
+
+        match self.direction {
             PortDirection::Send => {
-                out.push_str(&format!("{:?}", self.type_));
-                out.push_str(" -> Cmd msg");
+                out.push_str(&type_ref);
+                out.push_str(" -> Cmd msg\n")
             }
             PortDirection::Subscribe => {
                 out.push('(');
-                out.push_str(&format!("{:?}", self.type_));
-                out.push_str(" -> msg) -> Sub msg");
+                out.push_str(&type_ref);
+                out.push_str(" -> msg) -> Sub msg\n")
             }
         }
 
-        out
+        out.push_str(&self.name);
+        out.push_str("_ ");
+
+        match self.direction {
+            PortDirection::Send => out.push_str("value =\n    Debug.todo \"send\""),
+            PortDirection::Subscribe => out.push_str("toMsg =\n    Debug.todo \"subscribe\""),
+        }
+
+        Ok(out)
     }
 }
 
@@ -846,7 +868,7 @@ impl Module {
 
         for port in &self.ports {
             out.push_str("\n\n");
-            out.push_str(&port.to_source());
+            out.push_str(&port.to_source()?);
             out.push('\n');
         }
 
