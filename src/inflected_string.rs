@@ -2,7 +2,7 @@ use color_eyre::Result;
 use eyre::bail;
 use inflector::Inflector;
 
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone)]
 pub struct InflectedString(String);
 
 impl InflectedString {

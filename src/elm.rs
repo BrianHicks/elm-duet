@@ -3,7 +3,7 @@ use eyre::{bail, eyre, Result, WrapErr};
 use jtd::Schema;
 use std::collections::BTreeMap;
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub enum Type {
     Int,
     Float,
@@ -726,9 +726,61 @@ impl Type {
 }
 
 #[derive(Debug)]
+pub struct Port {
+    name: String,
+    direction: PortDirection,
+    type_: Type,
+}
+
+#[derive(Debug)]
+pub enum PortDirection {
+    Send,
+    Subscribe,
+}
+
+impl Port {
+    pub fn new_send(name: String, type_: Type) -> Self {
+        Self {
+            name,
+            direction: PortDirection::Send,
+            type_,
+        }
+    }
+
+    pub fn new_subscribe(name: String, type_: Type) -> Self {
+        Self {
+            name,
+            direction: PortDirection::Subscribe,
+            type_,
+        }
+    }
+
+    fn to_source(&self) -> String {
+        let mut out = String::from("port ");
+        out.push_str(&self.name);
+        out.push_str(" : ");
+
+        match self.direction {
+            PortDirection::Send => {
+                out.push_str(&format!("{:?}", self.type_));
+                out.push_str(" -> Cmd msg");
+            }
+            PortDirection::Subscribe => {
+                out.push('(');
+                out.push_str(&format!("{:?}", self.type_));
+                out.push_str(" -> msg) -> Sub msg");
+            }
+        }
+
+        out
+    }
+}
+
+#[derive(Debug)]
 pub struct Module {
     pub name: Vec<String>,
     decls: Vec<Decl>,
+    ports: Vec<Port>,
 }
 
 impl Module {
@@ -736,6 +788,7 @@ impl Module {
         Self {
             name,
             decls: Vec::new(),
+            ports: Vec::new(),
         }
     }
 
@@ -744,23 +797,27 @@ impl Module {
         schema: Schema,
         name_suggestion: Option<String>,
         globals: &BTreeMap<String, Schema>,
-    ) -> Result<()> {
+    ) -> Result<Type> {
         let (type_, decls) = Type::from_schema(schema, name_suggestion.clone(), globals)?;
 
         self.decls.extend(decls);
 
-        match type_ {
+        match &type_ {
             Type::Ref(_) => (),
             otherwise => self.decls.push(Decl::TypeAlias {
                 name: name_suggestion
                     .ok_or(eyre!("need a name suggestion to create a top-level definition from an unnamed type"))
                     ?.into(),
                 discriminator: None,
-                type_: otherwise,
+                type_: otherwise.clone(),
             }),
         };
 
-        Ok(())
+        Ok(type_)
+    }
+
+    pub fn insert_port(&mut self, port: Port) {
+        self.ports.push(port)
     }
 
     pub fn to_source(&self) -> Result<String> {
@@ -784,6 +841,12 @@ impl Module {
             out.push_str(&decl.to_decoder_source()?);
             out.push_str("\n\n\n");
             out.push_str(&decl.to_encoder_source()?);
+            out.push('\n');
+        }
+
+        for port in &self.ports {
+            out.push_str("\n\n");
+            out.push_str(&port.to_source());
             out.push('\n');
         }
 
@@ -1210,6 +1273,7 @@ mod tests {
             let m = Module {
                 name: Vec::from(["A".to_string(), "B".to_string()]),
                 decls: Vec::new(),
+                ports: Vec::new(),
             };
 
             let err = m.to_source().unwrap_err();
