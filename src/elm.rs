@@ -118,7 +118,11 @@ impl Decl {
                     "    Json.Decode.andThen\n        (\\tag ->\n            case tag of\n",
                 );
 
-                for (case, case_type_opt) in cases {
+                for (i, (case, case_type_opt)) in cases.iter().enumerate() {
+                    if i > 0 {
+                        out.push('\n');
+                    }
+
                     out.push_str("                \"");
                     out.push_str(case.orig());
                     out.push_str("\" ->\n                    ");
@@ -146,7 +150,7 @@ impl Decl {
                             out.push_str(&case.to_pascal_case()?);
                         }
                     }
-                    out.push_str("\n\n");
+                    out.push('\n');
                 }
 
                 out.push_str("        )\n        ");
