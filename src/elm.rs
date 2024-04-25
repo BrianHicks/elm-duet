@@ -28,6 +28,10 @@ pub enum Decl {
     TypeAlias {
         name: InflectedString,
         type_: Type,
+
+        // a bit of a hack, but we need to add disciminators specifically to records in order ot
+        // make the decoders and encoders round-trip properly.
+        discriminator: Option<String>,
     },
 }
 
@@ -64,7 +68,11 @@ impl Decl {
                     out.push('\n')
                 }
             }
-            Decl::TypeAlias { name, type_ } => {
+            Decl::TypeAlias {
+                name,
+                discriminator,
+                type_,
+            } => {
                 out.push_str("type alias ");
                 out.push_str(&name.to_pascal_case()?);
                 out.push_str(" =\n    ");
@@ -237,6 +245,16 @@ impl Decl {
 
         Ok(out)
     }
+
+    fn add_discriminator(&mut self, new_discriminator: String) -> Result<()> {
+        match self {
+            Decl::CustomTypeEnum { .. } => bail!("cannot add a discriminator to a custom type"),
+            Decl::TypeAlias { discriminator, .. } => {
+                *discriminator = Some(new_discriminator);
+                Ok(())
+            }
+        }
+    }
 }
 
 impl Type {
@@ -364,6 +382,7 @@ impl Type {
 
                     decls.push(Decl::TypeAlias {
                         name: name.into(),
+                        discriminator: None,
                         type_: Self::Record(fields),
                     });
 
@@ -403,11 +422,21 @@ impl Type {
 
                     let mut cases = BTreeMap::new();
                     for (tag, tag_schema) in mapping {
-                        let (value_type, value_decls) =
+                        let (value_type, mut value_decls) =
                             Self::from_schema(tag_schema, Some(tag.to_string()), globals)
                                 .wrap_err_with(|| {
                                     format!("could not convert mapping for `{tag}`")
                                 })?;
+
+                        // tell the referred decl (if we got one) that it needs to include the
+                        // discriminator tag in its encoder
+                        if let Type::Ref(ref_name) = &value_type {
+                            for decl in &mut value_decls {
+                                if decl.name() == ref_name {
+                                    decl.add_discriminator(discriminator.clone())?;
+                                }
+                            }
+                        }
 
                         decls.extend(value_decls);
                         cases.insert(tag.into(), Some(value_type));
@@ -711,6 +740,7 @@ impl Module {
                 name: name_suggestion
                     .ok_or(eyre!("need a name suggestion to create a top-level definition from an unnamed type"))
                     ?.into(),
+                discriminator: None,
                 type_: otherwise,
             }),
         };
@@ -989,6 +1019,7 @@ mod tests {
                 decls,
                 Vec::from([Decl::TypeAlias {
                     name: "Foo".into(),
+                    discriminator: None,
                     type_: Type::Record(BTreeMap::from([
                         ("a".into(), Type::Unit),
                         ("b".into(), Type::Unit),
@@ -1029,10 +1060,12 @@ mod tests {
                 Vec::from([
                     Decl::TypeAlias {
                         name: "a".into(),
+                        discriminator: Some("tag".to_string()),
                         type_: Type::Record(BTreeMap::from([("value".into(), Type::String)]))
                     },
                     Decl::TypeAlias {
                         name: "b".into(),
+                        discriminator: Some("tag".to_string()),
                         type_: Type::Record(BTreeMap::from([("value".into(), Type::Float)]))
                     },
                     Decl::CustomTypeEnum {
@@ -1094,6 +1127,7 @@ mod tests {
                 decls,
                 Vec::from([Decl::TypeAlias {
                     name: "foo".into(),
+                    discriminator: None,
                     type_: Type::Record(BTreeMap::new())
                 }])
             );
@@ -1136,6 +1170,7 @@ mod tests {
                 mod_.decls,
                 Vec::from([Decl::TypeAlias {
                     name: "Flags".into(),
+                    discriminator: None,
                     type_: Type::Record(BTreeMap::from([("a".into(), Type::String)]))
                 }])
             );
@@ -1149,6 +1184,7 @@ mod tests {
                 mod_.decls,
                 Vec::from([Decl::TypeAlias {
                     name: "Flags".into(),
+                    discriminator: None,
                     type_: Type::String
                 }])
             );
