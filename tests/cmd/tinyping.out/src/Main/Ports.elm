@@ -4,6 +4,7 @@ port module Main.Ports exposing (..)
 -}
 
 import Json.Decode
+import Json.Decode.Pipeline
 import Json.Encode
 
 
@@ -14,8 +15,8 @@ type alias AddNewPingAt =
 
 addNewPingAtDecoder : Decoder AddNewPingAt
 addNewPingAtDecoder =
-    Json.Decode.map AddNewPingAt
-        (Json.Decode.field "value" Json.Decode.float)
+    Json.Decode.succeed AddNewPingAt
+        |> Json.Decode.Pipeline.required "value" Json.Decode.float
 
 
 encodeAddNewPingAt : AddNewPingAt -> Json.Encode.Value
@@ -33,8 +34,8 @@ type alias SetMinutesPerPing =
 
 setMinutesPerPingDecoder : Decoder SetMinutesPerPing
 setMinutesPerPingDecoder =
-    Json.Decode.map SetMinutesPerPing
-        (Json.Decode.field "value" Json.Decode.float)
+    Json.Decode.succeed SetMinutesPerPing
+        |> Json.Decode.Pipeline.required "value" Json.Decode.float
 
 
 encodeSetMinutesPerPing : SetMinutesPerPing -> Json.Encode.Value
@@ -53,9 +54,9 @@ type alias SetTagForPing =
 
 setTagForPingDecoder : Decoder SetTagForPing
 setTagForPingDecoder =
-    Json.Decode.map2 SetTagForPing
-        (Json.Decode.field "index" Json.Decode.float)
-        (Json.Decode.field "value" (Json.Decode.nullable Json.Decode.string))
+    Json.Decode.succeed SetTagForPing
+        |> Json.Decode.Pipeline.required "index" Json.Decode.float
+        |> Json.Decode.Pipeline.required "value" (Json.Decode.nullable Json.Decode.string)
 
 
 encodeSetTagForPing : SetTagForPing -> Json.Encode.Value
@@ -121,10 +122,10 @@ type alias PingV1 =
 
 pingV1Decoder : Decoder PingV1
 pingV1Decoder =
-    Json.Decode.map3 PingV1
-        (Json.Decode.field "custom" (Json.Decode.dict Json.Decode.string))
-        (Json.Decode.field "tag" (Json.Decode.nullable Json.Decode.string))
-        (Json.Decode.field "time" Json.Decode.int)
+    Json.Decode.succeed PingV1
+        |> Json.Decode.Pipeline.required "custom" (Json.Decode.dict Json.Decode.string)
+        |> Json.Decode.Pipeline.required "tag" (Json.Decode.nullable Json.Decode.string)
+        |> Json.Decode.Pipeline.required "time" Json.Decode.int
 
 
 encodePingV1 : PingV1 -> Json.Encode.Value
@@ -175,8 +176,8 @@ type alias SettingsV1 =
 
 settingsV1Decoder : Decoder SettingsV1
 settingsV1Decoder =
-    Json.Decode.map SettingsV1
-        (Json.Decode.field "minutesPerPing" Json.Decode.int)
+    Json.Decode.succeed SettingsV1
+        |> Json.Decode.Pipeline.required "minutesPerPing" Json.Decode.int
 
 
 encodeSettingsV1 : SettingsV1 -> Json.Encode.Value
@@ -219,9 +220,9 @@ type alias DocV1 =
 
 docV1Decoder : Decoder DocV1
 docV1Decoder =
-    Json.Decode.map2 DocV1
-        (Json.Decode.field "pings" (Json.Decode.list pingsElementsDecoder))
-        (Json.Decode.field "settings" settingsDecoder)
+    Json.Decode.succeed DocV1
+        |> Json.Decode.Pipeline.required "pings" (Json.Decode.list pingsElementsDecoder)
+        |> Json.Decode.Pipeline.required "settings" settingsDecoder
 
 
 encodeDocV1 : DocV1 -> Json.Encode.Value
@@ -322,14 +323,14 @@ type alias NotificationOptions =
 
 notificationOptionsDecoder : Decoder NotificationOptions
 notificationOptionsDecoder =
-    Json.Decode.map7 NotificationOptions
-        (Json.Decode.field "badge" (Json.Decode.nullable Json.Decode.string))
-        (Json.Decode.field "body" (Json.Decode.nullable Json.Decode.string))
-        (Json.Decode.field "icon" (Json.Decode.nullable Json.Decode.string))
-        (Json.Decode.field "lang" (Json.Decode.nullable Json.Decode.string))
-        (Json.Decode.field "requireInteraction" (Json.Decode.nullable Json.Decode.bool))
-        (Json.Decode.field "silent" (Json.Decode.nullable Json.Decode.bool))
-        (Json.Decode.field "tag" (Json.Decode.nullable Json.Decode.string))
+    Json.Decode.succeed NotificationOptions
+        |> Json.Decode.Pipeline.required "badge" (Json.Decode.nullable Json.Decode.string)
+        |> Json.Decode.Pipeline.required "body" (Json.Decode.nullable Json.Decode.string)
+        |> Json.Decode.Pipeline.required "icon" (Json.Decode.nullable Json.Decode.string)
+        |> Json.Decode.Pipeline.required "lang" (Json.Decode.nullable Json.Decode.string)
+        |> Json.Decode.Pipeline.required "requireInteraction" (Json.Decode.nullable Json.Decode.bool)
+        |> Json.Decode.Pipeline.required "silent" (Json.Decode.nullable Json.Decode.bool)
+        |> Json.Decode.Pipeline.required "tag" (Json.Decode.nullable Json.Decode.string)
 
 
 encodeNotificationOptions : NotificationOptions -> Json.Encode.Value
@@ -402,9 +403,9 @@ type alias SendNotification =
 
 sendNotificationDecoder : Decoder SendNotification
 sendNotificationDecoder =
-    Json.Decode.map2 SendNotification
-        (Json.Decode.field "options" notificationOptionsDecoder)
-        (Json.Decode.field "title" Json.Decode.string)
+    Json.Decode.succeed SendNotification
+        |> Json.Decode.Pipeline.required "options" notificationOptionsDecoder
+        |> Json.Decode.Pipeline.required "title" Json.Decode.string
 
 
 encodeSendNotification : SendNotification -> Json.Encode.Value

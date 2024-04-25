@@ -4,6 +4,7 @@ port module Main.Ports exposing (..)
 -}
 
 import Json.Decode
+import Json.Decode.Pipeline
 import Json.Encode
 
 
@@ -14,8 +15,8 @@ type alias ElmToJs =
 
 elmToJsDecoder : Decoder ElmToJs
 elmToJsDecoder =
-    Json.Decode.map ElmToJs
-        (Json.Decode.field "a" Json.Decode.string)
+    Json.Decode.succeed ElmToJs
+        |> Json.Decode.Pipeline.required "a" Json.Decode.string
 
 
 encodeElmToJs : ElmToJs -> Json.Encode.Value
@@ -32,8 +33,8 @@ type alias JsToElm =
 
 jsToElmDecoder : Decoder JsToElm
 jsToElmDecoder =
-    Json.Decode.map JsToElm
-        (Json.Decode.field "a" Json.Decode.string)
+    Json.Decode.succeed JsToElm
+        |> Json.Decode.Pipeline.required "a" Json.Decode.string
 
 
 encodeJsToElm : JsToElm -> Json.Encode.Value

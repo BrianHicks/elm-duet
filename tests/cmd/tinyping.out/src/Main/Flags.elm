@@ -4,6 +4,7 @@ module Main.Flags exposing (..)
 -}
 
 import Json.Decode
+import Json.Decode.Pipeline
 import Json.Encode
 
 
@@ -53,9 +54,9 @@ type alias Flags =
 
 flagsDecoder : Decoder Flags
 flagsDecoder =
-    Json.Decode.map2 Flags
-        (Json.Decode.field "currentTimeMillis" Json.Decode.float)
-        (Json.Decode.field "notificationPermission" notificationPermissionDecoder)
+    Json.Decode.succeed Flags
+        |> Json.Decode.Pipeline.required "currentTimeMillis" Json.Decode.float
+        |> Json.Decode.Pipeline.required "notificationPermission" notificationPermissionDecoder
 
 
 encodeFlags : Flags -> Json.Encode.Value

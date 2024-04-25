@@ -4,6 +4,7 @@ module A.Flags exposing (..)
 -}
 
 import Json.Decode
+import Json.Decode.Pipeline
 import Json.Encode
 
 

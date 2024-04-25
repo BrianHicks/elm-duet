@@ -4,6 +4,7 @@ module Main.Flags exposing (..)
 -}
 
 import Json.Decode
+import Json.Decode.Pipeline
 import Json.Encode
 
 
@@ -25,19 +26,19 @@ type alias Flags =
 
 flagsDecoder : Decoder Flags
 flagsDecoder =
-    Json.Decode.map12 Flags
-        (Json.Decode.field "eight" Json.Decode.string)
-        (Json.Decode.field "eleven" Json.Decode.string)
-        (Json.Decode.field "five" Json.Decode.string)
-        (Json.Decode.field "four" Json.Decode.string)
-        (Json.Decode.field "nine" Json.Decode.string)
-        (Json.Decode.field "one" Json.Decode.string)
-        (Json.Decode.field "seven" Json.Decode.string)
-        (Json.Decode.field "six" Json.Decode.string)
-        (Json.Decode.field "ten" Json.Decode.string)
-        (Json.Decode.field "three" Json.Decode.string)
-        (Json.Decode.field "twelve" Json.Decode.string)
-        (Json.Decode.field "two" Json.Decode.string)
+    Json.Decode.succeed Flags
+        |> Json.Decode.Pipeline.required "eight" Json.Decode.string
+        |> Json.Decode.Pipeline.required "eleven" Json.Decode.string
+        |> Json.Decode.Pipeline.required "five" Json.Decode.string
+        |> Json.Decode.Pipeline.required "four" Json.Decode.string
+        |> Json.Decode.Pipeline.required "nine" Json.Decode.string
+        |> Json.Decode.Pipeline.required "one" Json.Decode.string
+        |> Json.Decode.Pipeline.required "seven" Json.Decode.string
+        |> Json.Decode.Pipeline.required "six" Json.Decode.string
+        |> Json.Decode.Pipeline.required "ten" Json.Decode.string
+        |> Json.Decode.Pipeline.required "three" Json.Decode.string
+        |> Json.Decode.Pipeline.required "twelve" Json.Decode.string
+        |> Json.Decode.Pipeline.required "two" Json.Decode.string
 
 
 encodeFlags : Flags -> Json.Encode.Value
