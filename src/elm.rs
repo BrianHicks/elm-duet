@@ -776,8 +776,17 @@ impl Port {
                 out.push_str(" -> Cmd msg\n")
             }
             PortDirection::Subscribe => {
-                out.push('(');
-                out.push_str(&type_ref.to_pascal_case()?);
+                out.push_str("(Result Json.Decode.Error ");
+
+                let type_name = type_ref.to_pascal_case()?;
+                if type_name.contains(' ') {
+                    out.push('(');
+                    out.push_str(&type_name);
+                    out.push(')');
+                } else {
+                    out.push_str(&type_name);
+                }
+
                 out.push_str(" -> msg) -> Sub msg\n")
             }
         }
@@ -793,7 +802,13 @@ impl Port {
                 out.push_str(&self.type_.encoder_name()?);
                 out.push_str(" value)");
             }
-            PortDirection::Subscribe => out.push_str("toMsg =\n    Debug.todo \"subscribe\""),
+            PortDirection::Subscribe => {
+                out.push_str("toMsg =\n    ");
+                out.push_str(&self.name);
+                out.push_str(" (\\value -> toMsg (Json.Decode.decodeValue value ");
+                out.push_str(&self.type_.decoder_name()?);
+                out.push(')');
+            }
         }
 
         Ok(out)
