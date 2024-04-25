@@ -2,16 +2,18 @@
 
 declare module Elm {
   namespace Main {
-    type Flags = {
-      currentJwt: string | null;
-    }
+    type Flags = Record<string, never>
   
     type Ports = {
-      logout: {
-        subscribe: (callback: (value: Record<string, never>) => void) => void;
+      elmToJs: {
+        subscribe: (callback: (value: {
+          a: string;
+        }) => void) => void;
       };
-      newJwt: {
-        subscribe: (callback: (value: string) => void) => void;
+      jsToElm: {
+        send: (value: {
+          a: string;
+        }) => void;
       };
     }
   

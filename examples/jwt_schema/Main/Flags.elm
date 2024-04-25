@@ -4,6 +4,7 @@ module Main.Flags exposing (..)
 -}
 
 import Json.Decode
+import Json.Decode.Pipeline
 import Json.Encode
 
 
@@ -14,8 +15,8 @@ type alias Flags =
 
 flagsDecoder : Decoder Flags
 flagsDecoder =
-    Json.Decode.map Flags
-        (Json.Decode.field "currentJwt" (Json.Decode.nullable Json.Decode.string))
+    Json.Decode.succeed Flags
+        |> Json.Decode.Pipeline.required "currentJwt" (Json.Decode.nullable Json.Decode.string)
 
 
 encodeFlags : Flags -> Json.Encode.Value
