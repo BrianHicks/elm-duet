@@ -236,7 +236,7 @@ impl Decl {
                 out.push_str("    ");
                 out.push_str(
                     &type_
-                        .to_encoder_source(&variable_name, &discriminator)?
+                        .to_encoder_source(&variable_name, discriminator)?
                         .replace('\n', "\n    "),
                 );
             }
