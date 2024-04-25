@@ -215,7 +215,7 @@ impl Decl {
                         Some(case_type) => out.push_str(
                             &case_type
                                 .to_encoder_source(&case_name.to_camel_case()?)?
-                                .replace("\n", "\n            "),
+                                .replace('\n', "\n            "),
                         ),
                         None => {
                             out.push_str("Encode.string \"");
@@ -620,7 +620,7 @@ impl Type {
             }
             Type::Maybe(type_) => {
                 out.push_str("case ");
-                out.push_str(&source_var);
+                out.push_str(source_var);
                 out.push_str(" of\n    Just value ->\n        ");
                 out.push_str(&type_.to_encoder_source("value")?.replace('\n', "\n       "));
                 out.push_str("\n\n    Nothing ->\n        Encode.null");
@@ -630,19 +630,19 @@ impl Type {
                 out.push_str("Encode.dict identity (\\value -> ");
                 out.push_str(&values.to_encoder_source("value")?);
                 out.push_str(") ");
-                out.push_str(&source_var);
+                out.push_str(source_var);
             }
             Type::List(values) => {
                 out.push_str("Encode.list (\\value -> ");
                 out.push_str(&values.to_encoder_source("value")?);
                 out.push_str(") ");
-                out.push_str(&source_var);
+                out.push_str(source_var);
             }
             Type::Ref(ref_) => {
                 out.push_str("encode");
                 out.push_str(&ref_.to_pascal_case()?);
                 out.push(' ');
-                out.push_str(&source_var);
+                out.push_str(source_var);
             }
             Type::Record(fields) => {
                 out.push_str("Encode.object\n");
@@ -653,8 +653,8 @@ impl Type {
                         out.push_str("    , ( \"");
                     }
 
-                    out.push_str(&name.orig());
-                    out.push_str("\"");
+                    out.push_str(name.orig());
+                    out.push('"');
 
                     let field_encoder = field_type.to_encoder_source(&format!(
                         "{}.{}",
@@ -662,7 +662,7 @@ impl Type {
                         name.to_camel_case()?
                     ))?;
 
-                    if field_encoder.contains("\n") {
+                    if field_encoder.contains('\n') {
                         out.push_str("\n      , ");
                         out.push_str(&field_encoder.replace('\n', "\n        "));
                         out.push_str("\n     ");
