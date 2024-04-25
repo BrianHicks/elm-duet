@@ -88,7 +88,7 @@ impl TSType {
                     | Type::Float32
                     | Type::Float64 => "number",
                     Type::String | Type::Timestamp => "string",
-                    Type::Boolean => "bool",
+                    Type::Boolean => "boolean",
                 },
                 nullable,
             }),
@@ -606,7 +606,7 @@ mod tests {
     fn interprets_boolean() {
         let type_ = from_schema(json!({"type": "boolean"}));
 
-        assert_eq!(type_.to_source(true).unwrap(), "bool".to_string())
+        assert_eq!(type_.to_source(true).unwrap(), "boolean".to_string())
     }
 
     #[test]

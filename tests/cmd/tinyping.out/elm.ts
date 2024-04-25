@@ -49,8 +49,8 @@ declare module Elm {
             body: string | null;
             icon: string | null;
             lang: string | null;
-            requireInteraction: bool | null;
-            silent: bool | null;
+            requireInteraction: boolean | null;
+            silent: boolean | null;
             tag: string | null;
           };
           title: string;
