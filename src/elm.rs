@@ -786,7 +786,13 @@ impl Port {
         out.push_str("_ ");
 
         match self.direction {
-            PortDirection::Send => out.push_str("value =\n    Debug.todo \"send\""),
+            PortDirection::Send => {
+                out.push_str("value =\n    ");
+                out.push_str(&self.name);
+                out.push_str(" (");
+                out.push_str(&self.type_.encoder_name()?);
+                out.push_str(" value)");
+            }
             PortDirection::Subscribe => out.push_str("toMsg =\n    Debug.todo \"subscribe\""),
         }
 
