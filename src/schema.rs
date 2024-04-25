@@ -176,13 +176,20 @@ impl Schema {
                 let mut ports_module = elm::Module::new(ports_name);
 
                 for (port, port_schema) in ports {
-                    ports_module
+                    let port_type = ports_module
                         .insert_from_schema(
                             jtd::Schema::from_serde_schema(port_schema.schema.clone())?,
                             Some(port.into()),
                             &globals,
                         )
                         .wrap_err_with(|| format!("could not convert the `{port}` port to Elm"))?;
+
+                    ports_module.insert_port(match port_schema.metadata.direction {
+                        PortDirection::ElmToJs => elm::Port::new_send(port.to_owned(), port_type),
+                        PortDirection::JsToElm => {
+                            elm::Port::new_subscribe(port.to_owned(), port_type)
+                        }
+                    })
                 }
 
                 files.insert(

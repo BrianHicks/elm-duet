@@ -3,7 +3,7 @@ use eyre::{bail, eyre, Result, WrapErr};
 use jtd::Schema;
 use std::collections::BTreeMap;
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub enum Type {
     Int,
     Float,
@@ -17,7 +17,7 @@ pub enum Type {
     Record(BTreeMap<InflectedString, Type>),
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub enum Decl {
     CustomTypeEnum {
         name: InflectedString,
@@ -114,7 +114,9 @@ impl Decl {
                 cases,
                 ..
             } => {
-                out.push_str("    Decode.andThen\n        (\\tag ->\n            case tag of\n");
+                out.push_str(
+                    "    Json.Decode.andThen\n        (\\tag ->\n            case tag of\n",
+                );
 
                 for (case, case_type_opt) in cases {
                     out.push_str("                \"");
@@ -125,7 +127,7 @@ impl Decl {
                         Some(type_) => {
                             let sub_decoder = type_.to_decoder_source(&type_name)?;
 
-                            out.push_str("Decode.map ");
+                            out.push_str("Json.Decode.map ");
                             out.push_str(&constructor_prefix.to_pascal_case()?);
                             out.push_str(&case.to_pascal_case()?);
                             if sub_decoder.contains('\n') {
@@ -139,7 +141,7 @@ impl Decl {
                             }
                         }
                         None => {
-                            out.push_str("Decode.succeed ");
+                            out.push_str("Json.Decode.succeed ");
                             out.push_str(&constructor_prefix.to_pascal_case()?);
                             out.push_str(&case.to_pascal_case()?);
                         }
@@ -149,11 +151,11 @@ impl Decl {
 
                 out.push_str("        )\n        ");
                 match discriminator {
-                    None => out.push_str("Decode.string"),
+                    None => out.push_str("Json.Decode.string"),
                     Some(name) => {
-                        out.push_str("(Decode.field \"");
+                        out.push_str("(Json.Decode.field \"");
                         out.push_str(name);
-                        out.push_str("\" Decode.string)");
+                        out.push_str("\" Json.Decode.string)");
                     }
                 }
             }
@@ -177,7 +179,7 @@ impl Decl {
         out.push_str(&decoder_name);
         out.push_str(" : ");
         out.push_str(&type_name);
-        out.push_str(" -> Encode.Value\n");
+        out.push_str(" -> Json.Encode.Value\n");
         out.push_str(&decoder_name);
         out.push(' ');
         out.push_str(&variable_name);
@@ -221,7 +223,7 @@ impl Decl {
                                 .replace('\n', "\n            "),
                         ),
                         None => {
-                            out.push_str("Encode.string \"");
+                            out.push_str("Json.Encode.string \"");
                             out.push_str(case.orig());
                             out.push('"');
                         }
@@ -549,13 +551,13 @@ impl Type {
         let mut out = String::new();
 
         match self {
-            Type::Int => out.push_str("Decode.int"),
-            Type::Float => out.push_str("Decode.float"),
-            Type::Bool => out.push_str("Decode.bool"),
-            Type::String => out.push_str("Decode.string"),
+            Type::Int => out.push_str("Json.Decode.int"),
+            Type::Float => out.push_str("Json.Decode.float"),
+            Type::Bool => out.push_str("Json.Decode.bool"),
+            Type::String => out.push_str("Json.Decode.string"),
             Type::Maybe(type_) => {
                 let sub_decoder = type_.to_decoder_source(dest_type)?;
-                out.push_str("Decode.nullable ");
+                out.push_str("Json.Decode.nullable ");
 
                 if sub_decoder.contains(' ') {
                     out.push('(');
@@ -565,10 +567,10 @@ impl Type {
                     out.push_str(&sub_decoder);
                 }
             }
-            Type::Unit => out.push_str("Decode.null ()"),
+            Type::Unit => out.push_str("Json.Decode.null ()"),
             Type::DictWithStringKeys(type_) => {
                 let sub_decoder = type_.to_decoder_source(dest_type)?;
-                out.push_str("Decode.dict ");
+                out.push_str("Json.Decode.dict ");
 
                 if sub_decoder.contains(' ') {
                     out.push('(');
@@ -580,7 +582,7 @@ impl Type {
             }
             Type::List(type_) => {
                 let sub_decoder = type_.to_decoder_source(dest_type)?;
-                out.push_str("Decode.list ");
+                out.push_str("Json.Decode.list ");
 
                 if sub_decoder.contains(' ') {
                     out.push('(');
@@ -595,7 +597,7 @@ impl Type {
                 out.push_str("Decoder");
             }
             Type::Record(fields) => {
-                out.push_str("Decode.map");
+                out.push_str("Json.Decode.map");
                 if fields.len() > 1 {
                     out.push_str(&fields.len().to_string()); // TODO: fix for >9
                 }
@@ -606,7 +608,7 @@ impl Type {
                     let sub_decoder = field_type.to_decoder_source(dest_type)?;
 
                     out.push_str("\n    ");
-                    out.push_str("(Decode.field \"");
+                    out.push_str("(Json.Decode.field \"");
                     out.push_str(name.orig());
                     out.push_str("\" ");
 
@@ -635,19 +637,19 @@ impl Type {
 
         match self {
             Type::Int => {
-                out.push_str("Encode.int ");
+                out.push_str("Json.Encode.int ");
                 out.push_str(source_var);
             }
             Type::Float => {
-                out.push_str("Encode.float ");
+                out.push_str("Json.Encode.float ");
                 out.push_str(source_var);
             }
             Type::Bool => {
-                out.push_str("Encode.bool ");
+                out.push_str("Json.Encode.bool ");
                 out.push_str(source_var);
             }
             Type::String => {
-                out.push_str("Encode.string ");
+                out.push_str("Json.Encode.string ");
                 out.push_str(source_var);
             }
             Type::Maybe(type_) => {
@@ -659,17 +661,17 @@ impl Type {
                         .to_encoder_source("value", discriminator_field_opt)?
                         .replace('\n', "\n       "),
                 );
-                out.push_str("\n\n    Nothing ->\n        Encode.null");
+                out.push_str("\n\n    Nothing ->\n        Json.Encode.null");
             }
-            Type::Unit => out.push_str("Encode.null"),
+            Type::Unit => out.push_str("Json.Encode.null"),
             Type::DictWithStringKeys(values) => {
-                out.push_str("Encode.dict identity (\\value -> ");
+                out.push_str("Json.Encode.dict identity (\\value -> ");
                 out.push_str(&values.to_encoder_source("value", discriminator_field_opt)?);
                 out.push_str(") ");
                 out.push_str(source_var);
             }
             Type::List(values) => {
-                out.push_str("Encode.list (\\value -> ");
+                out.push_str("Json.Encode.list (\\value -> ");
                 out.push_str(&values.to_encoder_source("value", discriminator_field_opt)?);
                 out.push_str(") ");
                 out.push_str(source_var);
@@ -681,7 +683,7 @@ impl Type {
                 out.push_str(source_var);
             }
             Type::Record(fields) => {
-                out.push_str("Encode.object\n");
+                out.push_str("Json.Encode.object\n");
                 for (i, (name, field_type)) in fields.iter().enumerate() {
                     if i == 0 {
                         out.push_str("    [ ( \"");
@@ -712,7 +714,7 @@ impl Type {
                 if let Some((discriminator_name, discriminator_value)) = discriminator_field_opt {
                     out.push_str("    , ( \"");
                     out.push_str(discriminator_name); // TODO: this probably should be inflected
-                    out.push_str("\", Encode.string \"");
+                    out.push_str("\", Json.Encode.string \"");
                     out.push_str(discriminator_value);
                     out.push_str("\" )\n");
                 }
@@ -726,9 +728,100 @@ impl Type {
 }
 
 #[derive(Debug)]
+pub struct Port {
+    name: String,
+    direction: PortDirection,
+    type_: Decl,
+}
+
+#[derive(Debug)]
+pub enum PortDirection {
+    Send,
+    Subscribe,
+}
+
+impl Port {
+    pub fn new_send(name: String, type_: Decl) -> Self {
+        Self {
+            name,
+            direction: PortDirection::Send,
+            type_,
+        }
+    }
+
+    pub fn new_subscribe(name: String, type_: Decl) -> Self {
+        Self {
+            name,
+            direction: PortDirection::Subscribe,
+            type_,
+        }
+    }
+
+    fn to_source(&self) -> Result<String> {
+        let mut out = String::from("port ");
+        out.push_str(&self.name);
+        out.push_str(" : ");
+
+        match self.direction {
+            PortDirection::Send => out.push_str("Value -> Cmd msg\n\n\n"),
+            PortDirection::Subscribe => out.push_str("(Value -> msg) -> Sub msg\n\n\n"),
+        }
+
+        out.push_str(&self.name);
+        out.push_str("_ : ");
+
+        let type_ref = self.type_.name();
+
+        match self.direction {
+            PortDirection::Send => {
+                out.push_str(&type_ref.to_pascal_case()?);
+                out.push_str(" -> Cmd msg\n")
+            }
+            PortDirection::Subscribe => {
+                out.push_str("(Result Json.Decode.Error ");
+
+                let type_name = type_ref.to_pascal_case()?;
+                if type_name.contains(' ') {
+                    out.push('(');
+                    out.push_str(&type_name);
+                    out.push(')');
+                } else {
+                    out.push_str(&type_name);
+                }
+
+                out.push_str(" -> msg) -> Sub msg\n")
+            }
+        }
+
+        out.push_str(&self.name);
+        out.push_str("_ ");
+
+        match self.direction {
+            PortDirection::Send => {
+                out.push_str("value =\n    ");
+                out.push_str(&self.name);
+                out.push_str(" (");
+                out.push_str(&self.type_.encoder_name()?);
+                out.push_str(" value)");
+            }
+            PortDirection::Subscribe => {
+                out.push_str("toMsg =\n    ");
+                out.push_str(&self.name);
+                out.push_str(" (\\value -> toMsg (Json.Decode.decodeValue value ");
+                out.push_str(&self.type_.decoder_name()?);
+                out.push(')');
+            }
+        }
+
+        Ok(out)
+    }
+}
+
+#[derive(Debug)]
 pub struct Module {
     pub name: Vec<String>,
     decls: Vec<Decl>,
+    ports: Vec<Port>,
 }
 
 impl Module {
@@ -736,6 +829,7 @@ impl Module {
         Self {
             name,
             decls: Vec::new(),
+            ports: Vec::new(),
         }
     }
 
@@ -744,23 +838,38 @@ impl Module {
         schema: Schema,
         name_suggestion: Option<String>,
         globals: &BTreeMap<String, Schema>,
-    ) -> Result<()> {
+    ) -> Result<Decl> {
         let (type_, decls) = Type::from_schema(schema, name_suggestion.clone(), globals)?;
 
         self.decls.extend(decls);
 
-        match type_ {
-            Type::Ref(_) => (),
-            otherwise => self.decls.push(Decl::TypeAlias {
-                name: name_suggestion
-                    .ok_or(eyre!("need a name suggestion to create a top-level definition from an unnamed type"))
-                    ?.into(),
-                discriminator: None,
-                type_: otherwise,
-            }),
-        };
+        match &type_ {
+            Type::Ref(name) => {
+                for decl in &self.decls {
+                    if decl.name() == name {
+                        return Ok(decl.clone());
+                    }
+                }
 
-        Ok(())
+                bail!("could not find a decl named {}. This is an internal error and should be reported.", name.to_pascal_case()?);
+            }
+            otherwise => {
+                let top_decl = Decl::TypeAlias {
+                    name: name_suggestion
+                        .ok_or(eyre!("need a name suggestion to create a top-level definition from an unnamed type"))
+                        ?.into(),
+                    discriminator: None,
+                    type_: otherwise.clone(),
+                };
+                self.decls.push(top_decl.clone());
+
+                Ok(top_decl)
+            }
+        }
+    }
+
+    pub fn insert_port(&mut self, port: Port) {
+        self.ports.push(port)
     }
 
     pub fn to_source(&self) -> Result<String> {
@@ -773,9 +882,13 @@ impl Module {
 
         let mut out = String::new();
 
+        if !self.ports.is_empty() {
+            out.push_str("port ");
+        }
+
         out.push_str("module ");
         out.push_str(&self.name.join("."));
-        out.push_str(" exposing (..)\n\n{-| Warning: this file is automatically generated. Don't edit by hand!\n-}\n"); // TODO: expose exactly the things we need?
+        out.push_str(" exposing (..)\n\n{-| Warning: this file is automatically generated. Don't edit by hand!\n-}\n\nimport Json.Decode\nimport Json.Encode\n");
 
         for decl in &self.decls {
             out.push_str("\n\n");
@@ -784,6 +897,12 @@ impl Module {
             out.push_str(&decl.to_decoder_source()?);
             out.push_str("\n\n\n");
             out.push_str(&decl.to_encoder_source()?);
+            out.push('\n');
+        }
+
+        for port in &self.ports {
+            out.push_str("\n\n");
+            out.push_str(&port.to_source()?);
             out.push('\n');
         }
 
@@ -1210,6 +1329,7 @@ mod tests {
             let m = Module {
                 name: Vec::from(["A".to_string(), "B".to_string()]),
                 decls: Vec::new(),
+                ports: Vec::new(),
             };
 
             let err = m.to_source().unwrap_err();
