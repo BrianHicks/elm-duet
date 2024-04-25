@@ -17,7 +17,7 @@ pub enum Type {
     Record(BTreeMap<InflectedString, Type>),
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub enum Decl {
     CustomTypeEnum {
         name: InflectedString,
@@ -729,7 +729,7 @@ impl Type {
 pub struct Port {
     name: String,
     direction: PortDirection,
-    type_: Type,
+    type_: Decl,
 }
 
 #[derive(Debug)]
@@ -739,7 +739,7 @@ pub enum PortDirection {
 }
 
 impl Port {
-    pub fn new_send(name: String, type_: Type) -> Self {
+    pub fn new_send(name: String, type_: Decl) -> Self {
         Self {
             name,
             direction: PortDirection::Send,
@@ -747,7 +747,7 @@ impl Port {
         }
     }
 
-    pub fn new_subscribe(name: String, type_: Type) -> Self {
+    pub fn new_subscribe(name: String, type_: Decl) -> Self {
         Self {
             name,
             direction: PortDirection::Subscribe,
@@ -768,20 +768,16 @@ impl Port {
         out.push_str(&self.name);
         out.push_str("_ : ");
 
-        let type_ref = if let Type::Ref(name) = &self.type_ {
-            name.to_pascal_case()?
-        } else {
-            String::from("TODO")
-        };
+        let type_ref = self.type_.name();
 
         match self.direction {
             PortDirection::Send => {
-                out.push_str(&type_ref);
+                out.push_str(&type_ref.to_pascal_case()?);
                 out.push_str(" -> Cmd msg\n")
             }
             PortDirection::Subscribe => {
                 out.push('(');
-                out.push_str(&type_ref);
+                out.push_str(&type_ref.to_pascal_case()?);
                 out.push_str(" -> msg) -> Sub msg\n")
             }
         }
@@ -819,23 +815,34 @@ impl Module {
         schema: Schema,
         name_suggestion: Option<String>,
         globals: &BTreeMap<String, Schema>,
-    ) -> Result<Type> {
+    ) -> Result<Decl> {
         let (type_, decls) = Type::from_schema(schema, name_suggestion.clone(), globals)?;
 
         self.decls.extend(decls);
 
         match &type_ {
-            Type::Ref(_) => (),
-            otherwise => self.decls.push(Decl::TypeAlias {
-                name: name_suggestion
-                    .ok_or(eyre!("need a name suggestion to create a top-level definition from an unnamed type"))
-                    ?.into(),
-                discriminator: None,
-                type_: otherwise.clone(),
-            }),
-        };
+            Type::Ref(name) => {
+                for decl in &self.decls {
+                    if decl.name() == name {
+                        return Ok(decl.clone());
+                    }
+                }
 
-        Ok(type_)
+                bail!("could not find a decl named {}. This is an internal error and should be reported.", name.to_pascal_case()?);
+            }
+            otherwise => {
+                let top_decl = Decl::TypeAlias {
+                    name: name_suggestion
+                        .ok_or(eyre!("need a name suggestion to create a top-level definition from an unnamed type"))
+                        ?.into(),
+                    discriminator: None,
+                    type_: otherwise.clone(),
+                };
+                self.decls.push(top_decl.clone());
+
+                return Ok(top_decl);
+            }
+        };
     }
 
     pub fn insert_port(&mut self, port: Port) {
