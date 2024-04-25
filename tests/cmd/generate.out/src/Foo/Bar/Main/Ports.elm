@@ -15,10 +15,11 @@ addNewPingAtDecoder =
         (Decode.field "value" Decode.float)
 
 
-encodeAddNewPingAt : AddNewPingAt -> Encode.Value
-encodeAddNewPingAt addNewPingAt =
+encodeAddNewPingAt : String -> AddNewPingAt -> Encode.Value
+encodeAddNewPingAt tag addNewPingAt =
     Encode.object
         [ ( "value", Encode.float addNewPingAt.value )
+        , ( "tag", Encode.string tag )
         ]
 
 
@@ -33,10 +34,11 @@ setMinutesPerPingDecoder =
         (Decode.field "value" Decode.float)
 
 
-encodeSetMinutesPerPing : SetMinutesPerPing -> Encode.Value
-encodeSetMinutesPerPing setMinutesPerPing =
+encodeSetMinutesPerPing : String -> SetMinutesPerPing -> Encode.Value
+encodeSetMinutesPerPing tag setMinutesPerPing =
     Encode.object
         [ ( "value", Encode.float setMinutesPerPing.value )
+        , ( "tag", Encode.string tag )
         ]
 
 
@@ -53,8 +55,8 @@ setTagForPingDecoder =
         (Decode.field "value" (Decode.nullable Decode.string))
 
 
-encodeSetTagForPing : SetTagForPing -> Encode.Value
-encodeSetTagForPing setTagForPing =
+encodeSetTagForPing : String -> SetTagForPing -> Encode.Value
+encodeSetTagForPing tag setTagForPing =
     Encode.object
         [ ( "index", Encode.float setTagForPing.index )
         , ( "value"
@@ -65,6 +67,7 @@ encodeSetTagForPing setTagForPing =
                 Nothing ->
                     Encode.null
           )
+        , ( "tag", Encode.string tag )
         ]
 
 
@@ -121,8 +124,8 @@ pingV1Decoder =
         (Decode.field "time" Decode.int)
 
 
-encodePingV1 : PingV1 -> Encode.Value
-encodePingV1 pingV1 =
+encodePingV1 : String -> PingV1 -> Encode.Value
+encodePingV1 version pingV1 =
     Encode.object
         [ ( "custom", Encode.dict identity (/value -> Encode.string value) pingV1.custom )
         , ( "tag"
@@ -134,6 +137,7 @@ encodePingV1 pingV1 =
                     Encode.null
           )
         , ( "time", Encode.int pingV1.time )
+        , ( "version", Encode.string version )
         ]
 
 
@@ -172,10 +176,11 @@ settingsV1Decoder =
         (Decode.field "minutesPerPing" Decode.int)
 
 
-encodeSettingsV1 : SettingsV1 -> Encode.Value
-encodeSettingsV1 settingsV1 =
+encodeSettingsV1 : String -> SettingsV1 -> Encode.Value
+encodeSettingsV1 version settingsV1 =
     Encode.object
         [ ( "minutesPerPing", Encode.int settingsV1.minutesPerPing )
+        , ( "version", Encode.string version )
         ]
 
 
@@ -216,11 +221,12 @@ docV1Decoder =
         (Decode.field "settings" settingsDecoder)
 
 
-encodeDocV1 : DocV1 -> Encode.Value
-encodeDocV1 docV1 =
+encodeDocV1 : String -> DocV1 -> Encode.Value
+encodeDocV1 version docV1 =
     Encode.object
         [ ( "pings", Encode.list (/value -> encodePingsElements value) docV1.pings )
         , ( "settings", encodeSettings docV1.settings )
+        , ( "version", Encode.string version )
         ]
 
 
