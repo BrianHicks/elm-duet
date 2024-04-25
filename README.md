@@ -102,6 +102,20 @@ flagsDecoder =
     Decode.map Flags
         (Decode.field "currentJwt" (Decode.nullable Decode.string))
 
+
+encodeFlags : Flags -> Encode.Value
+encodeFlags flags =
+    Encode.object
+        [ ( "currentJwt"
+          , case flags.currentJwt of
+                Just value ->
+                    Encode.string value
+            
+                Nothing ->
+                    Encode.null
+          )
+        ]
+
 ```
 
 And these for the ports:
@@ -122,6 +136,11 @@ logoutDecoder =
     Decode.null ()
 
 
+encodeLogout : Logout -> Encode.Value
+encodeLogout logout =
+    Encode.null
+
+
 type alias NewJwt =
     String
 
@@ -129,6 +148,11 @@ type alias NewJwt =
 newJwtDecoder : Decoder NewJwt
 newJwtDecoder =
     Decode.string
+
+
+encodeNewJwt : NewJwt -> Encode.Value
+encodeNewJwt newJwt =
+    Encode.string newJwt
 
 ```
 
@@ -146,7 +170,6 @@ Arguments:
 Options:
       --typescript-dest <TYPESCRIPT_DEST>  Destination for TypeScript types [default: elm.ts]
       --elm-dest <ELM_DEST>                Destination for Elm types [default: src/]
-      --elm-prefix <ELM_PREFIX>            Prefix for Elm module path [default: Interop]
   -h, --help                               Print help
   -V, --version                            Print version
 

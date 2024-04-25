@@ -13,6 +13,11 @@ logoutDecoder =
     Decode.null ()
 
 
+encodeLogout : Logout -> Encode.Value
+encodeLogout logout =
+    Encode.null
+
+
 type alias NewJwt =
     String
 
@@ -20,3 +25,8 @@ type alias NewJwt =
 newJwtDecoder : Decoder NewJwt
 newJwtDecoder =
     Decode.string
+
+
+encodeNewJwt : NewJwt -> Encode.Value
+encodeNewJwt newJwt =
+    Encode.string newJwt

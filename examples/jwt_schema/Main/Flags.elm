@@ -13,3 +13,17 @@ flagsDecoder : Decoder Flags
 flagsDecoder =
     Decode.map Flags
         (Decode.field "currentJwt" (Decode.nullable Decode.string))
+
+
+encodeFlags : Flags -> Encode.Value
+encodeFlags flags =
+    Encode.object
+        [ ( "currentJwt"
+          , case flags.currentJwt of
+                Just value ->
+                    Encode.string value
+            
+                Nothing ->
+                    Encode.null
+          )
+        ]
