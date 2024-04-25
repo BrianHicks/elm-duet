@@ -68,11 +68,7 @@ impl Decl {
                     out.push('\n')
                 }
             }
-            Decl::TypeAlias {
-                name,
-                discriminator,
-                type_,
-            } => {
+            Decl::TypeAlias { name, type_, .. } => {
                 out.push_str("type alias ");
                 out.push_str(&name.to_pascal_case()?);
                 out.push_str(" =\n    ");
@@ -180,7 +176,6 @@ impl Decl {
 
         match &self {
             Decl::CustomTypeEnum {
-                discriminator,
                 constructor_prefix,
                 cases,
                 ..
