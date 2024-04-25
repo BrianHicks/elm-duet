@@ -2,181 +2,189 @@
   "modules": {
     "Main": {
       "flags": {
-	"properties": {
-	  "currentTimeMillis": {
-	    "type": "float32"
-	  },
-	  "notificationPermission": {
-	    "enum": ["default", "granted", "denied"]
-	  }
-	}
+        "properties": {
+          "currentTimeMillis": {
+            "type": "float32"
+          },
+          "notificationPermission": {
+            "enum": [
+              "default",
+              "granted",
+              "denied"
+            ]
+          }
+        }
       },
       "ports": {
-	"requestNotificationPermission": {
-	  "metadata": {
-	    "direction": "ElmToJs"
-	  }
-	},
-	"notificationPermission": {
-	  "metadata": {
-	    "direction": "JsToElm"
-	  },
-	  "enum": ["default", "denied", "granted"]
-	},
-	"sendNotification": {
-	  "metadata": {
-	    "direction": "ElmToJs"
-	  },
-	  "properties": {
-	    "title": {
-	      "type": "string"
-	    },
-	    "options": {
-	      "metadata": {
-		"name": "NotificationOptions"
-	      },
-	      "properties": {
-		"badge": {
-		  "type": "string",
-		  "nullable": true
-		},
-		"body": {
-		  "type": "string",
-		  "nullable": true
-		},
-		"icon": {
-		  "type": "string",
-		  "nullable": true
-		},
-		"lang": {
-		  "type": "string",
-		  "nullable": true
-		},
-		"requireInteraction": {
-		  "type": "boolean",
-		  "nullable": true
-		},
-		"silent": {
-		  "type": "boolean",
-		  "nullable": true
-		},
-		"tag": {
-		  "type": "string",
-		  "nullable": true
-		}
-	      }
-	    }
-	  }
-	},
-	"changeDocument": {
-	  "metadata": {
-	    "direction": "ElmToJs"
-	  },
-	  "discriminator": "tag",
-	  "mapping": {
-	    "SetMinutesPerPing": {
-	      "properties": {
-		"value": {
-		  "type": "float64"
-		}
-	      }
-	    },
-	    "AddNewPingAt": {
-	      "properties": {
-		"value": {
-		  "type": "float64"
-		}
-	      }
-	    },
-	    "SetTagForPing": {
-	      "properties": {
-		"index": {
-		  "type": "float64"
-		},
-		"value": {
-		  "type": "string",
-		  "nullable": true
-		}
-	      }
-	    }
-	  }
-	},
-	"docFromAutomerge": {
-	  "metadata": {
-	    "direction": "JsToElm"
-	  },
-	  "ref": "doc"
-	}
+        "requestNotificationPermission": {
+          "metadata": {
+            "direction": "ElmToJs"
+          }
+        },
+        "notificationPermission": {
+          "metadata": {
+            "direction": "JsToElm"
+          },
+          "enum": [
+            "default",
+            "denied",
+            "granted"
+          ]
+        },
+        "sendNotification": {
+          "metadata": {
+            "direction": "ElmToJs"
+          },
+          "properties": {
+            "title": {
+              "type": "string"
+            },
+            "options": {
+              "metadata": {
+                "name": "NotificationOptions"
+              },
+              "properties": {
+                "badge": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "body": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "icon": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "lang": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "requireInteraction": {
+                  "type": "boolean",
+                  "nullable": true
+                },
+                "silent": {
+                  "type": "boolean",
+                  "nullable": true
+                },
+                "tag": {
+                  "type": "string",
+                  "nullable": true
+                }
+              }
+            }
+          }
+        },
+        "changeDocument": {
+          "metadata": {
+            "direction": "ElmToJs"
+          },
+          "discriminator": "tag",
+          "mapping": {
+            "SetMinutesPerPing": {
+              "properties": {
+                "value": {
+                  "type": "float64"
+                }
+              }
+            },
+            "AddNewPingAt": {
+              "properties": {
+                "value": {
+                  "type": "float64"
+                }
+              }
+            },
+            "SetTagForPing": {
+              "properties": {
+                "index": {
+                  "type": "float64"
+                },
+                "value": {
+                  "type": "string",
+                  "nullable": true
+                }
+              }
+            }
+          }
+        },
+        "docFromAutomerge": {
+          "metadata": {
+            "direction": "JsToElm"
+          },
+          "ref": "doc"
+        }
       }
     }
   },
   "definitions": {
     "doc": {
       "metadata": {
-	"constructorPrefix": "doc"
+        "constructorPrefix": "doc"
       },
       "discriminator": "version",
       "mapping": {
-	"v1": {
-	  "metadata": {
-	    "name": "DocV1"
-	  },
-	  "properties": {
-	    "pings": {
-	      "elements": {
-		"ref": "ping"
-	      }
-	    },
-	    "settings": {
-	      "ref": "settings"
-	    }
-	  }
-	}
+        "v1": {
+          "metadata": {
+            "name": "DocV1"
+          },
+          "properties": {
+            "pings": {
+              "elements": {
+                "ref": "ping"
+              }
+            },
+            "settings": {
+              "ref": "settings"
+            }
+          }
+        }
       }
     },
     "settings": {
       "metadata": {
-	"constructorPrefix": "settings"
+        "constructorPrefix": "settings"
       },
       "discriminator": "version",
       "mapping": {
-	"v1": {
-	  "metadata": {
-	    "name": "SettingsV1"
-	  },
-	  "properties": {
-	    "minutesPerPing": {
-	      "type": "int32"
-	    }
-	  }
-	}
+        "v1": {
+          "metadata": {
+            "name": "SettingsV1"
+          },
+          "properties": {
+            "minutesPerPing": {
+              "type": "int32"
+            }
+          }
+        }
       }
     },
     "ping": {
       "metadata": {
-	"constructorPrefix": "ping"
+        "constructorPrefix": "ping"
       },
       "discriminator": "version",
       "mapping": {
-	"v1": {
-	  "metadata": {
-	    "name": "PingV1"
-	  },
-	  "properties": {
-	    "time": {
-	      "type": "int32"
-	    },
-	    "tag": {
-	      "type": "string",
-	      "nullable": true
-	    },
-	    "custom": {
-	      "values": {
-		"type": "string"
-	      }
-	    }
-	  }
-	}
+        "v1": {
+          "metadata": {
+            "name": "PingV1"
+          },
+          "properties": {
+            "time": {
+              "type": "int32"
+            },
+            "tag": {
+              "type": "string",
+              "nullable": true
+            },
+            "custom": {
+              "values": {
+                "type": "string"
+              }
+            }
+          }
+        }
       }
     }
   }

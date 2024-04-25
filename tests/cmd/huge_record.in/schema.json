@@ -1,46 +1,46 @@
 {
-    "modules": {
-	"Main": {
-	    "flags": {
-		"properties": {
-		    "one": {
-			"type": "string"
-		    },
-		    "two": {
-			"type": "string"
-		    },
-		    "three": {
-			"type": "string"
-		    },
-		    "four": {
-			"type": "string"
-		    },
-		    "five": {
-			"type": "string"
-		    },
-		    "six": {
-			"type": "string"
-		    },
-		    "seven": {
-			"type": "string"
-		    },
-		    "eight": {
-			"type": "string"
-		    },
-		    "nine": {
-			"type": "string"
-		    },
-		    "ten": {
-			"type": "string"
-		    },
-		    "eleven": {
-			"type": "string"
-		    },
-		    "twelve": {
-			"type": "string"
-		    }
-		}
-	    }
-	}
+  "modules": {
+    "Main": {
+      "flags": {
+        "properties": {
+          "one": {
+            "type": "string"
+          },
+          "two": {
+            "type": "string"
+          },
+          "three": {
+            "type": "string"
+          },
+          "four": {
+            "type": "string"
+          },
+          "five": {
+            "type": "string"
+          },
+          "six": {
+            "type": "string"
+          },
+          "seven": {
+            "type": "string"
+          },
+          "eight": {
+            "type": "string"
+          },
+          "nine": {
+            "type": "string"
+          },
+          "ten": {
+            "type": "string"
+          },
+          "eleven": {
+            "type": "string"
+          },
+          "twelve": {
+            "type": "string"
+          }
+        }
+      }
     }
+  }
 }
