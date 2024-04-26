@@ -2,7 +2,7 @@ use crate::elm;
 use crate::typescript::NamespaceBuilder;
 use crate::typescript::TSType;
 use color_eyre::Result;
-use eyre::WrapErr;
+use eyre::{bail, WrapErr};
 use serde::Deserialize;
 use std::collections::BTreeMap;
 use std::path::Path;
@@ -43,8 +43,19 @@ pub enum PortDirection {
 impl Schema {
     pub fn from_fs(path: &Path) -> Result<Schema> {
         let bytes = std::fs::read(path).wrap_err_with(|| format!("could not read {path:?}"))?;
-        serde_json::from_slice(&bytes)
-            .wrap_err_with(|| format!("could not read schema from {path:?}"))
+
+        match path.extension().and_then(std::ffi::OsStr::to_str) {
+            Some("json") => serde_json::from_slice(&bytes)
+                .wrap_err_with(|| format!("could not read schema from {path:?}")),
+            Some(_) => bail!(
+                "I can't deserialize a schema from a {:?} file",
+                path.extension()
+            ),
+            None => bail!(
+                "I couldn't figure out what kind of file {} is because it doesn't have an extension!",
+                path.display(),
+            ),
+        }
     }
 
     fn globals(&self) -> Result<BTreeMap<String, jtd::Schema>> {
