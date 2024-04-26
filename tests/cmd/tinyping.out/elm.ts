@@ -36,13 +36,7 @@ declare module Elm {
           version: "v1";
         }) => void;
       };
-      notificationPermission: {
-        send: (value: "default" | "denied" | "granted") => void;
-      };
-      requestNotificationPermission: {
-        subscribe: (callback: (value: Record<string, never>) => void) => void;
-      };
-      sendNotification: {
+      newNotification: {
         subscribe: (callback: (value: {
           options: {
             badge: string | null;
@@ -55,6 +49,12 @@ declare module Elm {
           };
           title: string;
         }) => void) => void;
+      };
+      notificationPermission: {
+        send: (value: "default" | "denied" | "granted") => void;
+      };
+      requestNotificationPermission: {
+        subscribe: (callback: (value: Record<string, never>) => void) => void;
       };
     }
   

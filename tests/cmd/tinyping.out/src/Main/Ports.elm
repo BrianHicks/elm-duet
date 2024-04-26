@@ -254,57 +254,6 @@ encodeDocFromAutomerge docFromAutomerge =
             encodeDocV1 docV1
 
 
-type NotificationPermission
-    = Default
-    | Denied
-    | Granted
-
-
-
-notificationPermissionDecoder : Decoder NotificationPermission
-notificationPermissionDecoder =
-    Json.Decode.andThen
-        (/tag ->
-            case tag of
-                "default" ->
-                    Json.Decode.succeed Default
-
-                "denied" ->
-                    Json.Decode.succeed Denied
-
-                "granted" ->
-                    Json.Decode.succeed Granted
-        )
-        Json.Decode.string
-
-
-encodeNotificationPermission : NotificationPermission -> Json.Encode.Value
-encodeNotificationPermission notificationPermission =
-    case notificationPermission of
-        Default ->
-            Json.Encode.string "default"
-
-        Denied ->
-            Json.Encode.string "denied"
-
-        Granted ->
-            Json.Encode.string "granted"
-
-
-type alias RequestNotificationPermission =
-    ()
-
-
-requestNotificationPermissionDecoder : Decoder RequestNotificationPermission
-requestNotificationPermissionDecoder =
-    Json.Decode.null ()
-
-
-encodeRequestNotificationPermission : RequestNotificationPermission -> Json.Encode.Value
-encodeRequestNotificationPermission requestNotificationPermission =
-    Json.Encode.null
-
-
 type alias NotificationOptions =
     { badge : Maybe String
     , body : Maybe String
@@ -390,25 +339,76 @@ encodeNotificationOptions notificationOptions =
         ]
 
 
-type alias SendNotification =
+type alias NewNotification =
     { options : NotificationOptions
     , title : String
     }
 
 
-sendNotificationDecoder : Decoder SendNotification
-sendNotificationDecoder =
-    Json.Decode.succeed SendNotification
+newNotificationDecoder : Decoder NewNotification
+newNotificationDecoder =
+    Json.Decode.succeed NewNotification
         |> Json.Decode.Pipeline.required "options" notificationOptionsDecoder
         |> Json.Decode.Pipeline.required "title" Json.Decode.string
 
 
-encodeSendNotification : SendNotification -> Json.Encode.Value
-encodeSendNotification sendNotification =
+encodeNewNotification : NewNotification -> Json.Encode.Value
+encodeNewNotification newNotification =
     Json.Encode.object
-        [ ( "options", encodeNotificationOptions sendNotification.options )
-        , ( "title", Json.Encode.string sendNotification.title )
+        [ ( "options", encodeNotificationOptions newNotification.options )
+        , ( "title", Json.Encode.string newNotification.title )
         ]
+
+
+type NotificationPermission
+    = Default
+    | Denied
+    | Granted
+
+
+
+notificationPermissionDecoder : Decoder NotificationPermission
+notificationPermissionDecoder =
+    Json.Decode.andThen
+        (/tag ->
+            case tag of
+                "default" ->
+                    Json.Decode.succeed Default
+
+                "denied" ->
+                    Json.Decode.succeed Denied
+
+                "granted" ->
+                    Json.Decode.succeed Granted
+        )
+        Json.Decode.string
+
+
+encodeNotificationPermission : NotificationPermission -> Json.Encode.Value
+encodeNotificationPermission notificationPermission =
+    case notificationPermission of
+        Default ->
+            Json.Encode.string "default"
+
+        Denied ->
+            Json.Encode.string "denied"
+
+        Granted ->
+            Json.Encode.string "granted"
+
+
+type alias RequestNotificationPermission =
+    ()
+
+
+requestNotificationPermissionDecoder : Decoder RequestNotificationPermission
+requestNotificationPermissionDecoder =
+    Json.Decode.null ()
+
+
+encodeRequestNotificationPermission : RequestNotificationPermission -> Json.Encode.Value
+encodeRequestNotificationPermission requestNotificationPermission =
+    Json.Encode.null
 
 
 port changeDocument : Value -> Cmd msg
@@ -427,6 +427,14 @@ subscribeToDocFromAutomerge toMsg =
     docFromAutomerge (/value -> toMsg (Json.Decode.decodeValue value docFromAutomergeDecoder)
 
 
+port newNotification : Value -> Cmd msg
+
+
+sendNewNotification : NewNotification -> Cmd msg
+sendNewNotification value =
+    newNotification (encodeNewNotification value)
+
+
 port notificationPermission : (Value -> msg) -> Sub msg
 
 
@@ -441,11 +449,3 @@ port requestNotificationPermission : Value -> Cmd msg
 sendRequestNotificationPermission : RequestNotificationPermission -> Cmd msg
 sendRequestNotificationPermission value =
     requestNotificationPermission (encodeRequestNotificationPermission value)
-
-
-port sendNotification : Value -> Cmd msg
-
-
-sendSendNotification : SendNotification -> Cmd msg
-sendSendNotification value =
-    sendNotification (encodeSendNotification value)
