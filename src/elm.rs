@@ -757,10 +757,22 @@ impl Port {
             PortDirection::Subscribe => out.push_str("(Value -> msg) -> Sub msg\n\n\n"),
         }
 
-        out.push_str(&self.name);
-        out.push_str("_ : ");
-
         let type_ref = self.type_.name();
+
+        let type_safe_name = {
+            let mut out = String::new();
+
+            match self.direction {
+                PortDirection::Send => out.push_str("send"),
+                PortDirection::Subscribe => out.push_str("subscribeTo"),
+            }
+            out.push_str(&InflectedString::from(self.name.clone()).to_pascal_case()?);
+
+            out
+        };
+
+        out.push_str(&type_safe_name);
+        out.push_str(" : ");
 
         match self.direction {
             PortDirection::Send => {
@@ -783,8 +795,8 @@ impl Port {
             }
         }
 
-        out.push_str(&self.name);
-        out.push_str("_ ");
+        out.push_str(&type_safe_name);
+        out.push(' ');
 
         match self.direction {
             PortDirection::Send => {
