@@ -47,6 +47,8 @@ impl Schema {
         match path.extension().and_then(std::ffi::OsStr::to_str) {
             Some("json") => serde_json::from_slice(&bytes)
                 .wrap_err_with(|| format!("could not read schema from {path:?}")),
+            Some("yaml") => serde_yaml::from_slice(&bytes)
+                .wrap_err_with(|| format!("could not read schema from {path:?}")),
             Some(_) => bail!(
                 "I can't deserialize a schema from a {:?} file",
                 path.extension()
