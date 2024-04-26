@@ -13,41 +13,31 @@ We use [JSON Type Definitions](https://jsontypedef.com/) (JTD, [five-minute tuto
 
 Here's an example for an app that stores a [jwt](https://jwt.io/) in `localStorage` or similar to present to Elm:
 
-```json {source=examples/jwt_schema.json}
-{
-  "modules": {
-    "Main": {
-      "flags": {
-        "properties": {
-          "currentJwt": {
-            "type": "string",
-            "nullable": true
-          }
-        }
-      },
-      "ports": {
-        "newJwt": {
-          "metadata": {
-            "direction": "ElmToJs"
-          },
-          "type": "string"
-        },
-        "logout": {
-          "metadata": {
-            "direction": "ElmToJs"
-          }
-        }
-      }
-    }
-  }
-}
+```json {source=examples/jwt_schema.yaml}
+modules:
+  Main:
+    flags:
+      properties:
+        currentJwt:
+          type: string
+          nullable: true
+    ports:
+      newJwt:
+        metadata:
+          direction: ElmToJs
+        type: string
+      logout:
+        metadata:
+          direction: ElmToJs
 
 ```
 
-You can generate code from this by calling `elm-duet path/to/your/schema.json`:
+(We're using YAML in this example so we can use comments, but JSON schemas also work just fine.)
+
+You can generate code from this by calling `elm-duet path/to/your/schema.(yaml|json)`:
 
 ```console
-$ elm-duet examples/jwt_schema.json --typescript-dest examples/jwt_schema.ts --elm-dest examples/jwt_schema
+$ elm-duet examples/jwt_schema.yaml --typescript-dest examples/jwt_schema.ts --elm-dest examples/jwt_schema
 wrote examples/jwt_schema.ts
 wrote examples/jwt_schema/Main/Flags.elm
 wrote examples/jwt_schema/Main/Ports.elm
