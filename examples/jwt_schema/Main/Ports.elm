@@ -39,14 +39,14 @@ encodeNewJwt newJwt =
 port logout : Value -> Cmd msg
 
 
-logout_ : Logout -> Cmd msg
-logout_ value =
+sendLogout : Logout -> Cmd msg
+sendLogout value =
     logout (encodeLogout value)
 
 
 port newJwt : Value -> Cmd msg
 
 
-newJwt_ : NewJwt -> Cmd msg
-newJwt_ value =
+sendNewJwt : NewJwt -> Cmd msg
+sendNewJwt value =
     newJwt (encodeNewJwt value)

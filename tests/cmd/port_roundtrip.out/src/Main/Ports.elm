@@ -47,14 +47,14 @@ encodeJsToElm jsToElm =
 port elmToJs : Value -> Cmd msg
 
 
-elmToJs_ : ElmToJs -> Cmd msg
-elmToJs_ value =
+sendElmToJs : ElmToJs -> Cmd msg
+sendElmToJs value =
     elmToJs (encodeElmToJs value)
 
 
 port jsToElm : (Value -> msg) -> Sub msg
 
 
-jsToElm_ : (Result Json.Decode.Error JsToElm -> msg) -> Sub msg
-jsToElm_ toMsg =
+subscribeToJsToElm : (Result Json.Decode.Error JsToElm -> msg) -> Sub msg
+subscribeToJsToElm toMsg =
     jsToElm (/value -> toMsg (Json.Decode.decodeValue value jsToElmDecoder)
