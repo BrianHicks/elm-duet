@@ -1,13 +1,12 @@
 # elm-duet
 
-Elm is great, and TypeScript is great, but the flags and ports between them are hard to use safely.
-They're the only part of the a system between those two languages that aren't typed by default.
+I like Elm and TypeScript for building apps, but I find it annoying to make the boundary between them type-safe.
 
-You can get around this in various ways, of course, either by maintaining a definitions by hand or generating one side from the other.
+I can get around this in various ways, of course, either by maintaining a definitions by hand or generating one side from the other.
 In general, though, you run into a couple different issues:
 
 - It's easy for one side or the other to get out of date and errors to slip through CI and code review into production.
-- Definitions in one language may not be translatable to the other (despite the two type systems having pretty good overlap.)
+- Definitions in one language may not be translatable to the other (despite the two type systems having a high degree of overlap.)
 
 `elm-duet` tries to get around this by creating a single source of truth to generate both TypeScript definitions and Elm types with decoders.
 We use [JSON Type Definitions](https://jsontypedef.com/) (JTD, [five-minute tutorial](https://jsontypedef.com/docs/jtd-in-5-minutes/)) to say precisely what we want and generate ergonomic types on both sides (plus helpers like encoders to make testing easy!)
@@ -65,7 +64,7 @@ declare module Elm {
     type Flags = {
       currentJwt: string | null;
     }
-  
+
     type Ports = {
       logout: {
         subscribe: (callback: (value: Record<string, never>) => void) => void;
@@ -74,7 +73,7 @@ declare module Elm {
         subscribe: (callback: (value: string) => void) => void;
       };
     }
-  
+
     function init(config: {
       flags: Flags;
       node: HTMLElement;
@@ -116,7 +115,7 @@ encodeFlags flags =
           , case flags.currentJwt of
                 Just value ->
                     Json.Encode.string value
-            
+
                 Nothing ->
                     Json.Encode.null
           )
