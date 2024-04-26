@@ -184,12 +184,14 @@ impl Schema {
                         )
                         .wrap_err_with(|| format!("could not convert the `{port}` port to Elm"))?;
 
-                    ports_module.insert_port(match port_schema.metadata.direction {
-                        PortDirection::ElmToJs => elm::Port::new_send(port.to_owned(), port_type),
-                        PortDirection::JsToElm => {
-                            elm::Port::new_subscribe(port.to_owned(), port_type)
-                        }
-                    })
+                    ports_module.insert_port(elm::Port::new(
+                        port.to_owned(),
+                        match port_schema.metadata.direction {
+                            PortDirection::ElmToJs => elm::PortDirection::Send,
+                            PortDirection::JsToElm => elm::PortDirection::Subscribe,
+                        },
+                        port_type,
+                    ))
                 }
 
                 files.insert(

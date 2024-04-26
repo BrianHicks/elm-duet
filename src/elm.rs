@@ -739,18 +739,10 @@ pub enum PortDirection {
 }
 
 impl Port {
-    pub fn new_send(name: String, type_: Decl) -> Self {
+    pub fn new(name: String, direction: PortDirection, type_: Decl) -> Self {
         Self {
             name,
-            direction: PortDirection::Send,
-            type_,
-        }
-    }
-
-    pub fn new_subscribe(name: String, type_: Decl) -> Self {
-        Self {
-            name,
-            direction: PortDirection::Subscribe,
+            direction,
             type_,
         }
     }
