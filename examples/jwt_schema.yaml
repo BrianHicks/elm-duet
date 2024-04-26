@@ -1,15 +1,51 @@
+# An example app that uses JWTs to manage authentication. Imagine that the JWTs
+# are stored in localStorage so that they can persist across sessions. The
+# lifecycle of this app might look like:
+#
+# 1. On init, the JS side passes the Elm runtime the current value of the JWT
+#    (or `null`, if unset)
+# 2. Elm is responsible for authentication and for telling JS when it gets a
+#    new JWT (for example, when the user logs in)
+# 3. Elm is also responsible for telling JS if someone logs out, in which case
+#    we should clear the JWT from localStorage.
+
+# For elm-duet, we start by defining our data types. In this case, we're just
+# going to keep things simple and define a "jwt" that will just be an alias to
+# a string.
+definitions:
+  jwt:
+    type: string
+
+# Now we say how to use it. Each key in this object is a module in your Elm
+# application, in which we can define our flags and ports.
 modules:
   Main:
+    # First we'll define flags. As we mentioned above, that's either a JWT or
+    # null. We'll define it by referring to
+    #
+    # If your app doesn't use flags, you can omit this key.
     flags:
       properties:
         currentJwt:
-          type: string
+          ref: jwt
           nullable: true
+
+    # Next we'll do ports. As with flags, if your app doesn't use ports, you
+    # can omit this key.
     ports:
+      # Like flags, ports are specified with a JTD schema. In this case, we
+      # want a non-nullable version of the same JWT as earlier.
+      #
+      # Ports also have a direction. We specify this in the
+      # `metadata.direction` key, either `ElmToJs` or `JsToElm`.
       newJwt:
         metadata:
           direction: ElmToJs
-        type: string
+        ref: jwt
+
+      # Finally, logout is a bit odd: we really don't need a payload. JTD
+      # handles this by defining an "empty" case, which we specify by omitting
+      # any type information. We still need the direction metadata, though!
       logout:
         metadata:
           direction: ElmToJs
