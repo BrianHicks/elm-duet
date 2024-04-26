@@ -29,7 +29,7 @@ impl Cli {
 
         // TODO: better error message in all of this
 
-        std::fs::write(&self.typescript_dest, schema.flags_to_ts()?)?;
+        std::fs::write(&self.typescript_dest, schema.to_ts()?)?;
         println!("wrote {}", self.typescript_dest.display());
 
         for (name, contents) in schema.to_elm()? {

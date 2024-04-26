@@ -61,7 +61,7 @@ impl Schema {
         Ok(out)
     }
 
-    pub fn flags_to_ts(&self) -> Result<String> {
+    pub fn to_ts(&self) -> Result<String> {
         let mut builder = NamespaceBuilder::root("Elm");
 
         let globals = self.globals()?;
