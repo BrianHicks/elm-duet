@@ -243,3 +243,7 @@ Options:
   -V, --version                            Print version
 
 ```
+
+## License
+
+BSD 3-Clause, same as Elm.
