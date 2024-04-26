@@ -61,6 +61,7 @@ impl Schema {
         Ok(out)
     }
 
+    // TODO: audit how much work this does and consider moving responsibility into the TS module
     pub fn to_ts(&self) -> Result<String> {
         let mut builder = NamespaceBuilder::root("Elm");
 
