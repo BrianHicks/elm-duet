@@ -20,9 +20,11 @@
             pkgs.rustfmt
 
             # formatters
-            pkgs.elmPackages.elm-format
-            pkgs.nodePackages.prettier
             pkgs.typos
+
+            # formatters
+            pkgs.nodePackages.npm
+            pkgs.nodejs
           ];
         };
       }
