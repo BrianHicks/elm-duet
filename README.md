@@ -223,6 +223,63 @@ sendNewJwt value =
 You'll notice that in addition to decoders and encoders, `elm-duet` generates type-safe wrappers around the ports.
 This is, again, to let you send custom types through the ports in a way we control: if you specify an `enum`, for example, we ensure that both Elm and TypeScript have enough information to take advantage of the best parts of their respective type systems without falling back to plain strings.
 
+## Example 2: An All-in-One Port
+
+Some people like to define an all-in-one port for their application to make sure that they only have a single place to hook up new messages.
+`elm-duet` and JDT support this with discriminators and mappings:
+
+```yaml {source=examples/all_in_one.yaml}
+# We're going to define a port named `toWorld` that sends all our messages to
+# the JS in the same place. You can do the same thing for `fromWorld` for
+# subscriptions, but we're leaving that off to keep things succinct.
+modules:
+  Main:
+    ports:
+      toWorld:
+        metadata:
+          direction: ElmToJs
+
+        # JTD lets us distinguish between different types of an object by using
+        # the discriminator/mapping case. The first step is to define the field
+        # that "tags" the message. In this case, we'll literally use `tag`:
+        discriminator: tag
+
+        # Next, tell JTD all the possible values of `tag` and what types are
+        # associated with them. We'll use the same option as in the JWT schema
+        # example, but all in one port. Note that all the options need to be
+        # non-nullable objects, since we can't set a tag otherwise.
+        mapping:
+          newJwt:
+            properties:
+              value:
+                ref: jwt
+
+          logout:
+            # in cases where we don't want any payload, we specify an empty
+            # object aside from the tag.
+            properties:
+
+definitions:
+  jwt:
+    type: string
+
+```
+
+Again, we generate everything in `examples`:
+
+```console
+$ elm-duet examples/all_in_one.yaml --typescript-dest examples/all_in_one.ts --elm-dest examples/all_in_one
+? 1
+
+   0: [91mcould not convert port toWorld[0m
+   1: [91mjtd discriminator should have enforced that the value type must be an object[0m
+   2: [91madd_key_to_object only works on objects[0m
+
+Backtrace omitted. Run with RUST_BACKTRACE=1 environment variable to display it.
+Run with RUST_BACKTRACE=full to include source snippets.
+
+```
+
 ## The Full Help
 
 Here's the full help to give you an idea of what you can do with the tool:

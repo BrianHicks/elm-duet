@@ -1,0 +1,33 @@
+# We're going to define a port named `toWorld` that sends all our messages to
+# the JS in the same place. You can do the same thing for `fromWorld` for
+# subscriptions, but we're leaving that off to keep things succinct.
+modules:
+  Main:
+    ports:
+      toWorld:
+        metadata:
+          direction: ElmToJs
+
+        # JTD lets us distinguish between different types of an object by using
+        # the discriminator/mapping case. The first step is to define the field
+        # that "tags" the message. In this case, we'll literally use `tag`:
+        discriminator: tag
+
+        # Next, tell JTD all the possible values of `tag` and what types are
+        # associated with them. We'll use the same option as in the JWT schema
+        # example, but all in one port. Note that all the options need to be
+        # non-nullable objects, since we can't set a tag otherwise.
+        mapping:
+          newJwt:
+            properties:
+              value:
+                ref: jwt
+
+          logout:
+            # in cases where we don't want any payload, we specify an empty
+            # object aside from the tag.
+            properties:
+
+definitions:
+  jwt:
+    type: string
