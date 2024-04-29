@@ -21,6 +21,20 @@ struct Cli {
     /// Destination for Elm types
     #[clap(long, default_value = "src/")]
     elm_dest: PathBuf,
+
+    /// Turn off automatic formatting discovery
+    #[clap(long)]
+    no_format: bool,
+
+    /// What formatter should I use for TypeScript? (Assumed to take a `-w` flag to modify files in
+    /// place.)
+    #[clap(long, default_value = "prettier")]
+    ts_formatter: String,
+
+    /// What formatter should I use for Elm? (Assumed to take a `--yes` flag to modify files in
+    /// place without confirmation.)
+    #[clap(long, default_value = "elm-format")]
+    elm_formatter: String,
 }
 
 impl Cli {

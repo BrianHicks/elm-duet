@@ -405,10 +405,20 @@ Arguments:
   <SOURCE>  Location of the definition file
 
 Options:
-      --typescript-dest <TYPESCRIPT_DEST>  Destination for TypeScript types [default: elm.ts]
-      --elm-dest <ELM_DEST>                Destination for Elm types [default: src/]
-  -h, --help                               Print help
-  -V, --version                            Print version
+      --typescript-dest <TYPESCRIPT_DEST>
+          Destination for TypeScript types [default: elm.ts]
+      --elm-dest <ELM_DEST>
+          Destination for Elm types [default: src/]
+      --no-format
+          Turn off automatic formatting discovery
+      --ts-formatter <TS_FORMATTER>
+          What formatter should I use for TypeScript? (Assumed to take a `-w` flag to modify files in place.) [default: prettier]
+      --elm-formatter <ELM_FORMATTER>
+          What formatter should I use for Elm? (Assumed to take a `--yes` flag to modify files in place without confirmation.) [default: elm-format]
+  -h, --help
+          Print help
+  -V, --version
+          Print version
 
 ```
 
