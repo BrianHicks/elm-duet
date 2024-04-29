@@ -317,6 +317,22 @@ import Json.Decode.Pipeline
 import Json.Encode
 
 
+type alias TagLogout =
+    {}
+
+
+tagLogoutDecoder : Decoder TagLogout
+tagLogoutDecoder =
+    Json.Decode.succeed TagLogout
+
+
+encodeTagLogout : TagLogout -> Json.Encode.Value
+encodeTagLogout tagLogout =
+    Json.Encode.object
+        , ( "tag", Json.Encode.string "logout" )
+        ]
+
+
 type alias NewJwt =
     { value : String
     }
@@ -337,7 +353,7 @@ encodeNewJwt newJwt =
 
 
 type ToWorld
-    = Logout ()
+    = Logout TagLogout
     | NewJwt NewJwt
 
 
@@ -348,7 +364,7 @@ toWorldDecoder =
         (\tag ->
             case tag of
                 "logout" ->
-                    Json.Decode.map Logout Json.Decode.null ()
+                    Json.Decode.map Logout tagLogoutDecoder
 
                 "newJwt" ->
                     Json.Decode.map NewJwt newJwtDecoder
@@ -360,7 +376,7 @@ encodeToWorld : ToWorld -> Json.Encode.Value
 encodeToWorld toWorld =
     case toWorld of
         Logout logout ->
-            Json.Encode.null
+            encodeTagLogout logout
 
         NewJwt newJwt ->
             encodeNewJwt newJwt
