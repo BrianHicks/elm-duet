@@ -267,11 +267,12 @@ impl Type {
         schema: Schema,
         name_suggestion: Option<String>,
         globals: &BTreeMap<String, Schema>,
+        discriminator: Option<(String, String)>,
     ) -> Result<(Self, Vec<Decl>)> {
         let mut is_nullable = false;
         let mut decls = Vec::new();
 
-        let base = match schema {
+        let mut base = match schema {
             Schema::Empty { .. } => Self::Unit,
             Schema::Ref {
                 definitions,
@@ -286,6 +287,7 @@ impl Type {
                         schema.clone(),
                         name_suggestion.or_else(|| Some(ref_.to_string())),
                         globals,
+                        discriminator.clone(),
                     )
                     .wrap_err_with(|| format!("could not convert the value of ref `{ref_}`"))?;
 
@@ -353,6 +355,7 @@ impl Type {
                     *elements,
                     name_suggestion.map(|n| format!("{n}Elements")),
                     globals,
+                    discriminator.clone(),
                 )
                 .wrap_err("could not convert elements of a list")?;
 
@@ -375,11 +378,15 @@ impl Type {
 
                     let mut fields = BTreeMap::new();
                     for (field_name, field_schema) in properties {
-                        let (field_type, field_decls) =
-                            Self::from_schema(field_schema, Some(field_name.clone()), globals)
-                                .wrap_err_with(|| {
-                                    format!("could not convert the type of `{field_name}`")
-                                })?;
+                        let (field_type, field_decls) = Self::from_schema(
+                            field_schema,
+                            Some(field_name.clone()),
+                            globals,
+                            None, // We'll actually use this in the unified handler below!
+                        )
+                        .wrap_err_with(|| {
+                            format!("could not convert the type of `{field_name}`")
+                        })?;
 
                         decls.extend(field_decls);
                         fields.insert(field_name.into(), field_type);
@@ -404,6 +411,7 @@ impl Type {
                     *values,
                     name_suggestion.map(|n| format!("{n}Values")),
                     globals,
+                    discriminator.clone(),
                 )
                 .wrap_err("could not convert elements of a list")?;
 
@@ -415,7 +423,7 @@ impl Type {
                 metadata,
                 nullable,
                 mapping,
-                discriminator,
+                discriminator: discriminator_field,
                 ..
             } => match metadata
                 .get("name")
@@ -427,28 +435,20 @@ impl Type {
 
                     let mut cases = BTreeMap::new();
                     for (tag, tag_schema) in mapping {
-                        let (value_type, mut value_decls) =
-                            Self::from_schema(tag_schema, Some(tag.to_string()), globals)
-                                .wrap_err_with(|| {
-                                    format!("could not convert mapping for `{tag}`")
-                                })?;
-
-                        // tell the referred decl (if we got one) that it needs to include the
-                        // discriminator tag in its encoder
-                        if let Type::Ref(ref_name) = &value_type {
-                            for decl in &mut value_decls {
-                                if decl.name() == ref_name {
-                                    decl.add_discriminator(discriminator.clone(), tag.clone())?;
-                                }
-                            }
-                        }
+                        let (value_type, value_decls) = Self::from_schema(
+                            tag_schema,
+                            Some(tag.to_string()),
+                            globals,
+                            Some((discriminator_field.clone(), tag.to_string())),
+                        )
+                        .wrap_err_with(|| format!("could not convert mapping for `{tag}`"))?;
 
                         decls.extend(value_decls);
                         cases.insert(tag.into(), Some(value_type));
                     }
                     decls.push(Decl::CustomTypeEnum {
                         name: name.into(),
-                        discriminator: Some(discriminator),
+                        discriminator: Some(discriminator_field),
                         constructor_prefix: metadata
                             .get("constructorPrefix")
                             .and_then(|n| n.as_str())
@@ -462,6 +462,42 @@ impl Type {
                 None => bail!("string names are required for discriminators"),
             },
         };
+
+        if let Some((discriminator_tag, discriminator_value)) = discriminator {
+            match &base {
+                Self::Unit => {
+                    // TODO: this doesn't include any constructor prefixs. This could be a problem?
+                    // It might also be fine? We'll have to see.
+                    let name = InflectedString::from(format!("{discriminator_tag}_{discriminator_value}"));
+
+                    decls.push(Decl::TypeAlias {
+                        name: name.clone(),
+                        type_: Type::Record(BTreeMap::new()),
+                        discriminator: Some((discriminator_tag, discriminator_value)),
+                    });
+
+                    base = Self::Ref(name);
+                }
+                Self::Ref(ref_name) => {
+                    for decl in &mut decls {
+                        if decl.name() == ref_name {
+                            decl.add_discriminator(
+                                discriminator_tag.clone(),
+                                discriminator_value.clone(),
+                            )?;
+                        }
+                    }
+                }
+                Self::Int => bail!("I can't add a discriminator to an int"),
+                Self::Float => bail!("I can't add a discriminator to an float"),
+                Self::Bool => bail!("I can't add a discriminator to a bool"),
+                Self::String => bail!("I can't add a discriminator to a string"),
+                Self::Maybe(_) => bail!("I can't add a discriminator to a maybe"),
+                Self::DictWithStringKeys(_) => bail!("I can't add a discriminator to a dict"),
+                Self::List(_) => bail!("I can't add a discriminator to a list"),
+                Self::Record(_) => bail!("As silly as it seems, I can't add a discriminator to a record type directly. That has to be done at the decl level, and I don't know which decl to reference."),
+            }
+        }
 
         Ok((
             if is_nullable {
@@ -841,7 +877,7 @@ impl Module {
         name_suggestion: Option<String>,
         globals: &BTreeMap<String, Schema>,
     ) -> Result<Decl> {
-        let (type_, decls) = Type::from_schema(schema, name_suggestion.clone(), globals)?;
+        let (type_, decls) = Type::from_schema(schema, name_suggestion.clone(), globals, None)?;
 
         self.decls.extend(decls);
 
@@ -927,7 +963,7 @@ mod tests {
         }
 
         fn from_schema(value: Value) -> (Type, Vec<Decl>) {
-            Type::from_schema(from_json(value), None, &BTreeMap::new())
+            Type::from_schema(from_json(value), None, &BTreeMap::new(), None)
                 .expect("valid schema from JSON value")
         }
 
@@ -1082,6 +1118,7 @@ mod tests {
                 })),
                 None,
                 &BTreeMap::new(),
+                None,
             )
             .unwrap_err();
 
@@ -1128,6 +1165,7 @@ mod tests {
                 })),
                 None,
                 &BTreeMap::new(),
+                None,
             )
             .unwrap_err();
 
@@ -1240,6 +1278,7 @@ mod tests {
                 })),
                 None,
                 &BTreeMap::from([("foo".into(), from_json(json!({"type": "string"})))]),
+                None,
             )
             .unwrap();
 
@@ -1255,6 +1294,7 @@ mod tests {
                 })),
                 None,
                 &BTreeMap::from([("foo".into(), from_json(json!({"properties": {}})))]),
+                None,
             )
             .unwrap();
 
