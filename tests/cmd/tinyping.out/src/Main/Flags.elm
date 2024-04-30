@@ -14,7 +14,6 @@ type NotificationPermission
     | Granted
 
 
-
 notificationPermissionDecoder : Decoder NotificationPermission
 notificationPermissionDecoder =
     Json.Decode.andThen

@@ -5,30 +5,37 @@ declare module Elm {
     type Flags = {
       currentTimeMillis: number;
       notificationPermission: "default" | "denied" | "granted";
-    }
-  
+    };
+
     type Ports = {
       changeDocument: {
-        subscribe: (callback: (value: {
-          tag: "AddNewPingAt";
-          value: number;
-        } | {
-          tag: "SetMinutesPerPing";
-          value: number;
-        } | {
-          index: number;
-          tag: "SetTagForPing";
-          value: string | null;
-        }) => void) => void;
+        subscribe: (
+          callback: (
+            value:
+              | {
+                  tag: "AddNewPingAt";
+                  value: number;
+                }
+              | {
+                  tag: "SetMinutesPerPing";
+                  value: number;
+                }
+              | {
+                  index: number;
+                  tag: "SetTagForPing";
+                  value: string | null;
+                },
+          ) => void,
+        ) => void;
       };
       docFromAutomerge: {
         send: (value: {
-          pings: ({
+          pings: {
             custom: Record<string, string>;
             tag: string | null;
             time: number;
             version: "v1";
-          })[];
+          }[];
           settings: {
             minutesPerPing: number;
             version: "v1";
@@ -37,18 +44,20 @@ declare module Elm {
         }) => void;
       };
       newNotification: {
-        subscribe: (callback: (value: {
-          options: {
-            badge: string | null;
-            body: string | null;
-            icon: string | null;
-            lang: string | null;
-            requireInteraction: boolean | null;
-            silent: boolean | null;
-            tag: string | null;
-          };
-          title: string;
-        }) => void) => void;
+        subscribe: (
+          callback: (value: {
+            options: {
+              badge: string | null;
+              body: string | null;
+              icon: string | null;
+              lang: string | null;
+              requireInteraction: boolean | null;
+              silent: boolean | null;
+              tag: string | null;
+            };
+            title: string;
+          }) => void,
+        ) => void;
       };
       notificationPermission: {
         send: (value: "default" | "denied" | "granted") => void;
@@ -56,13 +65,10 @@ declare module Elm {
       requestNotificationPermission: {
         subscribe: (callback: (value: Record<string, never>) => void) => void;
       };
-    }
-  
-    function init(config: {
-      flags: Flags;
-      node: HTMLElement;
-    }): {
+    };
+
+    function init(config: { flags: Flags; node: HTMLElement }): {
       ports: Ports;
-    }
+    };
   }
 }
