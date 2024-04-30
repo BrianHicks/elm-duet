@@ -2,41 +2,32 @@
 
 declare module Elm {
   namespace A {
-    type Flags = string
-  
-    type Ports = Record<string, never>
-  
-    function init(config: {
-      flags: Flags;
-      node: HTMLElement;
-    }): {
+    type Flags = string;
+
+    type Ports = Record<string, never>;
+
+    function init(config: { flags: Flags; node: HTMLElement }): {
       ports: Ports;
-    }
+    };
   }
 
   namespace B {
-    type Flags = string
-  
-    type Ports = Record<string, never>
-  
-    function init(config: {
-      flags: Flags;
-      node: HTMLElement;
-    }): {
+    type Flags = string;
+
+    type Ports = Record<string, never>;
+
+    function init(config: { flags: Flags; node: HTMLElement }): {
       ports: Ports;
-    }
-  
+    };
+
     namespace B2 {
-      type Flags = string
-    
-      type Ports = Record<string, never>
-    
-      function init(config: {
-        flags: Flags;
-        node: HTMLElement;
-      }): {
+      type Flags = string;
+
+      type Ports = Record<string, never>;
+
+      function init(config: { flags: Flags; node: HTMLElement }): {
         ports: Ports;
-      }
+      };
     }
   }
 }

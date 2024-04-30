@@ -15,15 +15,12 @@ declare module Elm {
       three: string;
       twelve: string;
       two: string;
-    }
-  
-    type Ports = Record<string, never>
-  
-    function init(config: {
-      flags: Flags;
-      node: HTMLElement;
-    }): {
+    };
+
+    type Ports = Record<string, never>;
+
+    function init(config: { flags: Flags; node: HTMLElement }): {
       ports: Ports;
-    }
+    };
   }
 }

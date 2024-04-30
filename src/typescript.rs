@@ -143,6 +143,11 @@ impl TSType {
                     let mut value_type = Self::from_schema(value, globals)
                         .wrap_err_with(|| format!("could not convert the {tag} tag"))?;
 
+                    // This happens if the payload is empty in a mapping field.
+                    if value_type == Self::NeverObject {
+                        value_type = Self::new_object(BTreeMap::new())
+                    }
+
                     value_type
                         .add_key_to_object(&discriminator, Self::StringScalar(tag))
                         .wrap_err("jtd discriminator should have enforced that the value type must be an object")?;

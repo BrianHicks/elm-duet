@@ -67,7 +67,7 @@ encodeSetTagForPing setTagForPing =
           , case setTagForPing.value of
                 Just value ->
                     Json.Encode.string value
-            
+
                 Nothing ->
                     Json.Encode.null
           )
@@ -79,7 +79,6 @@ type ChangeDocument
     = AddNewPingAt AddNewPingAt
     | SetMinutesPerPing SetMinutesPerPing
     | SetTagForPing SetTagForPing
-
 
 
 changeDocumentDecoder : Decoder ChangeDocument
@@ -135,7 +134,7 @@ encodePingV1 pingV1 =
           , case pingV1.tag of
                 Just value ->
                     Json.Encode.string value
-            
+
                 Nothing ->
                     Json.Encode.null
           )
@@ -146,7 +145,6 @@ encodePingV1 pingV1 =
 
 type PingsElements
     = PingV1 PingV1
-
 
 
 pingsElementsDecoder : Decoder PingsElements
@@ -188,7 +186,6 @@ encodeSettingsV1 settingsV1 =
 
 type Settings
     = SettingsV1 SettingsV1
-
 
 
 settingsDecoder : Decoder Settings
@@ -235,7 +232,6 @@ type DocFromAutomerge
     = DocV1 DocV1
 
 
-
 docFromAutomergeDecoder : Decoder DocFromAutomerge
 docFromAutomergeDecoder =
     Json.Decode.andThen
@@ -254,11 +250,116 @@ encodeDocFromAutomerge docFromAutomerge =
             encodeDocV1 docV1
 
 
+type alias NotificationOptions =
+    { badge : Maybe String
+    , body : Maybe String
+    , icon : Maybe String
+    , lang : Maybe String
+    , requireInteraction : Maybe Bool
+    , silent : Maybe Bool
+    , tag : Maybe String
+    }
+
+
+notificationOptionsDecoder : Decoder NotificationOptions
+notificationOptionsDecoder =
+    Json.Decode.succeed NotificationOptions
+        |> Json.Decode.Pipeline.required "badge" (Json.Decode.nullable Json.Decode.string)
+        |> Json.Decode.Pipeline.required "body" (Json.Decode.nullable Json.Decode.string)
+        |> Json.Decode.Pipeline.required "icon" (Json.Decode.nullable Json.Decode.string)
+        |> Json.Decode.Pipeline.required "lang" (Json.Decode.nullable Json.Decode.string)
+        |> Json.Decode.Pipeline.required "requireInteraction" (Json.Decode.nullable Json.Decode.bool)
+        |> Json.Decode.Pipeline.required "silent" (Json.Decode.nullable Json.Decode.bool)
+        |> Json.Decode.Pipeline.required "tag" (Json.Decode.nullable Json.Decode.string)
+
+
+encodeNotificationOptions : NotificationOptions -> Json.Encode.Value
+encodeNotificationOptions notificationOptions =
+    Json.Encode.object
+        [ ( "badge"
+          , case notificationOptions.badge of
+                Just value ->
+                    Json.Encode.string value
+
+                Nothing ->
+                    Json.Encode.null
+          )
+        , ( "body"
+          , case notificationOptions.body of
+                Just value ->
+                    Json.Encode.string value
+
+                Nothing ->
+                    Json.Encode.null
+          )
+        , ( "icon"
+          , case notificationOptions.icon of
+                Just value ->
+                    Json.Encode.string value
+
+                Nothing ->
+                    Json.Encode.null
+          )
+        , ( "lang"
+          , case notificationOptions.lang of
+                Just value ->
+                    Json.Encode.string value
+
+                Nothing ->
+                    Json.Encode.null
+          )
+        , ( "requireInteraction"
+          , case notificationOptions.requireInteraction of
+                Just value ->
+                    Json.Encode.bool value
+
+                Nothing ->
+                    Json.Encode.null
+          )
+        , ( "silent"
+          , case notificationOptions.silent of
+                Just value ->
+                    Json.Encode.bool value
+
+                Nothing ->
+                    Json.Encode.null
+          )
+        , ( "tag"
+          , case notificationOptions.tag of
+                Just value ->
+                    Json.Encode.string value
+
+                Nothing ->
+                    Json.Encode.null
+          )
+        ]
+
+
+type alias NewNotification =
+    { options : NotificationOptions
+    , title : String
+    }
+
+
+newNotificationDecoder : Decoder NewNotification
+newNotificationDecoder =
+    Json.Decode.succeed NewNotification
+        |> Json.Decode.Pipeline.required "options" notificationOptionsDecoder
+        |> Json.Decode.Pipeline.required "title" Json.Decode.string
+
+
+encodeNewNotification : NewNotification -> Json.Encode.Value
+encodeNewNotification newNotification =
+    Json.Encode.object
+        [ ( "options", encodeNotificationOptions newNotification.options )
+        , ( "title", Json.Encode.string newNotification.title )
+        ]
+
+
 type NotificationPermission
     = Default
     | Denied
     | Granted
-
 
 
 notificationPermissionDecoder : Decoder NotificationPermission
@@ -305,147 +406,41 @@ encodeRequestNotificationPermission requestNotificationPermission =
     Json.Encode.null
 
 
-type alias NotificationOptions =
-    { badge : Maybe String
-    , body : Maybe String
-    , icon : Maybe String
-    , lang : Maybe String
-    , requireInteraction : Maybe Bool
-    , silent : Maybe Bool
-    , tag : Maybe String
-    }
-
-
-notificationOptionsDecoder : Decoder NotificationOptions
-notificationOptionsDecoder =
-    Json.Decode.succeed NotificationOptions
-        |> Json.Decode.Pipeline.required "badge" (Json.Decode.nullable Json.Decode.string)
-        |> Json.Decode.Pipeline.required "body" (Json.Decode.nullable Json.Decode.string)
-        |> Json.Decode.Pipeline.required "icon" (Json.Decode.nullable Json.Decode.string)
-        |> Json.Decode.Pipeline.required "lang" (Json.Decode.nullable Json.Decode.string)
-        |> Json.Decode.Pipeline.required "requireInteraction" (Json.Decode.nullable Json.Decode.bool)
-        |> Json.Decode.Pipeline.required "silent" (Json.Decode.nullable Json.Decode.bool)
-        |> Json.Decode.Pipeline.required "tag" (Json.Decode.nullable Json.Decode.string)
-
-
-encodeNotificationOptions : NotificationOptions -> Json.Encode.Value
-encodeNotificationOptions notificationOptions =
-    Json.Encode.object
-        [ ( "badge"
-          , case notificationOptions.badge of
-                Just value ->
-                    Json.Encode.string value
-            
-                Nothing ->
-                    Json.Encode.null
-          )
-        , ( "body"
-          , case notificationOptions.body of
-                Just value ->
-                    Json.Encode.string value
-            
-                Nothing ->
-                    Json.Encode.null
-          )
-        , ( "icon"
-          , case notificationOptions.icon of
-                Just value ->
-                    Json.Encode.string value
-            
-                Nothing ->
-                    Json.Encode.null
-          )
-        , ( "lang"
-          , case notificationOptions.lang of
-                Just value ->
-                    Json.Encode.string value
-            
-                Nothing ->
-                    Json.Encode.null
-          )
-        , ( "requireInteraction"
-          , case notificationOptions.requireInteraction of
-                Just value ->
-                    Json.Encode.bool value
-            
-                Nothing ->
-                    Json.Encode.null
-          )
-        , ( "silent"
-          , case notificationOptions.silent of
-                Just value ->
-                    Json.Encode.bool value
-            
-                Nothing ->
-                    Json.Encode.null
-          )
-        , ( "tag"
-          , case notificationOptions.tag of
-                Just value ->
-                    Json.Encode.string value
-            
-                Nothing ->
-                    Json.Encode.null
-          )
-        ]
-
-
-type alias SendNotification =
-    { options : NotificationOptions
-    , title : String
-    }
-
-
-sendNotificationDecoder : Decoder SendNotification
-sendNotificationDecoder =
-    Json.Decode.succeed SendNotification
-        |> Json.Decode.Pipeline.required "options" notificationOptionsDecoder
-        |> Json.Decode.Pipeline.required "title" Json.Decode.string
-
-
-encodeSendNotification : SendNotification -> Json.Encode.Value
-encodeSendNotification sendNotification =
-    Json.Encode.object
-        [ ( "options", encodeNotificationOptions sendNotification.options )
-        , ( "title", Json.Encode.string sendNotification.title )
-        ]
-
-
 port changeDocument : Value -> Cmd msg
 
 
-changeDocument_ : ChangeDocument -> Cmd msg
-changeDocument_ value =
+sendChangeDocument : ChangeDocument -> Cmd msg
+sendChangeDocument value =
     changeDocument (encodeChangeDocument value)
 
 
 port docFromAutomerge : (Value -> msg) -> Sub msg
 
 
-docFromAutomerge_ : (Result Json.Decode.Error DocFromAutomerge -> msg) -> Sub msg
-docFromAutomerge_ toMsg =
-    docFromAutomerge (/value -> toMsg (Json.Decode.decodeValue value docFromAutomergeDecoder)
+subscribeToDocFromAutomerge : (Result Json.Decode.Error DocFromAutomerge -> msg) -> Sub msg
+subscribeToDocFromAutomerge toMsg =
+    docFromAutomerge (/value -> toMsg (Json.Decode.decodeValue value docFromAutomergeDecoder))
+
+
+port newNotification : Value -> Cmd msg
+
+
+sendNewNotification : NewNotification -> Cmd msg
+sendNewNotification value =
+    newNotification (encodeNewNotification value)
 
 
 port notificationPermission : (Value -> msg) -> Sub msg
 
 
-notificationPermission_ : (Result Json.Decode.Error NotificationPermission -> msg) -> Sub msg
-notificationPermission_ toMsg =
-    notificationPermission (/value -> toMsg (Json.Decode.decodeValue value notificationPermissionDecoder)
+subscribeToNotificationPermission : (Result Json.Decode.Error NotificationPermission -> msg) -> Sub msg
+subscribeToNotificationPermission toMsg =
+    notificationPermission (/value -> toMsg (Json.Decode.decodeValue value notificationPermissionDecoder))
 
 
 port requestNotificationPermission : Value -> Cmd msg
 
 
-requestNotificationPermission_ : RequestNotificationPermission -> Cmd msg
-requestNotificationPermission_ value =
+sendRequestNotificationPermission : RequestNotificationPermission -> Cmd msg
+sendRequestNotificationPermission value =
     requestNotificationPermission (encodeRequestNotificationPermission value)
-
-
-port sendNotification : Value -> Cmd msg
-
-
-sendNotification_ : SendNotification -> Cmd msg
-sendNotification_ value =
-    sendNotification (encodeSendNotification value)

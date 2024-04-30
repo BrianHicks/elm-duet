@@ -2,7 +2,7 @@ use crate::elm;
 use crate::typescript::NamespaceBuilder;
 use crate::typescript::TSType;
 use color_eyre::Result;
-use eyre::WrapErr;
+use eyre::{bail, WrapErr};
 use serde::Deserialize;
 use std::collections::BTreeMap;
 use std::path::Path;
@@ -43,8 +43,21 @@ pub enum PortDirection {
 impl Schema {
     pub fn from_fs(path: &Path) -> Result<Schema> {
         let bytes = std::fs::read(path).wrap_err_with(|| format!("could not read {path:?}"))?;
-        serde_json::from_slice(&bytes)
-            .wrap_err_with(|| format!("could not read schema from {path:?}"))
+
+        match path.extension().and_then(std::ffi::OsStr::to_str) {
+            Some("json") => serde_json::from_slice(&bytes)
+                .wrap_err_with(|| format!("could not read schema from {path:?}")),
+            Some("yaml") => serde_yaml::from_slice(&bytes)
+                .wrap_err_with(|| format!("could not read schema from {path:?}")),
+            Some(_) => bail!(
+                "I can't deserialize a schema from a {:?} file",
+                path.extension()
+            ),
+            None => bail!(
+                "I couldn't figure out what kind of file {} is because it doesn't have an extension!",
+                path.display(),
+            ),
+        }
     }
 
     fn globals(&self) -> Result<BTreeMap<String, jtd::Schema>> {
@@ -61,7 +74,8 @@ impl Schema {
         Ok(out)
     }
 
-    pub fn flags_to_ts(&self) -> Result<String> {
+    // TODO: audit how much work this does and consider moving responsibility into the TS module
+    pub fn to_ts(&self) -> Result<String> {
         let mut builder = NamespaceBuilder::root("Elm");
 
         let globals = self.globals()?;
@@ -184,12 +198,14 @@ impl Schema {
                         )
                         .wrap_err_with(|| format!("could not convert the `{port}` port to Elm"))?;
 
-                    ports_module.insert_port(match port_schema.metadata.direction {
-                        PortDirection::ElmToJs => elm::Port::new_send(port.to_owned(), port_type),
-                        PortDirection::JsToElm => {
-                            elm::Port::new_subscribe(port.to_owned(), port_type)
-                        }
-                    })
+                    ports_module.insert_port(elm::Port::new(
+                        port.to_owned(),
+                        match port_schema.metadata.direction {
+                            PortDirection::ElmToJs => elm::PortDirection::Send,
+                            PortDirection::JsToElm => elm::PortDirection::Subscribe,
+                        },
+                        port_type,
+                    ))
                 }
 
                 files.insert(

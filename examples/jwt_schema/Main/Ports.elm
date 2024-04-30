@@ -8,20 +8,6 @@ import Json.Decode.Pipeline
 import Json.Encode
 
 
-type alias Logout =
-    ()
-
-
-logoutDecoder : Decoder Logout
-logoutDecoder =
-    Json.Decode.null ()
-
-
-encodeLogout : Logout -> Json.Encode.Value
-encodeLogout logout =
-    Json.Encode.null
-
-
 type alias NewJwt =
     String
 
@@ -36,17 +22,9 @@ encodeNewJwt newJwt =
     Json.Encode.string newJwt
 
 
-port logout : Value -> Cmd msg
-
-
-logout_ : Logout -> Cmd msg
-logout_ value =
-    logout (encodeLogout value)
-
-
 port newJwt : Value -> Cmd msg
 
 
-newJwt_ : NewJwt -> Cmd msg
-newJwt_ value =
+sendNewJwt : NewJwt -> Cmd msg
+sendNewJwt value =
     newJwt (encodeNewJwt value)
