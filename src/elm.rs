@@ -746,7 +746,11 @@ impl Type {
                 }
 
                 if let Some((discriminator_name, discriminator_value)) = discriminator_field_opt {
-                    out.push_str("    , ( \"");
+                    if fields.is_empty() {
+                        out.push_str("    [ ( \"");
+                    } else {
+                        out.push_str("    , ( \"");
+                    }
                     out.push_str(discriminator_name);
                     out.push_str("\", Json.Encode.string \"");
                     out.push_str(discriminator_value);
