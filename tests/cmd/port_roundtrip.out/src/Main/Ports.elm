@@ -57,4 +57,4 @@ port jsToElm : (Value -> msg) -> Sub msg
 
 subscribeToJsToElm : (Result Json.Decode.Error JsToElm -> msg) -> Sub msg
 subscribeToJsToElm toMsg =
-    jsToElm (/value -> toMsg (Json.Decode.decodeValue value jsToElmDecoder)
+    jsToElm (/value -> toMsg (Json.Decode.decodeValue value jsToElmDecoder))

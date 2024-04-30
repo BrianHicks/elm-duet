@@ -67,7 +67,7 @@ encodeSetTagForPing setTagForPing =
           , case setTagForPing.value of
                 Just value ->
                     Json.Encode.string value
-            
+
                 Nothing ->
                     Json.Encode.null
           )
@@ -79,7 +79,6 @@ type ChangeDocument
     = AddNewPingAt AddNewPingAt
     | SetMinutesPerPing SetMinutesPerPing
     | SetTagForPing SetTagForPing
-
 
 
 changeDocumentDecoder : Decoder ChangeDocument
@@ -135,7 +134,7 @@ encodePingV1 pingV1 =
           , case pingV1.tag of
                 Just value ->
                     Json.Encode.string value
-            
+
                 Nothing ->
                     Json.Encode.null
           )
@@ -146,7 +145,6 @@ encodePingV1 pingV1 =
 
 type PingsElements
     = PingV1 PingV1
-
 
 
 pingsElementsDecoder : Decoder PingsElements
@@ -188,7 +186,6 @@ encodeSettingsV1 settingsV1 =
 
 type Settings
     = SettingsV1 SettingsV1
-
 
 
 settingsDecoder : Decoder Settings
@@ -233,7 +230,6 @@ encodeDocV1 docV1 =
 
 type DocFromAutomerge
     = DocV1 DocV1
-
 
 
 docFromAutomergeDecoder : Decoder DocFromAutomerge
@@ -284,7 +280,7 @@ encodeNotificationOptions notificationOptions =
           , case notificationOptions.badge of
                 Just value ->
                     Json.Encode.string value
-            
+
                 Nothing ->
                     Json.Encode.null
           )
@@ -292,7 +288,7 @@ encodeNotificationOptions notificationOptions =
           , case notificationOptions.body of
                 Just value ->
                     Json.Encode.string value
-            
+
                 Nothing ->
                     Json.Encode.null
           )
@@ -300,7 +296,7 @@ encodeNotificationOptions notificationOptions =
           , case notificationOptions.icon of
                 Just value ->
                     Json.Encode.string value
-            
+
                 Nothing ->
                     Json.Encode.null
           )
@@ -308,7 +304,7 @@ encodeNotificationOptions notificationOptions =
           , case notificationOptions.lang of
                 Just value ->
                     Json.Encode.string value
-            
+
                 Nothing ->
                     Json.Encode.null
           )
@@ -316,7 +312,7 @@ encodeNotificationOptions notificationOptions =
           , case notificationOptions.requireInteraction of
                 Just value ->
                     Json.Encode.bool value
-            
+
                 Nothing ->
                     Json.Encode.null
           )
@@ -324,7 +320,7 @@ encodeNotificationOptions notificationOptions =
           , case notificationOptions.silent of
                 Just value ->
                     Json.Encode.bool value
-            
+
                 Nothing ->
                     Json.Encode.null
           )
@@ -332,7 +328,7 @@ encodeNotificationOptions notificationOptions =
           , case notificationOptions.tag of
                 Just value ->
                     Json.Encode.string value
-            
+
                 Nothing ->
                     Json.Encode.null
           )
@@ -364,7 +360,6 @@ type NotificationPermission
     = Default
     | Denied
     | Granted
-
 
 
 notificationPermissionDecoder : Decoder NotificationPermission
@@ -424,7 +419,7 @@ port docFromAutomerge : (Value -> msg) -> Sub msg
 
 subscribeToDocFromAutomerge : (Result Json.Decode.Error DocFromAutomerge -> msg) -> Sub msg
 subscribeToDocFromAutomerge toMsg =
-    docFromAutomerge (/value -> toMsg (Json.Decode.decodeValue value docFromAutomergeDecoder)
+    docFromAutomerge (/value -> toMsg (Json.Decode.decodeValue value docFromAutomergeDecoder))
 
 
 port newNotification : Value -> Cmd msg
@@ -440,7 +435,7 @@ port notificationPermission : (Value -> msg) -> Sub msg
 
 subscribeToNotificationPermission : (Result Json.Decode.Error NotificationPermission -> msg) -> Sub msg
 subscribeToNotificationPermission toMsg =
-    notificationPermission (/value -> toMsg (Json.Decode.decodeValue value notificationPermissionDecoder)
+    notificationPermission (/value -> toMsg (Json.Decode.decodeValue value notificationPermissionDecoder))
 
 
 port requestNotificationPermission : Value -> Cmd msg
