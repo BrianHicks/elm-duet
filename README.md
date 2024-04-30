@@ -19,8 +19,8 @@ I'll call those out as we get to them.
 Here's an example for an app that stores [JWTs](https://jwt.io/) in `localStorage`:
 
 ```yaml {source=examples/jwt_schema.yaml}
-# An example app that uses JWTs to manage authentication. Imagine that the JWTs
-# are stored in localStorage so that they can persist across sessions. The
+# An example schema that uses JWTs to manage authentication. Imagine that the
+# JWTs are stored in localStorage so that they can persist across sessions. The
 # lifecycle of this app might look like:
 #
 # 1. On init, the JS side passes the Elm runtime the current value of the JWT
