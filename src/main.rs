@@ -65,10 +65,21 @@ impl Cli {
         if !self.no_format {
             if let Some(ts_formatter) = Formatter::discover(&self.ts_formatter)? {
                 ts_formatter
-                    .format(&["-w"], &[&self.typescript_dest])
+                    // this is a silly clone but it doesn't matter much from a performance
+                    // perspective. If it bugs you, feel free to refactor it but know in advance
+                    // it'll just be for ergonomics or cleanliness.
+                    .format(&["-w"], &Vec::from([self.typescript_dest.clone()]))
                     .wrap_err("could not format TypeScript")?;
 
                 println!("formatted TypeScript")
+            }
+
+            if let Some(elm_formatter) = Formatter::discover(&self.elm_formatter)? {
+                elm_formatter
+                    .format(&["--yes"], &elm_files)
+                    .wrap_err("could not format Elm")?;
+
+                println!("formatted Elm")
             }
         }
 

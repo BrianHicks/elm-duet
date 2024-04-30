@@ -45,7 +45,7 @@ impl Formatter {
         Ok(None)
     }
 
-    pub(crate) fn format(&self, args: &[&str], files: &[&Path]) -> Result<()> {
+    pub(crate) fn format(&self, args: &[&str], files: &Vec<PathBuf>) -> Result<()> {
         let process = Command::new(&self.command)
             .args(args)
             .args(files)
