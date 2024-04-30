@@ -27,8 +27,6 @@ Here's an example for an app that stores [JWTs](https://jwt.io/) in `localStorag
 #    (or `null`, if unset)
 # 2. Elm is responsible for authentication and for telling JS when it gets a
 #    new JWT (for example, when the user logs in)
-# 3. Elm is also responsible for telling JS if someone logs out, in which case
-#    we should clear the JWT from localStorage.
 
 # For elm-duet, we start by defining our data types. In this case, we're just
 # going to keep things simple and define a "jwt" that will just be an alias to
@@ -64,14 +62,6 @@ modules:
           direction: ElmToJs
         ref: jwt
 
-      # Logout is a bit different: we really don't need a payload, just a
-      # signal. JTD handles this by defining an "empty" case, which we specify
-      # by omitting any type information. We still need to know which direction
-      # the port has to move, though, so we still include the metadata.
-      logout:
-        metadata:
-          direction: ElmToJs
-
 ```
 
 (We're using YAML in this example so we can use comments, but JSON schemas also work just fine.)
@@ -100,9 +90,6 @@ declare module Elm {
     };
 
     type Ports = {
-      logout: {
-        subscribe: (callback: (value: Record<string, never>) => void) => void;
-      };
       newJwt: {
         subscribe: (callback: (value: string) => void) => void;
       };
@@ -176,20 +163,6 @@ import Json.Decode.Pipeline
 import Json.Encode
 
 
-type alias Logout =
-    ()
-
-
-logoutDecoder : Decoder Logout
-logoutDecoder =
-    Json.Decode.null ()
-
-
-encodeLogout : Logout -> Json.Encode.Value
-encodeLogout logout =
-    Json.Encode.null
-
-
 type alias NewJwt =
     String
 
@@ -202,14 +175,6 @@ newJwtDecoder =
 encodeNewJwt : NewJwt -> Json.Encode.Value
 encodeNewJwt newJwt =
     Json.Encode.string newJwt
-
-
-port logout : Value -> Cmd msg
-
-
-sendLogout : Logout -> Cmd msg
-sendLogout value =
-    logout (encodeLogout value)
 
 
 port newJwt : Value -> Cmd msg

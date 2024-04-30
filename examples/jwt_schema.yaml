@@ -6,8 +6,6 @@
 #    (or `null`, if unset)
 # 2. Elm is responsible for authentication and for telling JS when it gets a
 #    new JWT (for example, when the user logs in)
-# 3. Elm is also responsible for telling JS if someone logs out, in which case
-#    we should clear the JWT from localStorage.
 
 # For elm-duet, we start by defining our data types. In this case, we're just
 # going to keep things simple and define a "jwt" that will just be an alias to
@@ -42,11 +40,3 @@ modules:
         metadata:
           direction: ElmToJs
         ref: jwt
-
-      # Logout is a bit different: we really don't need a payload, just a
-      # signal. JTD handles this by defining an "empty" case, which we specify
-      # by omitting any type information. We still need to know which direction
-      # the port has to move, though, so we still include the metadata.
-      logout:
-        metadata:
-          direction: ElmToJs
