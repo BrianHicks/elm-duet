@@ -1,6 +1,6 @@
 use color_eyre::{Help, SectionExt};
 use eyre::{eyre, Result, WrapErr};
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::process::{Command, Stdio};
 
 pub struct Formatter {
@@ -11,7 +11,7 @@ pub struct Formatter {
 impl Formatter {
     pub fn discover(binary_name: &str) -> Result<Option<Self>> {
         // first look in PATH
-        for source in std::env::var("PATH")?.split(":") {
+        for source in std::env::var("PATH")?.split(':') {
             let command = PathBuf::from(source).join(binary_name);
             if command.exists() {
                 return Ok(Some(Self {
