@@ -24,22 +24,16 @@ impl Formatter {
         // then search for node_modules up the cwd tree
         let cwd = std::env::current_dir()?;
         let mut search = Some(cwd.as_path());
-        loop {
-            match search {
-                Some(dir) => {
-                    let command = dir.join("node_modules").join(".bin").join(binary_name);
-                    if command.exists() {
-                        return Ok(Some(Self {
-                            name: binary_name.to_owned(),
-                            command,
-                        }));
-                    }
-
-                    search = dir.parent()
-                }
-
-                None => break,
+        while let Some(dir) = search {
+            let command = dir.join("node_modules").join(".bin").join(binary_name);
+            if command.exists() {
+                return Ok(Some(Self {
+                    name: binary_name.to_owned(),
+                    command,
+                }));
             }
+
+            search = dir.parent()
         }
 
         Ok(None)
