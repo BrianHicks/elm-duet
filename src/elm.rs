@@ -851,7 +851,7 @@ impl Port {
                 out.push_str(&self.name);
                 out.push_str(" (\\value -> toMsg (Json.Decode.decodeValue value ");
                 out.push_str(&self.type_.decoder_name()?);
-                out.push(')');
+                out.push_str("))");
             }
         }
 
