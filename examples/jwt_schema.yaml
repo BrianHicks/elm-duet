@@ -21,7 +21,7 @@ definitions:
 modules:
   Main:
     # First we'll define flags. As we mentioned above, that's either a JWT or
-    # null. We'll define it by referring to
+    # null. We'll define it by referring to `jwt` from above.
     #
     # If your app doesn't use flags, you can omit this key.
     flags:
