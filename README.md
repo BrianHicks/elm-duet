@@ -189,6 +189,9 @@ sendNewJwt value =
 You'll notice that in addition to decoders and encoders, `elm-duet` generates type-safe wrappers around the ports.
 This is, again, to let you send custom types through the ports in a way we control: if you specify an `enum`, for example, we ensure that both Elm and TypeScript have enough information to take advantage of the best parts of their respective type systems without falling back to plain strings.
 
+Other than those helpers, we don't try to generate any particular helpers for constructing values.
+Every app is going to have different needs there, and we expose everything you need to construct your own.
+
 ## Example 2: An All-in-One Port
 
 Some people like to define an all-in-one port for their application to make sure that they only have a single place to hook up new messages.
