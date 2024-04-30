@@ -13,13 +13,19 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
+      # Set up Rust
       - name: Setup Rust and Cargo
         uses: moonrepo/setup-rust@v1.1.0
+
+      # Set up formatters
       - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: 'npm'
       - run: npm install
+
+      # Test
       - name: Test
         run: cargo test
       - name: Test README files
