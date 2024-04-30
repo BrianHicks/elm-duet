@@ -1,8 +1,10 @@
 mod elm;
+mod formatting;
 mod inflected_string;
 mod schema;
 mod typescript;
 
+use crate::formatting::Formatter;
 use clap::Parser;
 use color_eyre::Result;
 use eyre::WrapErr;
@@ -46,6 +48,7 @@ impl Cli {
         std::fs::write(&self.typescript_dest, schema.to_ts()?)?;
         println!("wrote {}", self.typescript_dest.display());
 
+        let mut elm_files = Vec::new();
         for (name, contents) in schema.to_elm()? {
             let dest = self.elm_dest.join(name);
             if let Some(parent) = dest.parent() {
@@ -56,6 +59,17 @@ impl Cli {
 
             std::fs::write(&dest, contents)?;
             println!("wrote {}", dest.display());
+            elm_files.push(dest);
+        }
+
+        if !self.no_format {
+            if let Some(ts_formatter) = Formatter::discover(&self.ts_formatter)? {
+                ts_formatter
+                    .format(&["-w"], &[&self.typescript_dest])
+                    .wrap_err("could not format TypeScript")?;
+
+                println!("formatted TypeScript")
+            }
         }
 
         Ok(())
