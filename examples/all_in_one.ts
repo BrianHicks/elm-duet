@@ -5,16 +5,45 @@ declare module Elm {
     type Flags = Record<string, never>;
 
     type Ports = {
+      fromWorld: {
+        send: (
+          value:
+            | {
+                code: number;
+                reason: string;
+                tag: "close";
+                wasClean: boolean;
+              }
+            | {
+                tag: "error";
+              }
+            | {
+                data: string;
+                origin: string;
+                tag: "message";
+              }
+            | {
+                tag: "open";
+              },
+        ) => void;
+      };
       toWorld: {
         subscribe: (
           callback: (
             value:
               | {
-                  tag: "logout";
+                  code: number;
+                  reason: string;
+                  tag: "close";
                 }
               | {
-                  tag: "newJwt";
-                  value: string;
+                  protocols: string[] | null;
+                  tag: "connect";
+                  url: string;
+                }
+              | {
+                  message: string;
+                  tag: "send";
                 },
           ) => void,
         ) => void;

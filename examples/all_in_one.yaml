@@ -1,6 +1,12 @@
-# We're going to define a port named `toWorld` that sends all our messages to
-# the JS in the same place. You can do the same thing for `fromWorld` for
-# subscriptions, but we're leaving that off to keep things succinct.
+# Let's imagine that we're writing an app which handles some websocket messages
+# that we want Elm to react to. We'll leave it up to Elm to interpret the data
+# inside the messages, but we can use elm-duet to ensure that we have all the
+# right types for each port event set up.
+#
+# For this example, we're going to define a port named `toWorld` that sends all
+# our messages to JS in the same place, and the same for `fromWorld` for
+# subscriptions. We could do this across many ports as well, of course, but if
+# you prefer to put all your communication in one port, here's how you do it!
 modules:
   Main:
     ports:
@@ -18,16 +24,53 @@ modules:
         # example, but all in one port. Note that all the options need to be
         # non-nullable objects, since we can't set a tag otherwise.
         mapping:
-          newJwt:
+          connect:
             properties:
-              value:
-                ref: jwt
+              url:
+                type: string
+              protocols:
+                elements:
+                  type: string
+                nullable: true
 
-          logout:
-            # in cases where we don't want any payload, we specify an empty
-            # object aside from the tag.
+          send:
             properties:
+              message:
+                type: string
 
-definitions:
-  jwt:
-    type: string
+          close:
+            properties:
+              code:
+                type: uint8
+              reason:
+                type: string
+
+      # since we're managing the websocket in JS, we need to pass events back
+      # into Elm. Like `toWorld`, we'll use discriminator/mapping from JTD.
+      fromWorld:
+        metadata:
+          direction: JsToElm
+        discriminator: tag
+
+        mapping:
+          # There isn't any data in the `open` or `error` events, but we still
+          # care about knowing that it happened. In this case, we specify an
+          # empty object to signify that there is no additional data.
+          open: {}
+          error: {}
+
+          close:
+            properties:
+              code:
+                type: uint32
+              reason:
+                type: string
+              wasClean:
+                type: boolean
+
+          message:
+            properties:
+              data:
+                type: string
+              origin:
+                type: string

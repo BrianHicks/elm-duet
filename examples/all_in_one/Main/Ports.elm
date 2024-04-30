@@ -8,44 +8,202 @@ import Json.Decode.Pipeline
 import Json.Encode
 
 
-type alias TagLogout =
-    {}
-
-
-tagLogoutDecoder : Decoder TagLogout
-tagLogoutDecoder =
-    Json.Decode.succeed TagLogout
-
-
-encodeTagLogout : TagLogout -> Json.Encode.Value
-encodeTagLogout tagLogout =
-    Json.Encode.object
-        [ ( "tag", Json.Encode.string "logout" )
-        ]
-
-
-type alias NewJwt =
-    { value : String
+type alias Close =
+    { code : Int
+    , reason : String
+    , wasClean : Bool
     }
 
 
-newJwtDecoder : Decoder NewJwt
-newJwtDecoder =
-    Json.Decode.succeed NewJwt
-        |> Json.Decode.Pipeline.required "value" Json.Decode.string
+closeDecoder : Decoder Close
+closeDecoder =
+    Json.Decode.succeed Close
+        |> Json.Decode.Pipeline.required "code" Json.Decode.int
+        |> Json.Decode.Pipeline.required "reason" Json.Decode.string
+        |> Json.Decode.Pipeline.required "wasClean" Json.Decode.bool
 
 
-encodeNewJwt : NewJwt -> Json.Encode.Value
-encodeNewJwt newJwt =
+encodeClose : Close -> Json.Encode.Value
+encodeClose close =
     Json.Encode.object
-        [ ( "value", Json.Encode.string newJwt.value )
-        , ( "tag", Json.Encode.string "newJwt" )
+        [ ( "code", Json.Encode.int close.code )
+        , ( "reason", Json.Encode.string close.reason )
+        , ( "wasClean", Json.Encode.bool close.wasClean )
+        , ( "tag", Json.Encode.string "close" )
+        ]
+
+
+type alias TagError =
+    {}
+
+
+tagErrorDecoder : Decoder TagError
+tagErrorDecoder =
+    Json.Decode.succeed TagError
+
+
+encodeTagError : TagError -> Json.Encode.Value
+encodeTagError tagError =
+    Json.Encode.object
+        [ ( "tag", Json.Encode.string "error" )
+        ]
+
+
+type alias Message =
+    { data : String
+    , origin : String
+    }
+
+
+messageDecoder : Decoder Message
+messageDecoder =
+    Json.Decode.succeed Message
+        |> Json.Decode.Pipeline.required "data" Json.Decode.string
+        |> Json.Decode.Pipeline.required "origin" Json.Decode.string
+
+
+encodeMessage : Message -> Json.Encode.Value
+encodeMessage message =
+    Json.Encode.object
+        [ ( "data", Json.Encode.string message.data )
+        , ( "origin", Json.Encode.string message.origin )
+        , ( "tag", Json.Encode.string "message" )
+        ]
+
+
+type alias TagOpen =
+    {}
+
+
+tagOpenDecoder : Decoder TagOpen
+tagOpenDecoder =
+    Json.Decode.succeed TagOpen
+
+
+encodeTagOpen : TagOpen -> Json.Encode.Value
+encodeTagOpen tagOpen =
+    Json.Encode.object
+        [ ( "tag", Json.Encode.string "open" )
+        ]
+
+
+type FromWorld
+    = Close Close
+    | Error TagError
+    | Message Message
+    | Open TagOpen
+
+
+fromWorldDecoder : Decoder FromWorld
+fromWorldDecoder =
+    Json.Decode.andThen
+        (\tag ->
+            case tag of
+                "close" ->
+                    Json.Decode.map Close closeDecoder
+
+                "error" ->
+                    Json.Decode.map Error tagErrorDecoder
+
+                "message" ->
+                    Json.Decode.map Message messageDecoder
+
+                "open" ->
+                    Json.Decode.map Open tagOpenDecoder
+        )
+        (Json.Decode.field "tag" Json.Decode.string)
+
+
+encodeFromWorld : FromWorld -> Json.Encode.Value
+encodeFromWorld fromWorld =
+    case fromWorld of
+        Close close ->
+            encodeClose close
+
+        Error error ->
+            encodeTagError error
+
+        Message message ->
+            encodeMessage message
+
+        Open open ->
+            encodeTagOpen open
+
+
+type alias Close =
+    { code : Int
+    , reason : String
+    }
+
+
+closeDecoder : Decoder Close
+closeDecoder =
+    Json.Decode.succeed Close
+        |> Json.Decode.Pipeline.required "code" Json.Decode.int
+        |> Json.Decode.Pipeline.required "reason" Json.Decode.string
+
+
+encodeClose : Close -> Json.Encode.Value
+encodeClose close =
+    Json.Encode.object
+        [ ( "code", Json.Encode.int close.code )
+        , ( "reason", Json.Encode.string close.reason )
+        , ( "tag", Json.Encode.string "close" )
+        ]
+
+
+type alias Connect =
+    { protocols : Maybe (List String)
+    , url : String
+    }
+
+
+connectDecoder : Decoder Connect
+connectDecoder =
+    Json.Decode.succeed Connect
+        |> Json.Decode.Pipeline.required "protocols" (Json.Decode.nullable (Json.Decode.list Json.Decode.string))
+        |> Json.Decode.Pipeline.required "url" Json.Decode.string
+
+
+encodeConnect : Connect -> Json.Encode.Value
+encodeConnect connect =
+    Json.Encode.object
+        [ ( "protocols"
+          , case connect.protocols of
+                Just value ->
+                    Json.Encode.list (\value -> Json.Encode.string value) value
+
+                Nothing ->
+                    Json.Encode.null
+          )
+        , ( "url", Json.Encode.string connect.url )
+        , ( "tag", Json.Encode.string "connect" )
+        ]
+
+
+type alias Send =
+    { message : String
+    }
+
+
+sendDecoder : Decoder Send
+sendDecoder =
+    Json.Decode.succeed Send
+        |> Json.Decode.Pipeline.required "message" Json.Decode.string
+
+
+encodeSend : Send -> Json.Encode.Value
+encodeSend send =
+    Json.Encode.object
+        [ ( "message", Json.Encode.string send.message )
+        , ( "tag", Json.Encode.string "send" )
         ]
 
 
 type ToWorld
-    = Logout TagLogout
-    | NewJwt NewJwt
+    = Close Close
+    | Connect Connect
+    | Send Send
 
 
 toWorldDecoder : Decoder ToWorld
@@ -53,11 +211,14 @@ toWorldDecoder =
     Json.Decode.andThen
         (\tag ->
             case tag of
-                "logout" ->
-                    Json.Decode.map Logout tagLogoutDecoder
+                "close" ->
+                    Json.Decode.map Close closeDecoder
 
-                "newJwt" ->
-                    Json.Decode.map NewJwt newJwtDecoder
+                "connect" ->
+                    Json.Decode.map Connect connectDecoder
+
+                "send" ->
+                    Json.Decode.map Send sendDecoder
         )
         (Json.Decode.field "tag" Json.Decode.string)
 
@@ -65,11 +226,22 @@ toWorldDecoder =
 encodeToWorld : ToWorld -> Json.Encode.Value
 encodeToWorld toWorld =
     case toWorld of
-        Logout logout ->
-            encodeTagLogout logout
+        Close close ->
+            encodeClose close
 
-        NewJwt newJwt ->
-            encodeNewJwt newJwt
+        Connect connect ->
+            encodeConnect connect
+
+        Send send ->
+            encodeSend send
+
+
+port fromWorld : (Value -> msg) -> Sub msg
+
+
+subscribeToFromWorld : (Result Json.Decode.Error FromWorld -> msg) -> Sub msg
+subscribeToFromWorld toMsg =
+    fromWorld (\value -> toMsg (Json.Decode.decodeValue value fromWorldDecoder))
 
 
 port toWorld : Value -> Cmd msg
