@@ -2,24 +2,27 @@
 
 declare module Elm {
   namespace Main {
-    type Flags = Record<string, never>
-  
+    type Flags = Record<string, never>;
+
     type Ports = {
       toWorld: {
-        subscribe: (callback: (value: {
-          tag: "logout";
-        } | {
-          tag: "newJwt";
-          value: string;
-        }) => void) => void;
+        subscribe: (
+          callback: (
+            value:
+              | {
+                  tag: "logout";
+                }
+              | {
+                  tag: "newJwt";
+                  value: string;
+                },
+          ) => void,
+        ) => void;
       };
-    }
-  
-    function init(config: {
-      flags: Flags;
-      node: HTMLElement;
-    }): {
+    };
+
+    function init(config: { flags: Flags; node: HTMLElement }): {
       ports: Ports;
-    }
+    };
   }
 }

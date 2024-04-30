@@ -82,6 +82,8 @@ $ elm-duet examples/jwt_schema.yaml --typescript-dest examples/jwt_schema.ts --e
 wrote examples/jwt_schema.ts
 wrote examples/jwt_schema/Main/Flags.elm
 wrote examples/jwt_schema/Main/Ports.elm
+formatted TypeScript
+formatted Elm
 
 ```
 
@@ -94,8 +96,8 @@ declare module Elm {
   namespace Main {
     type Flags = {
       currentJwt: string | null;
-    }
-  
+    };
+
     type Ports = {
       logout: {
         subscribe: (callback: (value: Record<string, never>) => void) => void;
@@ -103,16 +105,14 @@ declare module Elm {
       newJwt: {
         subscribe: (callback: (value: string) => void) => void;
       };
-    }
-  
-    function init(config: {
-      flags: Flags;
-      node: HTMLElement;
-    }): {
+    };
+
+    function init(config: { flags: Flags; node: HTMLElement }): {
       ports: Ports;
-    }
+    };
   }
 }
+
 ```
 
 This should be flexible enough to use both if you're embedding your Elm app (e.g. with `esbuild`) or referring to it as an external JS file.
@@ -148,7 +148,7 @@ encodeFlags flags =
           , case flags.currentJwt of
                 Just value ->
                     Json.Encode.string value
-            
+
                 Nothing ->
                     Json.Encode.null
           )
@@ -271,6 +271,8 @@ Again, we generate everything in `examples`:
 $ elm-duet examples/all_in_one.yaml --typescript-dest examples/all_in_one.ts --elm-dest examples/all_in_one
 wrote examples/all_in_one.ts
 wrote examples/all_in_one/Main/Ports.elm
+formatted TypeScript
+formatted Elm
 
 ```
 
@@ -281,27 +283,31 @@ We get this in TypeScript:
 
 declare module Elm {
   namespace Main {
-    type Flags = Record<string, never>
-  
+    type Flags = Record<string, never>;
+
     type Ports = {
       toWorld: {
-        subscribe: (callback: (value: {
-          tag: "logout";
-        } | {
-          tag: "newJwt";
-          value: string;
-        }) => void) => void;
+        subscribe: (
+          callback: (
+            value:
+              | {
+                  tag: "logout";
+                }
+              | {
+                  tag: "newJwt";
+                  value: string;
+                },
+          ) => void,
+        ) => void;
       };
-    }
-  
-    function init(config: {
-      flags: Flags;
-      node: HTMLElement;
-    }): {
+    };
+
+    function init(config: { flags: Flags; node: HTMLElement }): {
       ports: Ports;
-    }
+    };
   }
 }
+
 ```
 
 And this Elm:
@@ -329,7 +335,7 @@ tagLogoutDecoder =
 encodeTagLogout : TagLogout -> Json.Encode.Value
 encodeTagLogout tagLogout =
     Json.Encode.object
-        , ( "tag", Json.Encode.string "logout" )
+        [ ( "tag", Json.Encode.string "logout" )
         ]
 
 
@@ -355,7 +361,6 @@ encodeNewJwt newJwt =
 type ToWorld
     = Logout TagLogout
     | NewJwt NewJwt
-
 
 
 toWorldDecoder : Decoder ToWorld

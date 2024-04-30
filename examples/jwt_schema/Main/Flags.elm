@@ -26,7 +26,7 @@ encodeFlags flags =
           , case flags.currentJwt of
                 Just value ->
                     Json.Encode.string value
-            
+
                 Nothing ->
                     Json.Encode.null
           )

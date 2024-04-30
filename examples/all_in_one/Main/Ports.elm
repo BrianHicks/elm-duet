@@ -20,7 +20,7 @@ tagLogoutDecoder =
 encodeTagLogout : TagLogout -> Json.Encode.Value
 encodeTagLogout tagLogout =
     Json.Encode.object
-        , ( "tag", Json.Encode.string "logout" )
+        [ ( "tag", Json.Encode.string "logout" )
         ]
 
 
@@ -46,7 +46,6 @@ encodeNewJwt newJwt =
 type ToWorld
     = Logout TagLogout
     | NewJwt NewJwt
-
 
 
 toWorldDecoder : Decoder ToWorld
