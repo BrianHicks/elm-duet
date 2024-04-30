@@ -43,9 +43,10 @@ modules:
           direction: ElmToJs
         ref: jwt
 
-      # Finally, logout is a bit odd: we really don't need a payload. JTD
-      # handles this by defining an "empty" case, which we specify by omitting
-      # any type information. We still need the direction metadata, though!
+      # Logout is a bit different: we really don't need a payload, just a
+      # signal. JTD handles this by defining an "empty" case, which we specify
+      # by omitting any type information. We still need to know which direction
+      # the port has to move, though, so we still include the metadata.
       logout:
         metadata:
           direction: ElmToJs
