@@ -525,7 +525,7 @@ impl Type {
                                 encoder.push_str("Just ");
                             }
                             encoder.push_str("( \"");
-                            encoder.push_str(&name.orig());
+                            encoder.push_str(name.orig());
                             encoder.push_str("\", ");
                             encoder.push_str(
                                 &field_type
