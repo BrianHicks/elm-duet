@@ -23,251 +23,6 @@ pub enum RecordPresence {
     Optional,
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
-pub enum Decl {
-    CustomTypeEnum {
-        name: InflectedString,
-        discriminator: Option<String>,
-        constructor_prefix: InflectedString,
-        cases: BTreeMap<InflectedString, Option<Type>>,
-    },
-    TypeAlias {
-        name: InflectedString,
-        type_: Type,
-
-        // a bit of a hack, but we need to add disciminators specifically to records in order to
-        // make the decoders and encoders round-trip properly.
-        discriminator: Option<(String, String)>,
-    },
-}
-
-impl Decl {
-    fn to_source(&self) -> Result<String> {
-        let mut out = String::new();
-
-        match self {
-            Decl::CustomTypeEnum {
-                name,
-                constructor_prefix,
-                cases,
-                ..
-            } => {
-                out.push_str("type ");
-                out.push_str(&name.to_pascal_case()?);
-                out.push('\n');
-
-                for (i, (case_name, case_type_opt)) in cases.iter().enumerate() {
-                    if i == 0 {
-                        out.push_str("    = ");
-                    } else {
-                        out.push_str("    | ");
-                    }
-
-                    out.push_str(&constructor_prefix.to_pascal_case()?);
-                    out.push_str(&case_name.to_pascal_case()?);
-
-                    if let Some(case_type) = case_type_opt {
-                        out.push(' ');
-                        out.push_str(&case_type.to_source()?.replace('\n', "\n    "));
-                    }
-
-                    out.push('\n')
-                }
-            }
-            Decl::TypeAlias { name, type_, .. } => {
-                out.push_str("type alias ");
-                out.push_str(&name.to_pascal_case()?);
-                out.push_str(" =\n    ");
-                out.push_str(&type_.to_source()?.replace('\n', "\n    "));
-            }
-        }
-
-        Ok(out)
-    }
-
-    fn name(&self) -> &InflectedString {
-        match self {
-            Decl::CustomTypeEnum { name, .. } => name,
-            Decl::TypeAlias { name, .. } => name,
-        }
-    }
-
-    fn decoder_name(&self) -> Result<String> {
-        Ok(format!("{}Decoder", self.name().to_camel_case()?))
-    }
-
-    fn encoder_name(&self) -> Result<String> {
-        Ok(format!("encode{}", self.name().to_pascal_case()?))
-    }
-
-    fn to_decoder_source(&self) -> Result<String> {
-        let mut out = String::new();
-
-        let name = self.name();
-        let decoder_name = self.decoder_name()?;
-        let type_name = name.to_pascal_case()?;
-        out.push_str(&decoder_name);
-        out.push_str(" : Decoder ");
-        out.push_str(&type_name);
-        out.push('\n');
-        out.push_str(&decoder_name);
-        out.push_str(" =\n");
-
-        match &self {
-            Decl::CustomTypeEnum {
-                constructor_prefix,
-                discriminator,
-                cases,
-                ..
-            } => {
-                out.push_str(
-                    "    Json.Decode.andThen\n        (\\tag ->\n            case tag of\n",
-                );
-
-                for (i, (case, case_type_opt)) in cases.iter().enumerate() {
-                    if i > 0 {
-                        out.push('\n');
-                    }
-
-                    out.push_str("                \"");
-                    out.push_str(case.orig());
-                    out.push_str("\" ->\n                    ");
-
-                    match case_type_opt {
-                        Some(type_) => {
-                            let sub_decoder = type_.to_decoder_source(&type_name)?;
-
-                            out.push_str("Json.Decode.map ");
-                            out.push_str(&constructor_prefix.to_pascal_case()?);
-                            out.push_str(&case.to_pascal_case()?);
-                            if sub_decoder.contains('\n') {
-                                out.push_str("\n                        ");
-                                out.push_str(
-                                    &sub_decoder.replace('\n', "\n                        "),
-                                );
-                            } else {
-                                out.push(' ');
-                                out.push_str(&sub_decoder);
-                            }
-                        }
-                        None => {
-                            out.push_str("Json.Decode.succeed ");
-                            out.push_str(&constructor_prefix.to_pascal_case()?);
-                            out.push_str(&case.to_pascal_case()?);
-                        }
-                    }
-                    out.push('\n');
-                }
-
-                out.push_str("        )\n        ");
-                match discriminator {
-                    None => out.push_str("Json.Decode.string"),
-                    Some(name) => {
-                        out.push_str("(Json.Decode.field \"");
-                        out.push_str(name);
-                        out.push_str("\" Json.Decode.string)");
-                    }
-                }
-            }
-            Decl::TypeAlias { type_, .. } => {
-                out.push_str("    ");
-                out.push_str(&type_.to_decoder_source(&type_name)?.replace('\n', "\n    "));
-            }
-        }
-
-        Ok(out)
-    }
-
-    fn to_encoder_source(&self) -> Result<String> {
-        let mut out = String::new();
-
-        let name = self.name();
-        let decoder_name = self.encoder_name()?;
-        let type_name = name.to_pascal_case()?;
-        let variable_name = name.to_camel_case()?;
-
-        out.push_str(&decoder_name);
-        out.push_str(" : ");
-        out.push_str(&type_name);
-        out.push_str(" -> Json.Encode.Value\n");
-        out.push_str(&decoder_name);
-        out.push(' ');
-        out.push_str(&variable_name);
-        out.push_str(" =\n");
-
-        match &self {
-            Decl::CustomTypeEnum {
-                constructor_prefix,
-                cases,
-                ..
-            } => {
-                out.push_str("    case ");
-                out.push_str(&variable_name);
-                out.push_str(" of\n");
-
-                for (i, (case, case_type_opt)) in cases.iter().enumerate() {
-                    if i > 0 {
-                        out.push_str("\n\n")
-                    }
-
-                    let case_name = InflectedString::from(format!(
-                        "{}{}",
-                        constructor_prefix.to_pascal_case()?,
-                        case.to_pascal_case()?
-                    ));
-
-                    out.push_str("        ");
-                    out.push_str(&case_name.to_pascal_case()?);
-
-                    if case_type_opt.is_some() {
-                        out.push(' ');
-                        out.push_str(&case_name.to_camel_case()?);
-                    }
-
-                    out.push_str(" ->\n            ");
-
-                    match case_type_opt {
-                        Some(case_type) => out.push_str(
-                            &case_type
-                                .to_encoder_source(&case_name.to_camel_case()?, &None)?
-                                .replace('\n', "\n            "),
-                        ),
-                        None => {
-                            out.push_str("Json.Encode.string \"");
-                            out.push_str(case.orig());
-                            out.push('"');
-                        }
-                    }
-                }
-            }
-            Decl::TypeAlias {
-                type_,
-                discriminator,
-                ..
-            } => {
-                out.push_str("    ");
-                out.push_str(
-                    &type_
-                        .to_encoder_source(&variable_name, discriminator)?
-                        .replace('\n', "\n    "),
-                );
-            }
-        }
-
-        Ok(out)
-    }
-
-    fn add_discriminator(&mut self, name: String, value: String) -> Result<()> {
-        match self {
-            Decl::CustomTypeEnum { .. } => bail!("cannot add a discriminator to a custom type"),
-            Decl::TypeAlias { discriminator, .. } => {
-                *discriminator = Some((name, value));
-                Ok(())
-            }
-        }
-    }
-}
-
 impl Type {
     pub fn from_schema(
         schema: Schema,
@@ -836,6 +591,251 @@ impl Type {
         }
 
         Ok(out)
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub enum Decl {
+    CustomTypeEnum {
+        name: InflectedString,
+        discriminator: Option<String>,
+        constructor_prefix: InflectedString,
+        cases: BTreeMap<InflectedString, Option<Type>>,
+    },
+    TypeAlias {
+        name: InflectedString,
+        type_: Type,
+
+        // a bit of a hack, but we need to add disciminators specifically to records in order to
+        // make the decoders and encoders round-trip properly.
+        discriminator: Option<(String, String)>,
+    },
+}
+
+impl Decl {
+    fn to_source(&self) -> Result<String> {
+        let mut out = String::new();
+
+        match self {
+            Decl::CustomTypeEnum {
+                name,
+                constructor_prefix,
+                cases,
+                ..
+            } => {
+                out.push_str("type ");
+                out.push_str(&name.to_pascal_case()?);
+                out.push('\n');
+
+                for (i, (case_name, case_type_opt)) in cases.iter().enumerate() {
+                    if i == 0 {
+                        out.push_str("    = ");
+                    } else {
+                        out.push_str("    | ");
+                    }
+
+                    out.push_str(&constructor_prefix.to_pascal_case()?);
+                    out.push_str(&case_name.to_pascal_case()?);
+
+                    if let Some(case_type) = case_type_opt {
+                        out.push(' ');
+                        out.push_str(&case_type.to_source()?.replace('\n', "\n    "));
+                    }
+
+                    out.push('\n')
+                }
+            }
+            Decl::TypeAlias { name, type_, .. } => {
+                out.push_str("type alias ");
+                out.push_str(&name.to_pascal_case()?);
+                out.push_str(" =\n    ");
+                out.push_str(&type_.to_source()?.replace('\n', "\n    "));
+            }
+        }
+
+        Ok(out)
+    }
+
+    fn name(&self) -> &InflectedString {
+        match self {
+            Decl::CustomTypeEnum { name, .. } => name,
+            Decl::TypeAlias { name, .. } => name,
+        }
+    }
+
+    fn decoder_name(&self) -> Result<String> {
+        Ok(format!("{}Decoder", self.name().to_camel_case()?))
+    }
+
+    fn encoder_name(&self) -> Result<String> {
+        Ok(format!("encode{}", self.name().to_pascal_case()?))
+    }
+
+    fn to_decoder_source(&self) -> Result<String> {
+        let mut out = String::new();
+
+        let name = self.name();
+        let decoder_name = self.decoder_name()?;
+        let type_name = name.to_pascal_case()?;
+        out.push_str(&decoder_name);
+        out.push_str(" : Decoder ");
+        out.push_str(&type_name);
+        out.push('\n');
+        out.push_str(&decoder_name);
+        out.push_str(" =\n");
+
+        match &self {
+            Decl::CustomTypeEnum {
+                constructor_prefix,
+                discriminator,
+                cases,
+                ..
+            } => {
+                out.push_str(
+                    "    Json.Decode.andThen\n        (\\tag ->\n            case tag of\n",
+                );
+
+                for (i, (case, case_type_opt)) in cases.iter().enumerate() {
+                    if i > 0 {
+                        out.push('\n');
+                    }
+
+                    out.push_str("                \"");
+                    out.push_str(case.orig());
+                    out.push_str("\" ->\n                    ");
+
+                    match case_type_opt {
+                        Some(type_) => {
+                            let sub_decoder = type_.to_decoder_source(&type_name)?;
+
+                            out.push_str("Json.Decode.map ");
+                            out.push_str(&constructor_prefix.to_pascal_case()?);
+                            out.push_str(&case.to_pascal_case()?);
+                            if sub_decoder.contains('\n') {
+                                out.push_str("\n                        ");
+                                out.push_str(
+                                    &sub_decoder.replace('\n', "\n                        "),
+                                );
+                            } else {
+                                out.push(' ');
+                                out.push_str(&sub_decoder);
+                            }
+                        }
+                        None => {
+                            out.push_str("Json.Decode.succeed ");
+                            out.push_str(&constructor_prefix.to_pascal_case()?);
+                            out.push_str(&case.to_pascal_case()?);
+                        }
+                    }
+                    out.push('\n');
+                }
+
+                out.push_str("        )\n        ");
+                match discriminator {
+                    None => out.push_str("Json.Decode.string"),
+                    Some(name) => {
+                        out.push_str("(Json.Decode.field \"");
+                        out.push_str(name);
+                        out.push_str("\" Json.Decode.string)");
+                    }
+                }
+            }
+            Decl::TypeAlias { type_, .. } => {
+                out.push_str("    ");
+                out.push_str(&type_.to_decoder_source(&type_name)?.replace('\n', "\n    "));
+            }
+        }
+
+        Ok(out)
+    }
+
+    fn to_encoder_source(&self) -> Result<String> {
+        let mut out = String::new();
+
+        let name = self.name();
+        let decoder_name = self.encoder_name()?;
+        let type_name = name.to_pascal_case()?;
+        let variable_name = name.to_camel_case()?;
+
+        out.push_str(&decoder_name);
+        out.push_str(" : ");
+        out.push_str(&type_name);
+        out.push_str(" -> Json.Encode.Value\n");
+        out.push_str(&decoder_name);
+        out.push(' ');
+        out.push_str(&variable_name);
+        out.push_str(" =\n");
+
+        match &self {
+            Decl::CustomTypeEnum {
+                constructor_prefix,
+                cases,
+                ..
+            } => {
+                out.push_str("    case ");
+                out.push_str(&variable_name);
+                out.push_str(" of\n");
+
+                for (i, (case, case_type_opt)) in cases.iter().enumerate() {
+                    if i > 0 {
+                        out.push_str("\n\n")
+                    }
+
+                    let case_name = InflectedString::from(format!(
+                        "{}{}",
+                        constructor_prefix.to_pascal_case()?,
+                        case.to_pascal_case()?
+                    ));
+
+                    out.push_str("        ");
+                    out.push_str(&case_name.to_pascal_case()?);
+
+                    if case_type_opt.is_some() {
+                        out.push(' ');
+                        out.push_str(&case_name.to_camel_case()?);
+                    }
+
+                    out.push_str(" ->\n            ");
+
+                    match case_type_opt {
+                        Some(case_type) => out.push_str(
+                            &case_type
+                                .to_encoder_source(&case_name.to_camel_case()?, &None)?
+                                .replace('\n', "\n            "),
+                        ),
+                        None => {
+                            out.push_str("Json.Encode.string \"");
+                            out.push_str(case.orig());
+                            out.push('"');
+                        }
+                    }
+                }
+            }
+            Decl::TypeAlias {
+                type_,
+                discriminator,
+                ..
+            } => {
+                out.push_str("    ");
+                out.push_str(
+                    &type_
+                        .to_encoder_source(&variable_name, discriminator)?
+                        .replace('\n', "\n    "),
+                );
+            }
+        }
+
+        Ok(out)
+    }
+
+    fn add_discriminator(&mut self, name: String, value: String) -> Result<()> {
+        match self {
+            Decl::CustomTypeEnum { .. } => bail!("cannot add a discriminator to a custom type"),
+            Decl::TypeAlias { discriminator, .. } => {
+                *discriminator = Some((name, value));
+                Ok(())
+            }
+        }
     }
 }
 
