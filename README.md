@@ -105,6 +105,9 @@ declare module Elm {
 
 This should be flexible enough to use both if you're embedding your Elm app (e.g. with `esbuild`) or referring to it as an external JS file.
 
+Notice how the `ports` key and the port itself are optional.
+This is because you're not *required* to hook up the ports on the Elm side, and if you don't then Elm will omit those keys from the objects you get at runtmie.
+
 We also get this file containing Elm flags:
 
 ```elm {source=examples/jwt_schema/Main/Flags.elm}
