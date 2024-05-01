@@ -13,7 +13,7 @@ type alias AddNewPingAt =
     }
 
 
-addNewPingAtDecoder : Decoder AddNewPingAt
+addNewPingAtDecoder : Json.Decode.Decoder AddNewPingAt
 addNewPingAtDecoder =
     Json.Decode.succeed AddNewPingAt
         |> Json.Decode.Pipeline.required "value" Json.Decode.float
@@ -32,7 +32,7 @@ type alias SetMinutesPerPing =
     }
 
 
-setMinutesPerPingDecoder : Decoder SetMinutesPerPing
+setMinutesPerPingDecoder : Json.Decode.Decoder SetMinutesPerPing
 setMinutesPerPingDecoder =
     Json.Decode.succeed SetMinutesPerPing
         |> Json.Decode.Pipeline.required "value" Json.Decode.float
@@ -52,7 +52,7 @@ type alias SetTagForPing =
     }
 
 
-setTagForPingDecoder : Decoder SetTagForPing
+setTagForPingDecoder : Json.Decode.Decoder SetTagForPing
 setTagForPingDecoder =
     Json.Decode.succeed SetTagForPing
         |> Json.Decode.Pipeline.required "index" Json.Decode.float
@@ -81,7 +81,7 @@ type ChangeDocument
     | SetTagForPing SetTagForPing
 
 
-changeDocumentDecoder : Decoder ChangeDocument
+changeDocumentDecoder : Json.Decode.Decoder ChangeDocument
 changeDocumentDecoder =
     Json.Decode.andThen
         (/tag ->
@@ -118,7 +118,7 @@ type alias PingV1 =
     }
 
 
-pingV1Decoder : Decoder PingV1
+pingV1Decoder : Json.Decode.Decoder PingV1
 pingV1Decoder =
     Json.Decode.succeed PingV1
         |> Json.Decode.Pipeline.required "custom" (Json.Decode.dict Json.Decode.string)
@@ -147,7 +147,7 @@ type PingsElements
     = PingV1 PingV1
 
 
-pingsElementsDecoder : Decoder PingsElements
+pingsElementsDecoder : Json.Decode.Decoder PingsElements
 pingsElementsDecoder =
     Json.Decode.andThen
         (/tag ->
@@ -170,7 +170,7 @@ type alias SettingsV1 =
     }
 
 
-settingsV1Decoder : Decoder SettingsV1
+settingsV1Decoder : Json.Decode.Decoder SettingsV1
 settingsV1Decoder =
     Json.Decode.succeed SettingsV1
         |> Json.Decode.Pipeline.required "minutesPerPing" Json.Decode.int
@@ -188,7 +188,7 @@ type Settings
     = SettingsV1 SettingsV1
 
 
-settingsDecoder : Decoder Settings
+settingsDecoder : Json.Decode.Decoder Settings
 settingsDecoder =
     Json.Decode.andThen
         (/tag ->
@@ -212,7 +212,7 @@ type alias DocV1 =
     }
 
 
-docV1Decoder : Decoder DocV1
+docV1Decoder : Json.Decode.Decoder DocV1
 docV1Decoder =
     Json.Decode.succeed DocV1
         |> Json.Decode.Pipeline.required "pings" (Json.Decode.list pingsElementsDecoder)
@@ -232,7 +232,7 @@ type DocFromAutomerge
     = DocV1 DocV1
 
 
-docFromAutomergeDecoder : Decoder DocFromAutomerge
+docFromAutomergeDecoder : Json.Decode.Decoder DocFromAutomerge
 docFromAutomergeDecoder =
     Json.Decode.andThen
         (/tag ->
@@ -261,7 +261,7 @@ type alias NotificationOptions =
     }
 
 
-notificationOptionsDecoder : Decoder NotificationOptions
+notificationOptionsDecoder : Json.Decode.Decoder NotificationOptions
 notificationOptionsDecoder =
     Json.Decode.succeed NotificationOptions
         |> Json.Decode.Pipeline.required "badge" (Json.Decode.nullable Json.Decode.string)
@@ -341,7 +341,7 @@ type alias NewNotification =
     }
 
 
-newNotificationDecoder : Decoder NewNotification
+newNotificationDecoder : Json.Decode.Decoder NewNotification
 newNotificationDecoder =
     Json.Decode.succeed NewNotification
         |> Json.Decode.Pipeline.required "options" notificationOptionsDecoder
@@ -362,7 +362,7 @@ type NotificationPermission
     | Granted
 
 
-notificationPermissionDecoder : Decoder NotificationPermission
+notificationPermissionDecoder : Json.Decode.Decoder NotificationPermission
 notificationPermissionDecoder =
     Json.Decode.andThen
         (/tag ->
@@ -396,7 +396,7 @@ type alias RequestNotificationPermission =
     ()
 
 
-requestNotificationPermissionDecoder : Decoder RequestNotificationPermission
+requestNotificationPermissionDecoder : Json.Decode.Decoder RequestNotificationPermission
 requestNotificationPermissionDecoder =
     Json.Decode.null ()
 
@@ -406,7 +406,7 @@ encodeRequestNotificationPermission requestNotificationPermission =
     Json.Encode.null
 
 
-port changeDocument : Value -> Cmd msg
+port changeDocument : Json.Decode.Value -> Cmd msg
 
 
 sendChangeDocument : ChangeDocument -> Cmd msg
@@ -414,7 +414,7 @@ sendChangeDocument value =
     changeDocument (encodeChangeDocument value)
 
 
-port docFromAutomerge : (Value -> msg) -> Sub msg
+port docFromAutomerge : (Json.Decode.Value -> msg) -> Sub msg
 
 
 subscribeToDocFromAutomerge : (Result Json.Decode.Error DocFromAutomerge -> msg) -> Sub msg
@@ -422,7 +422,7 @@ subscribeToDocFromAutomerge toMsg =
     docFromAutomerge (/value -> toMsg (Json.Decode.decodeValue value docFromAutomergeDecoder))
 
 
-port newNotification : Value -> Cmd msg
+port newNotification : Json.Decode.Value -> Cmd msg
 
 
 sendNewNotification : NewNotification -> Cmd msg
@@ -430,7 +430,7 @@ sendNewNotification value =
     newNotification (encodeNewNotification value)
 
 
-port notificationPermission : (Value -> msg) -> Sub msg
+port notificationPermission : (Json.Decode.Value -> msg) -> Sub msg
 
 
 subscribeToNotificationPermission : (Result Json.Decode.Error NotificationPermission -> msg) -> Sub msg
@@ -438,7 +438,7 @@ subscribeToNotificationPermission toMsg =
     notificationPermission (/value -> toMsg (Json.Decode.decodeValue value notificationPermissionDecoder))
 
 
-port requestNotificationPermission : Value -> Cmd msg
+port requestNotificationPermission : Json.Decode.Value -> Cmd msg
 
 
 sendRequestNotificationPermission : RequestNotificationPermission -> Cmd msg

@@ -13,7 +13,7 @@ type alias Flags =
     }
 
 
-flagsDecoder : Decoder Flags
+flagsDecoder : Json.Decode.Decoder Flags
 flagsDecoder =
     Json.Decode.succeed Flags
         |> Json.Decode.Pipeline.required "currentJwt" (Json.Decode.nullable Json.Decode.string)

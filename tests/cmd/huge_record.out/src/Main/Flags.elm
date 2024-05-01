@@ -24,7 +24,7 @@ type alias Flags =
     }
 
 
-flagsDecoder : Decoder Flags
+flagsDecoder : Json.Decode.Decoder Flags
 flagsDecoder =
     Json.Decode.succeed Flags
         |> Json.Decode.Pipeline.required "eight" Json.Decode.string

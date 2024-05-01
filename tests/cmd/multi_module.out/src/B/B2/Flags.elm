@@ -12,7 +12,7 @@ type alias Flags =
     String
 
 
-flagsDecoder : Decoder Flags
+flagsDecoder : Json.Decode.Decoder Flags
 flagsDecoder =
     Json.Decode.string
 

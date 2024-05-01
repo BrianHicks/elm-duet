@@ -126,7 +126,7 @@ type alias Flags =
     }
 
 
-flagsDecoder : Decoder Flags
+flagsDecoder : Json.Decode.Decoder Flags
 flagsDecoder =
     Json.Decode.succeed Flags
         |> Json.Decode.Pipeline.required "currentJwt" (Json.Decode.nullable Json.Decode.string)
@@ -170,7 +170,7 @@ type alias NewJwt =
     String
 
 
-newJwtDecoder : Decoder NewJwt
+newJwtDecoder : Json.Decode.Decoder NewJwt
 newJwtDecoder =
     Json.Decode.string
 
@@ -180,7 +180,7 @@ encodeNewJwt newJwt =
     Json.Encode.string newJwt
 
 
-port newJwt : Value -> Cmd msg
+port newJwt : Json.Decode.Value -> Cmd msg
 
 
 sendNewJwt : NewJwt -> Cmd msg

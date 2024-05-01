@@ -15,7 +15,7 @@ type alias Close =
     }
 
 
-closeDecoder : Decoder Close
+closeDecoder : Json.Decode.Decoder Close
 closeDecoder =
     Json.Decode.succeed Close
         |> Json.Decode.Pipeline.required "code" Json.Decode.int
@@ -37,7 +37,7 @@ type alias TagError =
     {}
 
 
-tagErrorDecoder : Decoder TagError
+tagErrorDecoder : Json.Decode.Decoder TagError
 tagErrorDecoder =
     Json.Decode.succeed TagError
 
@@ -55,7 +55,7 @@ type alias Message =
     }
 
 
-messageDecoder : Decoder Message
+messageDecoder : Json.Decode.Decoder Message
 messageDecoder =
     Json.Decode.succeed Message
         |> Json.Decode.Pipeline.required "data" Json.Decode.string
@@ -75,7 +75,7 @@ type alias TagOpen =
     {}
 
 
-tagOpenDecoder : Decoder TagOpen
+tagOpenDecoder : Json.Decode.Decoder TagOpen
 tagOpenDecoder =
     Json.Decode.succeed TagOpen
 
@@ -94,7 +94,7 @@ type FromWorld
     | Open TagOpen
 
 
-fromWorldDecoder : Decoder FromWorld
+fromWorldDecoder : Json.Decode.Decoder FromWorld
 fromWorldDecoder =
     Json.Decode.andThen
         (\tag ->
@@ -136,7 +136,7 @@ type alias Close =
     }
 
 
-closeDecoder : Decoder Close
+closeDecoder : Json.Decode.Decoder Close
 closeDecoder =
     Json.Decode.succeed Close
         |> Json.Decode.Pipeline.required "code" Json.Decode.int
@@ -158,7 +158,7 @@ type alias Connect =
     }
 
 
-connectDecoder : Decoder Connect
+connectDecoder : Json.Decode.Decoder Connect
 connectDecoder =
     Json.Decode.succeed Connect
         |> Json.Decode.Pipeline.optional "protocols" (Json.Decode.nullable (Json.Decode.list Json.Decode.string)) Nothing
@@ -180,7 +180,7 @@ type alias Send =
     }
 
 
-sendDecoder : Decoder Send
+sendDecoder : Json.Decode.Decoder Send
 sendDecoder =
     Json.Decode.succeed Send
         |> Json.Decode.Pipeline.required "message" Json.Decode.string
@@ -200,7 +200,7 @@ type ToWorld
     | Send Send
 
 
-toWorldDecoder : Decoder ToWorld
+toWorldDecoder : Json.Decode.Decoder ToWorld
 toWorldDecoder =
     Json.Decode.andThen
         (\tag ->
@@ -230,7 +230,7 @@ encodeToWorld toWorld =
             encodeSend send
 
 
-port fromWorld : (Value -> msg) -> Sub msg
+port fromWorld : (Json.Decode.Value -> msg) -> Sub msg
 
 
 subscribeToFromWorld : (Result Json.Decode.Error FromWorld -> msg) -> Sub msg
@@ -238,7 +238,7 @@ subscribeToFromWorld toMsg =
     fromWorld (\value -> toMsg (Json.Decode.decodeValue value fromWorldDecoder))
 
 
-port toWorld : Value -> Cmd msg
+port toWorld : Json.Decode.Value -> Cmd msg
 
 
 sendToWorld : ToWorld -> Cmd msg

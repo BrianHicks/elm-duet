@@ -14,7 +14,7 @@ type NotificationPermission
     | Granted
 
 
-notificationPermissionDecoder : Decoder NotificationPermission
+notificationPermissionDecoder : Json.Decode.Decoder NotificationPermission
 notificationPermissionDecoder =
     Json.Decode.andThen
         (/tag ->
@@ -50,7 +50,7 @@ type alias Flags =
     }
 
 
-flagsDecoder : Decoder Flags
+flagsDecoder : Json.Decode.Decoder Flags
 flagsDecoder =
     Json.Decode.succeed Flags
         |> Json.Decode.Pipeline.required "currentTimeMillis" Json.Decode.float

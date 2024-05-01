@@ -13,7 +13,7 @@ type alias ElmToJs =
     }
 
 
-elmToJsDecoder : Decoder ElmToJs
+elmToJsDecoder : Json.Decode.Decoder ElmToJs
 elmToJsDecoder =
     Json.Decode.succeed ElmToJs
         |> Json.Decode.Pipeline.required "a" Json.Decode.string
@@ -31,7 +31,7 @@ type alias JsToElm =
     }
 
 
-jsToElmDecoder : Decoder JsToElm
+jsToElmDecoder : Json.Decode.Decoder JsToElm
 jsToElmDecoder =
     Json.Decode.succeed JsToElm
         |> Json.Decode.Pipeline.required "a" Json.Decode.string
@@ -44,7 +44,7 @@ encodeJsToElm jsToElm =
         ]
 
 
-port elmToJs : Value -> Cmd msg
+port elmToJs : Json.Decode.Value -> Cmd msg
 
 
 sendElmToJs : ElmToJs -> Cmd msg
@@ -52,7 +52,7 @@ sendElmToJs value =
     elmToJs (encodeElmToJs value)
 
 
-port jsToElm : (Value -> msg) -> Sub msg
+port jsToElm : (Json.Decode.Value -> msg) -> Sub msg
 
 
 subscribeToJsToElm : (Result Json.Decode.Error JsToElm -> msg) -> Sub msg
