@@ -7,7 +7,7 @@ use std::collections::BTreeMap;
 #[derive(Debug, PartialEq, Eq)]
 pub enum TSType {
     Object {
-        properties: BTreeMap<InflectedString, TSType>,
+        properties: BTreeMap<InflectedString, (TSType, FieldPresence)>,
         nullable: bool,
     },
     NeverObject,
@@ -54,11 +54,18 @@ pub enum TSType {
     },
 }
 
+#[derive(Debug, PartialEq, Eq)]
+pub enum FieldPresence {
+    Required,
+    Optional,
+}
+
 impl TSType {
     pub fn from_schema(schema: Schema, globals: &BTreeMap<String, Schema>) -> Result<Self> {
         match schema {
             Schema::Properties {
                 properties,
+                optional_properties,
                 nullable,
                 ..
             } => {
@@ -67,7 +74,14 @@ impl TSType {
                     let type_ = Self::from_schema(value, globals)
                         .wrap_err_with(|| format!("could not convert the {name} key"))?;
 
-                    converted_properties.insert(name.into(), type_);
+                    converted_properties.insert(name.into(), (type_, FieldPresence::Required));
+                }
+
+                for (name, value) in optional_properties {
+                    let type_ = Self::from_schema(value, globals)
+                        .wrap_err_with(|| format!("could not convert the {name} key"))?;
+
+                    converted_properties.insert(name.into(), (type_, FieldPresence::Optional));
                 }
 
                 Ok(Self::Object {
@@ -149,7 +163,7 @@ impl TSType {
                     }
 
                     value_type
-                        .add_key_to_object(&discriminator, Self::StringScalar(tag))
+                        .add_key_to_object(&discriminator, Self::StringScalar(tag), FieldPresence::Required)
                         .wrap_err("jtd discriminator should have enforced that the value type must be an object")?;
 
                     members.push(value_type);
@@ -187,9 +201,12 @@ impl TSType {
                 nullable,
             } => {
                 out.push_str("{\n");
-                for (name, value) in properties {
+                for (name, (value, presence)) in properties {
                     out.push_str("  ");
                     out.push_str(&name.to_camel_case()?);
+                    if *presence == FieldPresence::Optional {
+                        out.push('?');
+                    }
                     out.push_str(": ");
                     out.push_str(&value.to_source(false)?.replace('\n', "\n  "));
                     out.push_str(";\n");
@@ -311,21 +328,26 @@ impl TSType {
         Ok(out)
     }
 
-    pub fn new_object(properties: BTreeMap<&str, TSType>) -> Self {
+    pub fn new_object(properties: BTreeMap<&str, (TSType, FieldPresence)>) -> Self {
         Self::Object {
             properties: properties.into_iter().map(|(k, v)| (k.into(), v)).collect(),
             nullable: false,
         }
     }
 
-    pub fn new_singleton_object(key: &str, value: TSType) -> Self {
-        Self::new_object(BTreeMap::from([(key, value)]))
+    pub fn new_singleton_object(key: &str, value: TSType, presence: FieldPresence) -> Self {
+        Self::new_object(BTreeMap::from([(key, (value, presence))]))
     }
 
-    pub fn add_key_to_object(&mut self, key: &str, value: TSType) -> Result<()> {
+    pub fn add_key_to_object(
+        &mut self,
+        key: &str,
+        value: TSType,
+        presence: FieldPresence,
+    ) -> Result<()> {
         match self {
             Self::Object { properties, .. } => {
-                properties.insert(key.into(), value);
+                properties.insert(key.into(), (value, presence));
                 Ok(())
             }
             _ => bail!("add_key_to_object only works on objects"),
@@ -359,15 +381,24 @@ impl TSType {
                     Self::new_object(BTreeMap::from([
                         (
                             "node",
-                            Self::Scalar {
-                                value: "HTMLElement",
-                                nullable: false,
-                            },
+                            (
+                                Self::Scalar {
+                                    value: "HTMLElement",
+                                    nullable: false,
+                                },
+                                FieldPresence::Required,
+                            ),
                         ),
-                        ("flags", flags),
+                        ("flags", (flags, FieldPresence::Required)),
                     ])),
                 )]),
-                Self::new_singleton_object("ports", Self::new_ref("Ports")),
+                Self::new_singleton_object(
+                    "ports",
+                    Self::new_ref("Ports"),
+                    // ports is optional because if the app does not set up any ports, Elm will
+                    // omit this field in the generated code.
+                    FieldPresence::Optional,
+                ),
             ),
         )
     }
@@ -615,7 +646,7 @@ mod tests {
     }
 
     #[test]
-    fn interprets_object() {
+    fn interprets_properties() {
         let type_ = from_schema(json!({
             "properties": {
                 "a": { "type": "float32" }
@@ -625,6 +656,20 @@ mod tests {
         assert_eq!(
             type_.to_source(true).unwrap(),
             "{\n  a: number;\n}".to_string()
+        )
+    }
+
+    #[test]
+    fn interprets_optional_properties() {
+        let type_ = from_schema(json!({
+            "optionalProperties": {
+                "a": { "type": "float32" }
+            }
+        }));
+
+        assert_eq!(
+            type_.to_source(true).unwrap(),
+            "{\n  a?: number;\n}".to_string()
         )
     }
 
@@ -694,23 +739,41 @@ mod tests {
             TSType::Union {
                 members: Vec::from([
                     TSType::new_object(BTreeMap::from([
-                        ("tag", TSType::StringScalar("one".to_string())),
+                        (
+                            "tag",
+                            (
+                                TSType::StringScalar("one".to_string()),
+                                FieldPresence::Required
+                            )
+                        ),
                         (
                             "a",
-                            TSType::Scalar {
-                                value: "number",
-                                nullable: false
-                            }
+                            (
+                                TSType::Scalar {
+                                    value: "number",
+                                    nullable: false
+                                },
+                                FieldPresence::Required
+                            )
                         ),
                     ])),
                     TSType::new_object(BTreeMap::from([
-                        ("tag", TSType::StringScalar("two".to_string())),
+                        (
+                            "tag",
+                            (
+                                TSType::StringScalar("two".to_string()),
+                                FieldPresence::Required
+                            )
+                        ),
                         (
                             "b",
-                            TSType::Scalar {
-                                value: "string",
-                                nullable: false
-                            }
+                            (
+                                TSType::Scalar {
+                                    value: "string",
+                                    nullable: false
+                                },
+                                FieldPresence::Required
+                            )
                         ),
                     ])),
                 ]),

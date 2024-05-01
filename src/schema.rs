@@ -1,6 +1,6 @@
 use crate::elm;
 use crate::typescript::NamespaceBuilder;
-use crate::typescript::TSType;
+use crate::typescript::{FieldPresence, TSType};
 use color_eyre::Result;
 use eyre::{bail, WrapErr};
 use serde::Deserialize;
@@ -123,14 +123,18 @@ impl Schema {
                             PortDirection::JsToElm => TSType::new_singleton_object(
                                 "send",
                                 TSType::new_send_function(type_),
+                                FieldPresence::Required,
                             ),
                             PortDirection::ElmToJs => TSType::new_singleton_object(
                                 "subscribe",
                                 TSType::new_subscribe_function(type_),
+                                FieldPresence::Required,
                             ),
                         };
 
-                        port_keys.insert(name.as_str(), func_record);
+                        // if a port is defined in Elm but not hooked up, Elm will omit it. That
+                        // means this could be optional and we need to deal with that.
+                        port_keys.insert(name.as_str(), (func_record, FieldPresence::Optional));
                     }
 
                     builder.insert(
