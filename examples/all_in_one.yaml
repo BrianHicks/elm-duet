@@ -28,10 +28,10 @@ modules:
             properties:
               url:
                 type: string
+            optionalProperties:
               protocols:
                 elements:
                   type: string
-                nullable: true
 
           send:
             properties:
