@@ -161,24 +161,18 @@ type alias Connect =
 connectDecoder : Decoder Connect
 connectDecoder =
     Json.Decode.succeed Connect
-        |> Json.Decode.Pipeline.required "protocols" (Json.Decode.nullable (Json.Decode.list Json.Decode.string))
+        |> Json.Decode.Pipeline.optional "protocols" (Json.Decode.nullable (Json.Decode.list Json.Decode.string)) Nothing
         |> Json.Decode.Pipeline.required "url" Json.Decode.string
 
 
 encodeConnect : Connect -> Json.Encode.Value
 encodeConnect connect =
-    Json.Encode.object
-        [ ( "protocols"
-          , case connect.protocols of
-                Just value ->
-                    Json.Encode.list (\value -> Json.Encode.string value) value
-
-                Nothing ->
-                    Json.Encode.null
-          )
-        , ( "url", Json.Encode.string connect.url )
-        , ( "tag", Json.Encode.string "connect" )
+    List.filterMap identity
+        [ Maybe.map (\protocols -> Json.Encode.list (\value -> Json.Encode.string value) protocols) connect.protocols
+        , Just ( "url", Json.Encode.string connect.url )
+        , Just ( "tag", Json.Encode.string "connect" )
         ]
+        |> Json.Encode.object
 
 
 type alias Send =

@@ -37,7 +37,7 @@ declare module Elm {
                   tag: "close";
                 }
               | {
-                  protocols: string[] | null;
+                  protocols?: string[];
                   tag: "connect";
                   url: string;
                 }

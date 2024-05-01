@@ -231,10 +231,10 @@ modules:
             properties:
               url:
                 type: string
+            optionalProperties:
               protocols:
                 elements:
                   type: string
-                nullable: true
 
           send:
             properties:
@@ -333,7 +333,7 @@ declare module Elm {
                   tag: "close";
                 }
               | {
-                  protocols: string[] | null;
+                  protocols?: string[];
                   tag: "connect";
                   url: string;
                 }
