@@ -678,7 +678,7 @@ impl Decl {
         let decoder_name = self.decoder_name()?;
         let type_name = name.to_pascal_case()?;
         out.push_str(&decoder_name);
-        out.push_str(" : Decoder ");
+        out.push_str(" : Json.Decode.Decoder ");
         out.push_str(&type_name);
         out.push('\n');
         out.push_str(&decoder_name);
@@ -867,8 +867,8 @@ impl Port {
         out.push_str(" : ");
 
         match self.direction {
-            PortDirection::Send => out.push_str("Value -> Cmd msg\n\n\n"),
-            PortDirection::Subscribe => out.push_str("(Value -> msg) -> Sub msg\n\n\n"),
+            PortDirection::Send => out.push_str("Json.Decode.Value -> Cmd msg\n\n\n"),
+            PortDirection::Subscribe => out.push_str("(Json.Decode.Value -> msg) -> Sub msg\n\n\n"),
         }
 
         let type_ref = self.type_.name();
