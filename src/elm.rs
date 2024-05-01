@@ -14,7 +14,13 @@ pub enum Type {
     DictWithStringKeys(Box<Type>),
     List(Box<Type>),
     Ref(InflectedString),
-    Record(BTreeMap<InflectedString, Type>),
+    Record(BTreeMap<InflectedString, (Type, RecordPresence)>),
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub enum RecordPresence {
+    Required,
+    Optional,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -367,6 +373,7 @@ impl Type {
                 metadata,
                 nullable,
                 properties,
+                optional_properties,
                 ..
             } => match metadata
                 .get("name")
@@ -389,7 +396,26 @@ impl Type {
                         })?;
 
                         decls.extend(field_decls);
-                        fields.insert(field_name.into(), field_type);
+                        fields.insert(field_name.into(), (field_type, RecordPresence::Required));
+                    }
+
+                    for (field_name, field_schema) in optional_properties {
+                        let (field_type, field_decls) = Self::from_schema(
+                            field_schema,
+                            Some(field_name.clone()),
+                            globals,
+                            None, // We'll actually use this in the unified handler below!
+                        )
+                        .wrap_err_with(|| {
+                            format!("could not convert the type of `{field_name}`")
+                        })?;
+
+                        decls.extend(field_decls);
+
+                        fields.insert(
+                            field_name.into(),
+                            (Self::Maybe(Box::new(field_type)), RecordPresence::Optional),
+                        );
                     }
 
                     decls.push(Decl::TypeAlias {
@@ -568,7 +594,7 @@ impl Type {
                 if fields.is_empty() {
                     out.push_str("{}");
                 } else {
-                    for (i, (name, value)) in fields.iter().enumerate() {
+                    for (i, (name, (value, _))) in fields.iter().enumerate() {
                         if i == 0 {
                             out.push_str("{ ");
                         } else {
@@ -640,11 +666,18 @@ impl Type {
                 out.push_str("Json.Decode.succeed ");
                 out.push_str(dest_type);
 
-                for (name, field_type) in fields {
+                for (name, (field_type, presence)) in fields {
                     let sub_decoder = field_type.to_decoder_source(dest_type)?;
 
                     out.push_str("\n    ");
-                    out.push_str("|> Json.Decode.Pipeline.required \"");
+                    match presence {
+                        RecordPresence::Required => {
+                            out.push_str("|> Json.Decode.Pipeline.required \"")
+                        }
+                        RecordPresence::Optional => {
+                            out.push_str("|> Json.Decode.Pipeline.optional \"")
+                        }
+                    }
                     out.push_str(name.orig());
                     out.push_str("\" ");
 
@@ -654,6 +687,10 @@ impl Type {
                         out.push(')');
                     } else {
                         out.push_str(&sub_decoder);
+                    }
+
+                    if *presence == RecordPresence::Optional {
+                        out.push_str(" Nothing");
                     }
                 }
             }
@@ -717,47 +754,84 @@ impl Type {
                 out.push_str(source_var);
             }
             Type::Record(fields) => {
-                out.push_str("Json.Encode.object\n");
-                for (i, (name, field_type)) in fields.iter().enumerate() {
-                    if i == 0 {
-                        out.push_str("    [ ( \"");
-                    } else {
-                        out.push_str("    , ( \"");
-                    }
+                let mut field_encoders = Vec::with_capacity(fields.len() + 1);
+                let any_optional = fields
+                    .values()
+                    .any(|(_, presence)| *presence == RecordPresence::Optional);
 
-                    out.push_str(name.orig());
-                    out.push('"');
+                for (name, (field_type, presence)) in fields {
+                    let accessor = format!("{}.{}", source_var, name.to_camel_case()?);
 
-                    let field_encoder = field_type.to_encoder_source(
-                        &format!("{}.{}", source_var, name.to_camel_case()?),
-                        discriminator_field_opt,
-                    )?;
+                    let mut encoder = String::new();
 
-                    if field_encoder.contains('\n') {
-                        out.push_str("\n      , ");
-                        out.push_str(&field_encoder.replace('\n', "\n        "));
-                        out.push_str("\n     ");
-                    } else {
-                        out.push_str(", ");
-                        out.push_str(&field_encoder);
-                    }
+                    match presence {
+                        RecordPresence::Required => {
+                            if any_optional {
+                                encoder.push_str("Just ");
+                            }
+                            encoder.push_str("( \"");
+                            encoder.push_str(&name.orig());
+                            encoder.push_str("\", ");
+                            encoder.push_str(
+                                &field_type
+                                    .to_encoder_source(&accessor, discriminator_field_opt)?
+                                    .replace('\n', "\n    "),
+                            );
+                            encoder.push_str(" )");
+                        }
+                        RecordPresence::Optional => {
+                            let local_var = name.to_camel_case()?;
 
-                    out.push_str(" )\n");
+                            let maybe_inner = match field_type {
+                                Type::Maybe(inner) => inner,
+                                _ => bail!(
+                                    "Optional fields must be `Maybe x`, but I got a {field_type:?}"
+                                ),
+                            };
+
+                            encoder.push_str("Maybe.map (\\");
+                            encoder.push_str(&local_var);
+                            encoder.push_str(" -> ");
+                            encoder.push_str(
+                                &maybe_inner
+                                    .to_encoder_source(&local_var, discriminator_field_opt)?
+                                    .replace('\n', "\n    "),
+                            );
+                            encoder.push_str(") ");
+                            encoder.push_str(&accessor);
+                        }
+                    };
+
+                    field_encoders.push(encoder)
                 }
 
                 if let Some((discriminator_name, discriminator_value)) = discriminator_field_opt {
-                    if fields.is_empty() {
-                        out.push_str("    [ ( \"");
-                    } else {
-                        out.push_str("    , ( \"");
+                    let mut encoder = String::new();
+                    if any_optional {
+                        encoder.push_str("Just ");
                     }
-                    out.push_str(discriminator_name);
-                    out.push_str("\", Json.Encode.string \"");
-                    out.push_str(discriminator_value);
-                    out.push_str("\" )\n");
+                    encoder.push_str("( \"");
+                    encoder.push_str(discriminator_name);
+                    encoder.push_str("\", Json.Encode.string \"");
+                    encoder.push_str(discriminator_value);
+                    encoder.push_str("\" )\n");
+
+                    field_encoders.push(encoder)
                 }
 
-                out.push_str("    ]");
+                if any_optional {
+                    out.push_str("List.filterMap identity\n    [")
+                } else {
+                    out.push_str("Json.Encode.object\n    [")
+                }
+
+                out.push_str(&field_encoders.join("\n    ,"));
+
+                out.push_str("\n    ]");
+
+                if any_optional {
+                    out.push_str("\n    |> Json.Encode.object")
+                }
             }
         }
 
@@ -1199,9 +1273,35 @@ mod tests {
                     name: "Foo".into(),
                     discriminator: None,
                     type_: Type::Record(BTreeMap::from([
-                        ("a".into(), Type::Unit),
-                        ("b".into(), Type::Unit),
+                        ("a".into(), (Type::Unit, RecordPresence::Required)),
+                        ("b".into(), (Type::Unit, RecordPresence::Required)),
                     ])),
+                }])
+            );
+        }
+
+        #[test]
+        fn interprets_optional_properties() {
+            let (type_, decls) = from_schema(json!({
+                "metadata": {
+                    "name": "Foo",
+                },
+                "optionalProperties": {
+                    "a": {},
+                },
+            }));
+
+            assert_eq!(type_, Type::Ref("Foo".into()));
+
+            assert_eq!(
+                decls,
+                Vec::from([Decl::TypeAlias {
+                    name: "Foo".into(),
+                    discriminator: None,
+                    type_: Type::Record(BTreeMap::from([(
+                        "a".into(),
+                        (Type::Maybe(Box::new(Type::Unit)), RecordPresence::Optional)
+                    ),])),
                 }])
             );
         }
@@ -1239,12 +1339,18 @@ mod tests {
                     Decl::TypeAlias {
                         name: "a".into(),
                         discriminator: Some(("tag".to_string(), "a".to_string())),
-                        type_: Type::Record(BTreeMap::from([("value".into(), Type::String)]))
+                        type_: Type::Record(BTreeMap::from([(
+                            "value".into(),
+                            (Type::String, RecordPresence::Required)
+                        )]))
                     },
                     Decl::TypeAlias {
                         name: "b".into(),
                         discriminator: Some(("tag".to_string(), "b".to_string())),
-                        type_: Type::Record(BTreeMap::from([("value".into(), Type::Float)]))
+                        type_: Type::Record(BTreeMap::from([(
+                            "value".into(),
+                            (Type::Float, RecordPresence::Required)
+                        )]))
                     },
                     Decl::CustomTypeEnum {
                         name: "Foo".into(),
@@ -1351,7 +1457,10 @@ mod tests {
                 Vec::from([Decl::TypeAlias {
                     name: "Flags".into(),
                     discriminator: None,
-                    type_: Type::Record(BTreeMap::from([("a".into(), Type::String)]))
+                    type_: Type::Record(BTreeMap::from([(
+                        "a".into(),
+                        (Type::String, RecordPresence::Required)
+                    )]))
                 }])
             );
         }
