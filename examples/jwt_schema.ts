@@ -7,13 +7,13 @@ declare module Elm {
     };
 
     type Ports = {
-      newJwt: {
+      newJwt?: {
         subscribe: (callback: (value: string) => void) => void;
       };
     };
 
     function init(config: { flags: Flags; node: HTMLElement }): {
-      ports: Ports;
+      ports?: Ports;
     };
   }
 }

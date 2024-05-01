@@ -20,7 +20,7 @@ declare module Elm {
     type Ports = Record<string, never>;
 
     function init(config: { flags: Flags; node: HTMLElement }): {
-      ports: Ports;
+      ports?: Ports;
     };
   }
 }

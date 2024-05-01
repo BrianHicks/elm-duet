@@ -8,7 +8,7 @@ declare module Elm {
     };
 
     type Ports = {
-      changeDocument: {
+      changeDocument?: {
         subscribe: (
           callback: (
             value:
@@ -28,7 +28,7 @@ declare module Elm {
           ) => void,
         ) => void;
       };
-      docFromAutomerge: {
+      docFromAutomerge?: {
         send: (value: {
           pings: {
             custom: Record<string, string>;
@@ -43,7 +43,7 @@ declare module Elm {
           version: "v1";
         }) => void;
       };
-      newNotification: {
+      newNotification?: {
         subscribe: (
           callback: (value: {
             options: {
@@ -59,16 +59,16 @@ declare module Elm {
           }) => void,
         ) => void;
       };
-      notificationPermission: {
+      notificationPermission?: {
         send: (value: "default" | "denied" | "granted") => void;
       };
-      requestNotificationPermission: {
+      requestNotificationPermission?: {
         subscribe: (callback: (value: Record<string, never>) => void) => void;
       };
     };
 
     function init(config: { flags: Flags; node: HTMLElement }): {
-      ports: Ports;
+      ports?: Ports;
     };
   }
 }

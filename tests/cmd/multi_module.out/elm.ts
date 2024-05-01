@@ -7,7 +7,7 @@ declare module Elm {
     type Ports = Record<string, never>;
 
     function init(config: { flags: Flags; node: HTMLElement }): {
-      ports: Ports;
+      ports?: Ports;
     };
   }
 
@@ -17,7 +17,7 @@ declare module Elm {
     type Ports = Record<string, never>;
 
     function init(config: { flags: Flags; node: HTMLElement }): {
-      ports: Ports;
+      ports?: Ports;
     };
 
     namespace B2 {
@@ -26,7 +26,7 @@ declare module Elm {
       type Ports = Record<string, never>;
 
       function init(config: { flags: Flags; node: HTMLElement }): {
-        ports: Ports;
+        ports?: Ports;
       };
     }
   }

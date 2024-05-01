@@ -5,16 +5,16 @@ declare module Elm {
     type Flags = Record<string, never>;
 
     type Ports = {
-      elmToJs: {
+      elmToJs?: {
         subscribe: (callback: (value: { a: string }) => void) => void;
       };
-      jsToElm: {
+      jsToElm?: {
         send: (value: { a: string }) => void;
       };
     };
 
     function init(config: { flags: Flags; node: HTMLElement }): {
-      ports: Ports;
+      ports?: Ports;
     };
   }
 }
