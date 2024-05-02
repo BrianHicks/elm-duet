@@ -759,7 +759,10 @@ impl Decl {
         let name = self.name();
         let decoder_name = self.encoder_name()?;
         let type_name = name.to_pascal_case()?;
-        let variable_name = name.to_camel_case()?;
+
+        // We have an underscore after this because we commonly generate a port with the same name
+        // and that needs to take precedence.
+        let variable_name = format!("{}_", name.to_camel_case()?);
 
         out.push_str(&decoder_name);
         out.push_str(" : ");
