@@ -242,12 +242,12 @@ port fromWorld : (Json.Decode.Value -> msg) -> Sub msg
 
 subscribeToFromWorld : (Result Json.Decode.Error FromWorld -> msg) -> Sub msg
 subscribeToFromWorld toMsg =
-    fromWorld (\value -> toMsg (Json.Decode.decodeValue value fromWorldDecoder))
+    fromWorld (Json.Decode.decodeValue fromWorldDecoder >> toMsg)
 
 
 port toWorld : Json.Decode.Value -> Cmd msg
 
 
 sendToWorld : ToWorld -> Cmd msg
-sendToWorld value =
-    toWorld (encodeToWorld value)
+sendToWorld =
+    encodeToWorld >> toWorld

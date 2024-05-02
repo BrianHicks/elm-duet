@@ -27,5 +27,5 @@ port newJwt : Json.Decode.Value -> Cmd msg
 
 
 sendNewJwt : NewJwt -> Cmd msg
-sendNewJwt value =
-    newJwt (encodeNewJwt value)
+sendNewJwt =
+    encodeNewJwt >> newJwt

@@ -426,8 +426,8 @@ port changeDocument : Json.Decode.Value -> Cmd msg
 
 
 sendChangeDocument : ChangeDocument -> Cmd msg
-sendChangeDocument value =
-    changeDocument (encodeChangeDocument value)
+sendChangeDocument =
+    encodeChangeDocument >> changeDocument
 
 
 port docFromAutomerge : (Json.Decode.Value -> msg) -> Sub msg
@@ -435,15 +435,15 @@ port docFromAutomerge : (Json.Decode.Value -> msg) -> Sub msg
 
 subscribeToDocFromAutomerge : (Result Json.Decode.Error DocFromAutomerge -> msg) -> Sub msg
 subscribeToDocFromAutomerge toMsg =
-    docFromAutomerge (/value -> toMsg (Json.Decode.decodeValue value docFromAutomergeDecoder))
+    docFromAutomerge (Json.Decode.decodeValue docFromAutomergeDecoder >> toMsg)
 
 
 port newNotification : Json.Decode.Value -> Cmd msg
 
 
 sendNewNotification : NewNotification -> Cmd msg
-sendNewNotification value =
-    newNotification (encodeNewNotification value)
+sendNewNotification =
+    encodeNewNotification >> newNotification
 
 
 port notificationPermission : (Json.Decode.Value -> msg) -> Sub msg
@@ -451,12 +451,12 @@ port notificationPermission : (Json.Decode.Value -> msg) -> Sub msg
 
 subscribeToNotificationPermission : (Result Json.Decode.Error NotificationPermission -> msg) -> Sub msg
 subscribeToNotificationPermission toMsg =
-    notificationPermission (/value -> toMsg (Json.Decode.decodeValue value notificationPermissionDecoder))
+    notificationPermission (Json.Decode.decodeValue notificationPermissionDecoder >> toMsg)
 
 
 port requestNotificationPermission : Json.Decode.Value -> Cmd msg
 
 
 sendRequestNotificationPermission : RequestNotificationPermission -> Cmd msg
-sendRequestNotificationPermission value =
-    requestNotificationPermission (encodeRequestNotificationPermission value)
+sendRequestNotificationPermission =
+    encodeRequestNotificationPermission >> requestNotificationPermission
