@@ -733,7 +733,8 @@ impl Decl {
                     out.push('\n');
                 }
 
-                out.push_str("        )\n        ");
+                out.push_str(
+                    "                unknown ->\n                    Json.Decode.fail (\"Unknown value `\" ++ unknown ++ \"`\")\n        )\n        ");
                 match discriminator {
                     None => out.push_str("Json.Decode.string"),
                     Some(name) => {
