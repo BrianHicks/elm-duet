@@ -920,20 +920,21 @@ impl Port {
         out.push_str(&type_safe_name);
         out.push(' ');
 
+        // I don't normally like to write things point-free, but in this case it lets us
+        // avoid assigning names that may cause a collisions with things from schemas
         match self.direction {
             PortDirection::Send => {
-                out.push_str("value =\n    ");
-                out.push_str(&self.name);
-                out.push_str(" (");
+                out.push_str(" =\n    ");
                 out.push_str(&self.type_.encoder_name()?);
-                out.push_str(" value)");
+                out.push_str(" >> ");
+                out.push_str(&self.name);
             }
             PortDirection::Subscribe => {
                 out.push_str("toMsg =\n    ");
                 out.push_str(&self.name);
-                out.push_str(" (\\value -> toMsg (Json.Decode.decodeValue value ");
+                out.push_str(" (Json.Decode.decodeValue ");
                 out.push_str(&self.type_.decoder_name()?);
-                out.push_str("))");
+                out.push_str(" >> toMsg)");
             }
         }
 
