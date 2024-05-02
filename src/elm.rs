@@ -546,13 +546,15 @@ impl Type {
 
                             encoder.push_str("Maybe.map (\\");
                             encoder.push_str(&local_var);
-                            encoder.push_str(" -> ");
+                            encoder.push_str(" -> ( \"");
+                            encoder.push_str(name.orig());
+                            encoder.push_str("\", ");
                             encoder.push_str(
                                 &maybe_inner
                                     .to_encoder_source(&local_var, discriminator_field_opt)?
                                     .replace('\n', "\n    "),
                             );
-                            encoder.push_str(") ");
+                            encoder.push_str(")) ");
                             encoder.push_str(&accessor);
                         }
                     };
