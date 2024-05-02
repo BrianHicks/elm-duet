@@ -19,5 +19,5 @@ flagsDecoder =
 
 
 encodeFlags : Flags -> Json.Encode.Value
-encodeFlags flags =
-    Json.Encode.string flags
+encodeFlags flags_ =
+    Json.Encode.string flags_

@@ -134,10 +134,10 @@ flagsDecoder =
 
 
 encodeFlags : Flags -> Json.Encode.Value
-encodeFlags flags =
+encodeFlags flags_ =
     Json.Encode.object
         [ ( "currentJwt"
-          , case flags.currentJwt of
+          , case flags_.currentJwt of
                 Just value ->
                     Json.Encode.string value
 
@@ -178,8 +178,8 @@ newJwtDecoder =
 
 
 encodeNewJwt : NewJwt -> Json.Encode.Value
-encodeNewJwt newJwt =
-    Json.Encode.string newJwt
+encodeNewJwt newJwt_ =
+    Json.Encode.string newJwt_
 
 
 port newJwt : Json.Decode.Value -> Cmd msg

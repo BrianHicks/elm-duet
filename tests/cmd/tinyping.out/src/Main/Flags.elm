@@ -36,8 +36,8 @@ notificationPermissionDecoder =
 
 
 encodeNotificationPermission : NotificationPermission -> Json.Encode.Value
-encodeNotificationPermission notificationPermission =
-    case notificationPermission of
+encodeNotificationPermission notificationPermission_ =
+    case notificationPermission_ of
         NotificationPermissionDefault ->
             Json.Encode.string "default"
 
@@ -62,8 +62,8 @@ flagsDecoder =
 
 
 encodeFlags : Flags -> Json.Encode.Value
-encodeFlags flags =
+encodeFlags flags_ =
     Json.Encode.object
-        [ ( "currentTimeMillis", Json.Encode.float flags.currentTimeMillis )
-        , ( "notificationPermission", encodeNotificationPermission flags.notificationPermission )
+        [ ( "currentTimeMillis", Json.Encode.float flags_.currentTimeMillis )
+        , ( "notificationPermission", encodeNotificationPermission flags_.notificationPermission )
         ]

@@ -21,10 +21,10 @@ flagsDecoder =
 
 
 encodeFlags : Flags -> Json.Encode.Value
-encodeFlags flags =
+encodeFlags flags_ =
     Json.Encode.object
         [ ( "currentJwt"
-          , case flags.currentJwt of
+          , case flags_.currentJwt of
                 Just value ->
                     Json.Encode.string value
 

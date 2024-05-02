@@ -43,18 +43,18 @@ flagsDecoder =
 
 
 encodeFlags : Flags -> Json.Encode.Value
-encodeFlags flags =
+encodeFlags flags_ =
     Json.Encode.object
-        [ ( "eight", Json.Encode.string flags.eight )
-        , ( "eleven", Json.Encode.string flags.eleven )
-        , ( "five", Json.Encode.string flags.five )
-        , ( "four", Json.Encode.string flags.four )
-        , ( "nine", Json.Encode.string flags.nine )
-        , ( "one", Json.Encode.string flags.one )
-        , ( "seven", Json.Encode.string flags.seven )
-        , ( "six", Json.Encode.string flags.six )
-        , ( "ten", Json.Encode.string flags.ten )
-        , ( "three", Json.Encode.string flags.three )
-        , ( "twelve", Json.Encode.string flags.twelve )
-        , ( "two", Json.Encode.string flags.two )
+        [ ( "eight", Json.Encode.string flags_.eight )
+        , ( "eleven", Json.Encode.string flags_.eleven )
+        , ( "five", Json.Encode.string flags_.five )
+        , ( "four", Json.Encode.string flags_.four )
+        , ( "nine", Json.Encode.string flags_.nine )
+        , ( "one", Json.Encode.string flags_.one )
+        , ( "seven", Json.Encode.string flags_.seven )
+        , ( "six", Json.Encode.string flags_.six )
+        , ( "ten", Json.Encode.string flags_.ten )
+        , ( "three", Json.Encode.string flags_.three )
+        , ( "twelve", Json.Encode.string flags_.twelve )
+        , ( "two", Json.Encode.string flags_.two )
         ]

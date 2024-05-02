@@ -21,9 +21,9 @@ addNewPingAtDecoder =
 
 
 encodeAddNewPingAt : AddNewPingAt -> Json.Encode.Value
-encodeAddNewPingAt addNewPingAt =
+encodeAddNewPingAt addNewPingAt_ =
     Json.Encode.object
-        [ ( "value", Json.Encode.float addNewPingAt.value )
+        [ ( "value", Json.Encode.float addNewPingAt_.value )
         , ( "tag", Json.Encode.string "AddNewPingAt" )
         ]
 
@@ -40,9 +40,9 @@ setMinutesPerPingDecoder =
 
 
 encodeSetMinutesPerPing : SetMinutesPerPing -> Json.Encode.Value
-encodeSetMinutesPerPing setMinutesPerPing =
+encodeSetMinutesPerPing setMinutesPerPing_ =
     Json.Encode.object
-        [ ( "value", Json.Encode.float setMinutesPerPing.value )
+        [ ( "value", Json.Encode.float setMinutesPerPing_.value )
         , ( "tag", Json.Encode.string "SetMinutesPerPing" )
         ]
 
@@ -61,11 +61,11 @@ setTagForPingDecoder =
 
 
 encodeSetTagForPing : SetTagForPing -> Json.Encode.Value
-encodeSetTagForPing setTagForPing =
+encodeSetTagForPing setTagForPing_ =
     Json.Encode.object
-        [ ( "index", Json.Encode.float setTagForPing.index )
+        [ ( "index", Json.Encode.float setTagForPing_.index )
         , ( "value"
-          , case setTagForPing.value of
+          , case setTagForPing_.value of
                 Just value ->
                     Json.Encode.string value
 
@@ -103,8 +103,8 @@ changeDocumentDecoder =
 
 
 encodeChangeDocument : ChangeDocument -> Json.Encode.Value
-encodeChangeDocument changeDocument =
-    case changeDocument of
+encodeChangeDocument changeDocument_ =
+    case changeDocument_ of
         ChangeDocumentAddNewPingAt changeDocumentAddNewPingAt ->
             encodeAddNewPingAt changeDocumentAddNewPingAt
 
@@ -131,18 +131,18 @@ pingV1Decoder =
 
 
 encodePingV1 : PingV1 -> Json.Encode.Value
-encodePingV1 pingV1 =
+encodePingV1 pingV1_ =
     Json.Encode.object
-        [ ( "custom", Json.Encode.dict identity (/value -> Json.Encode.string value) pingV1.custom )
+        [ ( "custom", Json.Encode.dict identity (/value -> Json.Encode.string value) pingV1_.custom )
         , ( "tag"
-          , case pingV1.tag of
+          , case pingV1_.tag of
                 Just value ->
                     Json.Encode.string value
 
                 Nothing ->
                     Json.Encode.null
           )
-        , ( "time", Json.Encode.int pingV1.time )
+        , ( "time", Json.Encode.int pingV1_.time )
         , ( "version", Json.Encode.string "v1" )
         ]
 
@@ -166,8 +166,8 @@ pingsElementsDecoder =
 
 
 encodePingsElements : PingsElements -> Json.Encode.Value
-encodePingsElements pingsElements =
-    case pingsElements of
+encodePingsElements pingsElements_ =
+    case pingsElements_ of
         PingPingsElementsV1 pingPingsElementsV1 ->
             encodePingV1 pingPingsElementsV1
 
@@ -184,9 +184,9 @@ settingsV1Decoder =
 
 
 encodeSettingsV1 : SettingsV1 -> Json.Encode.Value
-encodeSettingsV1 settingsV1 =
+encodeSettingsV1 settingsV1_ =
     Json.Encode.object
-        [ ( "minutesPerPing", Json.Encode.int settingsV1.minutesPerPing )
+        [ ( "minutesPerPing", Json.Encode.int settingsV1_.minutesPerPing )
         , ( "version", Json.Encode.string "v1" )
         ]
 
@@ -210,8 +210,8 @@ settingsDecoder =
 
 
 encodeSettings : Settings -> Json.Encode.Value
-encodeSettings settings =
-    case settings of
+encodeSettings settings_ =
+    case settings_ of
         SettingsSettingsV1 settingsSettingsV1 ->
             encodeSettingsV1 settingsSettingsV1
 
@@ -230,10 +230,10 @@ docV1Decoder =
 
 
 encodeDocV1 : DocV1 -> Json.Encode.Value
-encodeDocV1 docV1 =
+encodeDocV1 docV1_ =
     Json.Encode.object
-        [ ( "pings", Json.Encode.list (/value -> encodePingsElements value) docV1.pings )
-        , ( "settings", encodeSettings docV1.settings )
+        [ ( "pings", Json.Encode.list (/value -> encodePingsElements value) docV1_.pings )
+        , ( "settings", encodeSettings docV1_.settings )
         , ( "version", Json.Encode.string "v1" )
         ]
 
@@ -257,8 +257,8 @@ docFromAutomergeDecoder =
 
 
 encodeDocFromAutomerge : DocFromAutomerge -> Json.Encode.Value
-encodeDocFromAutomerge docFromAutomerge =
-    case docFromAutomerge of
+encodeDocFromAutomerge docFromAutomerge_ =
+    case docFromAutomerge_ of
         DocDocFromAutomergeV1 docDocFromAutomergeV1 ->
             encodeDocV1 docDocFromAutomergeV1
 
@@ -287,10 +287,10 @@ notificationOptionsDecoder =
 
 
 encodeNotificationOptions : NotificationOptions -> Json.Encode.Value
-encodeNotificationOptions notificationOptions =
+encodeNotificationOptions notificationOptions_ =
     Json.Encode.object
         [ ( "badge"
-          , case notificationOptions.badge of
+          , case notificationOptions_.badge of
                 Just value ->
                     Json.Encode.string value
 
@@ -298,7 +298,7 @@ encodeNotificationOptions notificationOptions =
                     Json.Encode.null
           )
         , ( "body"
-          , case notificationOptions.body of
+          , case notificationOptions_.body of
                 Just value ->
                     Json.Encode.string value
 
@@ -306,7 +306,7 @@ encodeNotificationOptions notificationOptions =
                     Json.Encode.null
           )
         , ( "icon"
-          , case notificationOptions.icon of
+          , case notificationOptions_.icon of
                 Just value ->
                     Json.Encode.string value
 
@@ -314,7 +314,7 @@ encodeNotificationOptions notificationOptions =
                     Json.Encode.null
           )
         , ( "lang"
-          , case notificationOptions.lang of
+          , case notificationOptions_.lang of
                 Just value ->
                     Json.Encode.string value
 
@@ -322,7 +322,7 @@ encodeNotificationOptions notificationOptions =
                     Json.Encode.null
           )
         , ( "requireInteraction"
-          , case notificationOptions.requireInteraction of
+          , case notificationOptions_.requireInteraction of
                 Just value ->
                     Json.Encode.bool value
 
@@ -330,7 +330,7 @@ encodeNotificationOptions notificationOptions =
                     Json.Encode.null
           )
         , ( "silent"
-          , case notificationOptions.silent of
+          , case notificationOptions_.silent of
                 Just value ->
                     Json.Encode.bool value
 
@@ -338,7 +338,7 @@ encodeNotificationOptions notificationOptions =
                     Json.Encode.null
           )
         , ( "tag"
-          , case notificationOptions.tag of
+          , case notificationOptions_.tag of
                 Just value ->
                     Json.Encode.string value
 
@@ -362,10 +362,10 @@ newNotificationDecoder =
 
 
 encodeNewNotification : NewNotification -> Json.Encode.Value
-encodeNewNotification newNotification =
+encodeNewNotification newNotification_ =
     Json.Encode.object
-        [ ( "options", encodeNotificationOptions newNotification.options )
-        , ( "title", Json.Encode.string newNotification.title )
+        [ ( "options", encodeNotificationOptions newNotification_.options )
+        , ( "title", Json.Encode.string newNotification_.title )
         ]
 
 
@@ -396,8 +396,8 @@ notificationPermissionDecoder =
 
 
 encodeNotificationPermission : NotificationPermission -> Json.Encode.Value
-encodeNotificationPermission notificationPermission =
-    case notificationPermission of
+encodeNotificationPermission notificationPermission_ =
+    case notificationPermission_ of
         NotificationPermissionDefault ->
             Json.Encode.string "default"
 
@@ -418,7 +418,7 @@ requestNotificationPermissionDecoder =
 
 
 encodeRequestNotificationPermission : RequestNotificationPermission -> Json.Encode.Value
-encodeRequestNotificationPermission requestNotificationPermission =
+encodeRequestNotificationPermission requestNotificationPermission_ =
     Json.Encode.null
 
 

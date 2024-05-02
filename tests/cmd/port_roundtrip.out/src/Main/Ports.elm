@@ -21,9 +21,9 @@ elmToJsDecoder =
 
 
 encodeElmToJs : ElmToJs -> Json.Encode.Value
-encodeElmToJs elmToJs =
+encodeElmToJs elmToJs_ =
     Json.Encode.object
-        [ ( "a", Json.Encode.string elmToJs.a )
+        [ ( "a", Json.Encode.string elmToJs_.a )
         ]
 
 
@@ -39,9 +39,9 @@ jsToElmDecoder =
 
 
 encodeJsToElm : JsToElm -> Json.Encode.Value
-encodeJsToElm jsToElm =
+encodeJsToElm jsToElm_ =
     Json.Encode.object
-        [ ( "a", Json.Encode.string jsToElm.a )
+        [ ( "a", Json.Encode.string jsToElm_.a )
         ]
 
 

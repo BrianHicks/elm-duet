@@ -19,8 +19,8 @@ newJwtDecoder =
 
 
 encodeNewJwt : NewJwt -> Json.Encode.Value
-encodeNewJwt newJwt =
-    Json.Encode.string newJwt
+encodeNewJwt newJwt_ =
+    Json.Encode.string newJwt_
 
 
 port newJwt : Json.Decode.Value -> Cmd msg

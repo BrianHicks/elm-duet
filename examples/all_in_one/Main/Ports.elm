@@ -25,11 +25,11 @@ closeDecoder =
 
 
 encodeClose : Close -> Json.Encode.Value
-encodeClose close =
+encodeClose close_ =
     Json.Encode.object
-        [ ( "code", Json.Encode.int close.code )
-        , ( "reason", Json.Encode.string close.reason )
-        , ( "wasClean", Json.Encode.bool close.wasClean )
+        [ ( "code", Json.Encode.int close_.code )
+        , ( "reason", Json.Encode.string close_.reason )
+        , ( "wasClean", Json.Encode.bool close_.wasClean )
         , ( "tag", Json.Encode.string "close" )
         ]
 
@@ -44,7 +44,7 @@ tagErrorDecoder =
 
 
 encodeTagError : TagError -> Json.Encode.Value
-encodeTagError tagError =
+encodeTagError tagError_ =
     Json.Encode.object
         [ ( "tag", Json.Encode.string "error" )
         ]
@@ -64,10 +64,10 @@ messageDecoder =
 
 
 encodeMessage : Message -> Json.Encode.Value
-encodeMessage message =
+encodeMessage message_ =
     Json.Encode.object
-        [ ( "data", Json.Encode.string message.data )
-        , ( "origin", Json.Encode.string message.origin )
+        [ ( "data", Json.Encode.string message_.data )
+        , ( "origin", Json.Encode.string message_.origin )
         , ( "tag", Json.Encode.string "message" )
         ]
 
@@ -82,7 +82,7 @@ tagOpenDecoder =
 
 
 encodeTagOpen : TagOpen -> Json.Encode.Value
-encodeTagOpen tagOpen =
+encodeTagOpen tagOpen_ =
     Json.Encode.object
         [ ( "tag", Json.Encode.string "open" )
         ]
@@ -119,8 +119,8 @@ fromWorldDecoder =
 
 
 encodeFromWorld : FromWorld -> Json.Encode.Value
-encodeFromWorld fromWorld =
-    case fromWorld of
+encodeFromWorld fromWorld_ =
+    case fromWorld_ of
         FromWorldClose fromWorldClose ->
             encodeClose fromWorldClose
 
@@ -148,10 +148,10 @@ closeDecoder =
 
 
 encodeClose : Close -> Json.Encode.Value
-encodeClose close =
+encodeClose close_ =
     Json.Encode.object
-        [ ( "code", Json.Encode.int close.code )
-        , ( "reason", Json.Encode.string close.reason )
+        [ ( "code", Json.Encode.int close_.code )
+        , ( "reason", Json.Encode.string close_.reason )
         , ( "tag", Json.Encode.string "close" )
         ]
 
@@ -170,10 +170,10 @@ connectDecoder =
 
 
 encodeConnect : Connect -> Json.Encode.Value
-encodeConnect connect =
+encodeConnect connect_ =
     List.filterMap identity
-        [ Maybe.map (\protocols -> Json.Encode.list (\value -> Json.Encode.string value) protocols) connect.protocols
-        , Just ( "url", Json.Encode.string connect.url )
+        [ Maybe.map (\protocols -> Json.Encode.list (\value -> Json.Encode.string value) protocols) connect_.protocols
+        , Just ( "url", Json.Encode.string connect_.url )
         , Just ( "tag", Json.Encode.string "connect" )
         ]
         |> Json.Encode.object
@@ -191,9 +191,9 @@ sendDecoder =
 
 
 encodeSend : Send -> Json.Encode.Value
-encodeSend send =
+encodeSend send_ =
     Json.Encode.object
-        [ ( "message", Json.Encode.string send.message )
+        [ ( "message", Json.Encode.string send_.message )
         , ( "tag", Json.Encode.string "send" )
         ]
 
@@ -225,8 +225,8 @@ toWorldDecoder =
 
 
 encodeToWorld : ToWorld -> Json.Encode.Value
-encodeToWorld toWorld =
-    case toWorld of
+encodeToWorld toWorld_ =
+    case toWorld_ of
         ToWorldClose toWorldClose ->
             encodeClose toWorldClose
 
