@@ -535,7 +535,7 @@ impl Type {
                             encoder.push_str(" )");
                         }
                         RecordPresence::Optional => {
-                            let local_var = name.to_camel_case()?;
+                            let local_var = format!("{}_", name.to_camel_case()?);
 
                             let maybe_inner = match field_type {
                                 Type::Maybe(inner) => inner,
