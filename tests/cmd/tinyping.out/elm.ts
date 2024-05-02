@@ -11,7 +11,7 @@ declare module Elm {
       changeDocument?: {
         subscribe: (
           callback: (
-            value:
+            value: (
               | {
                   tag: "AddNewPingAt";
                   value: number;
@@ -24,7 +24,8 @@ declare module Elm {
                   index: number;
                   tag: "SetTagForPing";
                   value: string | null;
-                },
+                }
+            )[],
           ) => void,
         ) => void;
       };
@@ -43,26 +44,26 @@ declare module Elm {
           version: "v1";
         }) => void;
       };
-      newNotification?: {
+      gotNewNotificationsPermission?: {
+        send: (value: "default" | "denied" | "granted") => void;
+      };
+      notify?: {
         subscribe: (
           callback: (value: {
             options: {
-              badge: string | null;
-              body: string | null;
-              icon: string | null;
-              lang: string | null;
-              requireInteraction: boolean | null;
-              silent: boolean | null;
-              tag: string | null;
+              badge?: string;
+              body?: string;
+              icon?: string;
+              lang?: string;
+              requireInteraction?: boolean;
+              silent?: boolean;
+              tag?: string;
             };
             title: string;
           }) => void,
         ) => void;
       };
-      notificationPermission?: {
-        send: (value: "default" | "denied" | "granted") => void;
-      };
-      requestNotificationPermission?: {
+      requestNotificationsPermission?: {
         subscribe: (callback: (value: Record<string, never>) => void) => void;
       };
     };

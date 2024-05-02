@@ -76,25 +76,25 @@ encodeSetTagForPing setTagForPing_ =
         ]
 
 
-type ChangeDocument
-    = ChangeDocumentAddNewPingAt AddNewPingAt
-    | ChangeDocumentSetMinutesPerPing SetMinutesPerPing
-    | ChangeDocumentSetTagForPing SetTagForPing
+type ChangeDocumentElements
+    = ChangeDocumentElementsAddNewPingAt AddNewPingAt
+    | ChangeDocumentElementsSetMinutesPerPing SetMinutesPerPing
+    | ChangeDocumentElementsSetTagForPing SetTagForPing
 
 
-changeDocumentDecoder : Json.Decode.Decoder ChangeDocument
-changeDocumentDecoder =
+changeDocumentElementsDecoder : Json.Decode.Decoder ChangeDocumentElements
+changeDocumentElementsDecoder =
     Json.Decode.andThen
         (/tag ->
             case tag of
                 "AddNewPingAt" ->
-                    Json.Decode.map ChangeDocumentAddNewPingAt addNewPingAtDecoder
+                    Json.Decode.map ChangeDocumentElementsAddNewPingAt addNewPingAtDecoder
 
                 "SetMinutesPerPing" ->
-                    Json.Decode.map ChangeDocumentSetMinutesPerPing setMinutesPerPingDecoder
+                    Json.Decode.map ChangeDocumentElementsSetMinutesPerPing setMinutesPerPingDecoder
 
                 "SetTagForPing" ->
-                    Json.Decode.map ChangeDocumentSetTagForPing setTagForPingDecoder
+                    Json.Decode.map ChangeDocumentElementsSetTagForPing setTagForPingDecoder
 
                 unknown ->
                     Json.Decode.fail ("Unknown value `" ++ unknown ++ "`")
@@ -102,17 +102,31 @@ changeDocumentDecoder =
         (Json.Decode.field "tag" Json.Decode.string)
 
 
+encodeChangeDocumentElements : ChangeDocumentElements -> Json.Encode.Value
+encodeChangeDocumentElements changeDocumentElements_ =
+    case changeDocumentElements_ of
+        ChangeDocumentElementsAddNewPingAt changeDocumentElementsAddNewPingAt ->
+            encodeAddNewPingAt changeDocumentElementsAddNewPingAt
+
+        ChangeDocumentElementsSetMinutesPerPing changeDocumentElementsSetMinutesPerPing ->
+            encodeSetMinutesPerPing changeDocumentElementsSetMinutesPerPing
+
+        ChangeDocumentElementsSetTagForPing changeDocumentElementsSetTagForPing ->
+            encodeSetTagForPing changeDocumentElementsSetTagForPing
+
+
+type alias ChangeDocument =
+    List ChangeDocumentElements
+
+
+changeDocumentDecoder : Json.Decode.Decoder ChangeDocument
+changeDocumentDecoder =
+    Json.Decode.list changeDocumentElementsDecoder
+
+
 encodeChangeDocument : ChangeDocument -> Json.Encode.Value
 encodeChangeDocument changeDocument_ =
-    case changeDocument_ of
-        ChangeDocumentAddNewPingAt changeDocumentAddNewPingAt ->
-            encodeAddNewPingAt changeDocumentAddNewPingAt
-
-        ChangeDocumentSetMinutesPerPing changeDocumentSetMinutesPerPing ->
-            encodeSetMinutesPerPing changeDocumentSetMinutesPerPing
-
-        ChangeDocumentSetTagForPing changeDocumentSetTagForPing ->
-            encodeSetTagForPing changeDocumentSetTagForPing
+    Json.Encode.list (/value -> encodeChangeDocumentElements value) changeDocument_
 
 
 type alias PingV1 =
@@ -148,7 +162,7 @@ encodePingV1 pingV1_ =
 
 
 type PingsElements
-    = PingPingsElementsV1 PingV1
+    = VersionedPingsElementsV1 PingV1
 
 
 pingsElementsDecoder : Json.Decode.Decoder PingsElements
@@ -157,7 +171,7 @@ pingsElementsDecoder =
         (/tag ->
             case tag of
                 "v1" ->
-                    Json.Decode.map PingPingsElementsV1 pingV1Decoder
+                    Json.Decode.map VersionedPingsElementsV1 pingV1Decoder
 
                 unknown ->
                     Json.Decode.fail ("Unknown value `" ++ unknown ++ "`")
@@ -168,8 +182,8 @@ pingsElementsDecoder =
 encodePingsElements : PingsElements -> Json.Encode.Value
 encodePingsElements pingsElements_ =
     case pingsElements_ of
-        PingPingsElementsV1 pingPingsElementsV1 ->
-            encodePingV1 pingPingsElementsV1
+        VersionedPingsElementsV1 versionedPingsElementsV1 ->
+            encodePingV1 versionedPingsElementsV1
 
 
 type alias SettingsV1 =
@@ -192,7 +206,7 @@ encodeSettingsV1 settingsV1_ =
 
 
 type Settings
-    = SettingsSettingsV1 SettingsV1
+    = VersionedSettingsV1 SettingsV1
 
 
 settingsDecoder : Json.Decode.Decoder Settings
@@ -201,7 +215,7 @@ settingsDecoder =
         (/tag ->
             case tag of
                 "v1" ->
-                    Json.Decode.map SettingsSettingsV1 settingsV1Decoder
+                    Json.Decode.map VersionedSettingsV1 settingsV1Decoder
 
                 unknown ->
                     Json.Decode.fail ("Unknown value `" ++ unknown ++ "`")
@@ -212,8 +226,8 @@ settingsDecoder =
 encodeSettings : Settings -> Json.Encode.Value
 encodeSettings settings_ =
     case settings_ of
-        SettingsSettingsV1 settingsSettingsV1 ->
-            encodeSettingsV1 settingsSettingsV1
+        VersionedSettingsV1 versionedSettingsV1 ->
+            encodeSettingsV1 versionedSettingsV1
 
 
 type alias DocV1 =
@@ -239,7 +253,7 @@ encodeDocV1 docV1_ =
 
 
 type DocFromAutomerge
-    = DocDocFromAutomergeV1 DocV1
+    = VersionedDocFromAutomergeV1 DocV1
 
 
 docFromAutomergeDecoder : Json.Decode.Decoder DocFromAutomerge
@@ -248,7 +262,7 @@ docFromAutomergeDecoder =
         (/tag ->
             case tag of
                 "v1" ->
-                    Json.Decode.map DocDocFromAutomergeV1 docV1Decoder
+                    Json.Decode.map VersionedDocFromAutomergeV1 docV1Decoder
 
                 unknown ->
                     Json.Decode.fail ("Unknown value `" ++ unknown ++ "`")
@@ -259,11 +273,50 @@ docFromAutomergeDecoder =
 encodeDocFromAutomerge : DocFromAutomerge -> Json.Encode.Value
 encodeDocFromAutomerge docFromAutomerge_ =
     case docFromAutomerge_ of
-        DocDocFromAutomergeV1 docDocFromAutomergeV1 ->
-            encodeDocV1 docDocFromAutomergeV1
+        VersionedDocFromAutomergeV1 versionedDocFromAutomergeV1 ->
+            encodeDocV1 versionedDocFromAutomergeV1
 
 
-type alias NotificationOptions =
+type GotNewNotificationsPermission
+    = GotNewNotificationsPermissionDefault
+    | GotNewNotificationsPermissionDenied
+    | GotNewNotificationsPermissionGranted
+
+
+gotNewNotificationsPermissionDecoder : Json.Decode.Decoder GotNewNotificationsPermission
+gotNewNotificationsPermissionDecoder =
+    Json.Decode.andThen
+        (/tag ->
+            case tag of
+                "default" ->
+                    Json.Decode.succeed GotNewNotificationsPermissionDefault
+
+                "denied" ->
+                    Json.Decode.succeed GotNewNotificationsPermissionDenied
+
+                "granted" ->
+                    Json.Decode.succeed GotNewNotificationsPermissionGranted
+
+                unknown ->
+                    Json.Decode.fail ("Unknown value `" ++ unknown ++ "`")
+        )
+        Json.Decode.string
+
+
+encodeGotNewNotificationsPermission : GotNewNotificationsPermission -> Json.Encode.Value
+encodeGotNewNotificationsPermission gotNewNotificationsPermission_ =
+    case gotNewNotificationsPermission_ of
+        GotNewNotificationsPermissionDefault ->
+            Json.Encode.string "default"
+
+        GotNewNotificationsPermissionDenied ->
+            Json.Encode.string "denied"
+
+        GotNewNotificationsPermissionGranted ->
+            Json.Encode.string "granted"
+
+
+type alias Options =
     { badge : Maybe String
     , body : Maybe String
     , icon : Maybe String
@@ -274,151 +327,64 @@ type alias NotificationOptions =
     }
 
 
-notificationOptionsDecoder : Json.Decode.Decoder NotificationOptions
-notificationOptionsDecoder =
-    Json.Decode.succeed NotificationOptions
-        |> Json.Decode.Pipeline.required "badge" (Json.Decode.nullable Json.Decode.string)
-        |> Json.Decode.Pipeline.required "body" (Json.Decode.nullable Json.Decode.string)
-        |> Json.Decode.Pipeline.required "icon" (Json.Decode.nullable Json.Decode.string)
-        |> Json.Decode.Pipeline.required "lang" (Json.Decode.nullable Json.Decode.string)
-        |> Json.Decode.Pipeline.required "requireInteraction" (Json.Decode.nullable Json.Decode.bool)
-        |> Json.Decode.Pipeline.required "silent" (Json.Decode.nullable Json.Decode.bool)
-        |> Json.Decode.Pipeline.required "tag" (Json.Decode.nullable Json.Decode.string)
+optionsDecoder : Json.Decode.Decoder Options
+optionsDecoder =
+    Json.Decode.succeed Options
+        |> Json.Decode.Pipeline.optional "badge" (Json.Decode.nullable Json.Decode.string) Nothing
+        |> Json.Decode.Pipeline.optional "body" (Json.Decode.nullable Json.Decode.string) Nothing
+        |> Json.Decode.Pipeline.optional "icon" (Json.Decode.nullable Json.Decode.string) Nothing
+        |> Json.Decode.Pipeline.optional "lang" (Json.Decode.nullable Json.Decode.string) Nothing
+        |> Json.Decode.Pipeline.optional "requireInteraction" (Json.Decode.nullable Json.Decode.bool) Nothing
+        |> Json.Decode.Pipeline.optional "silent" (Json.Decode.nullable Json.Decode.bool) Nothing
+        |> Json.Decode.Pipeline.optional "tag" (Json.Decode.nullable Json.Decode.string) Nothing
 
 
-encodeNotificationOptions : NotificationOptions -> Json.Encode.Value
-encodeNotificationOptions notificationOptions_ =
-    Json.Encode.object
-        [ ( "badge"
-          , case notificationOptions_.badge of
-                Just value ->
-                    Json.Encode.string value
-
-                Nothing ->
-                    Json.Encode.null
-          )
-        , ( "body"
-          , case notificationOptions_.body of
-                Just value ->
-                    Json.Encode.string value
-
-                Nothing ->
-                    Json.Encode.null
-          )
-        , ( "icon"
-          , case notificationOptions_.icon of
-                Just value ->
-                    Json.Encode.string value
-
-                Nothing ->
-                    Json.Encode.null
-          )
-        , ( "lang"
-          , case notificationOptions_.lang of
-                Just value ->
-                    Json.Encode.string value
-
-                Nothing ->
-                    Json.Encode.null
-          )
-        , ( "requireInteraction"
-          , case notificationOptions_.requireInteraction of
-                Just value ->
-                    Json.Encode.bool value
-
-                Nothing ->
-                    Json.Encode.null
-          )
-        , ( "silent"
-          , case notificationOptions_.silent of
-                Just value ->
-                    Json.Encode.bool value
-
-                Nothing ->
-                    Json.Encode.null
-          )
-        , ( "tag"
-          , case notificationOptions_.tag of
-                Just value ->
-                    Json.Encode.string value
-
-                Nothing ->
-                    Json.Encode.null
-          )
+encodeOptions : Options -> Json.Encode.Value
+encodeOptions options_ =
+    List.filterMap identity
+        [ Maybe.map (/badge_ -> ( "badge", Json.Encode.string badge_ )) options_.badge
+        , Maybe.map (/body_ -> ( "body", Json.Encode.string body_ )) options_.body
+        , Maybe.map (/icon_ -> ( "icon", Json.Encode.string icon_ )) options_.icon
+        , Maybe.map (/lang_ -> ( "lang", Json.Encode.string lang_ )) options_.lang
+        , Maybe.map (/requireInteraction_ -> ( "requireInteraction", Json.Encode.bool requireInteraction_ )) options_.requireInteraction
+        , Maybe.map (/silent_ -> ( "silent", Json.Encode.bool silent_ )) options_.silent
+        , Maybe.map (/tag_ -> ( "tag", Json.Encode.string tag_ )) options_.tag
         ]
+        |> Json.Encode.object
 
 
-type alias NewNotification =
-    { options : NotificationOptions
+type alias Notify =
+    { options : Options
     , title : String
     }
 
 
-newNotificationDecoder : Json.Decode.Decoder NewNotification
-newNotificationDecoder =
-    Json.Decode.succeed NewNotification
-        |> Json.Decode.Pipeline.required "options" notificationOptionsDecoder
+notifyDecoder : Json.Decode.Decoder Notify
+notifyDecoder =
+    Json.Decode.succeed Notify
+        |> Json.Decode.Pipeline.required "options" optionsDecoder
         |> Json.Decode.Pipeline.required "title" Json.Decode.string
 
 
-encodeNewNotification : NewNotification -> Json.Encode.Value
-encodeNewNotification newNotification_ =
+encodeNotify : Notify -> Json.Encode.Value
+encodeNotify notify_ =
     Json.Encode.object
-        [ ( "options", encodeNotificationOptions newNotification_.options )
-        , ( "title", Json.Encode.string newNotification_.title )
+        [ ( "options", encodeOptions notify_.options )
+        , ( "title", Json.Encode.string notify_.title )
         ]
 
 
-type NotificationPermission
-    = NotificationPermissionDefault
-    | NotificationPermissionDenied
-    | NotificationPermissionGranted
-
-
-notificationPermissionDecoder : Json.Decode.Decoder NotificationPermission
-notificationPermissionDecoder =
-    Json.Decode.andThen
-        (/tag ->
-            case tag of
-                "default" ->
-                    Json.Decode.succeed NotificationPermissionDefault
-
-                "denied" ->
-                    Json.Decode.succeed NotificationPermissionDenied
-
-                "granted" ->
-                    Json.Decode.succeed NotificationPermissionGranted
-
-                unknown ->
-                    Json.Decode.fail ("Unknown value `" ++ unknown ++ "`")
-        )
-        Json.Decode.string
-
-
-encodeNotificationPermission : NotificationPermission -> Json.Encode.Value
-encodeNotificationPermission notificationPermission_ =
-    case notificationPermission_ of
-        NotificationPermissionDefault ->
-            Json.Encode.string "default"
-
-        NotificationPermissionDenied ->
-            Json.Encode.string "denied"
-
-        NotificationPermissionGranted ->
-            Json.Encode.string "granted"
-
-
-type alias RequestNotificationPermission =
+type alias RequestNotificationsPermission =
     ()
 
 
-requestNotificationPermissionDecoder : Json.Decode.Decoder RequestNotificationPermission
-requestNotificationPermissionDecoder =
+requestNotificationsPermissionDecoder : Json.Decode.Decoder RequestNotificationsPermission
+requestNotificationsPermissionDecoder =
     Json.Decode.null ()
 
 
-encodeRequestNotificationPermission : RequestNotificationPermission -> Json.Encode.Value
-encodeRequestNotificationPermission requestNotificationPermission_ =
+encodeRequestNotificationsPermission : RequestNotificationsPermission -> Json.Encode.Value
+encodeRequestNotificationsPermission requestNotificationsPermission_ =
     Json.Encode.null
 
 
@@ -438,25 +404,25 @@ subscribeToDocFromAutomerge toMsg =
     docFromAutomerge (Json.Decode.decodeValue docFromAutomergeDecoder >> toMsg)
 
 
-port newNotification : Json.Decode.Value -> Cmd msg
+port gotNewNotificationsPermission : (Json.Decode.Value -> msg) -> Sub msg
 
 
-sendNewNotification : NewNotification -> Cmd msg
-sendNewNotification =
-    encodeNewNotification >> newNotification
+subscribeToGotNewNotificationsPermission : (Result Json.Decode.Error GotNewNotificationsPermission -> msg) -> Sub msg
+subscribeToGotNewNotificationsPermission toMsg =
+    gotNewNotificationsPermission (Json.Decode.decodeValue gotNewNotificationsPermissionDecoder >> toMsg)
 
 
-port notificationPermission : (Json.Decode.Value -> msg) -> Sub msg
+port notify : Json.Decode.Value -> Cmd msg
 
 
-subscribeToNotificationPermission : (Result Json.Decode.Error NotificationPermission -> msg) -> Sub msg
-subscribeToNotificationPermission toMsg =
-    notificationPermission (Json.Decode.decodeValue notificationPermissionDecoder >> toMsg)
+sendNotify : Notify -> Cmd msg
+sendNotify =
+    encodeNotify >> notify
 
 
-port requestNotificationPermission : Json.Decode.Value -> Cmd msg
+port requestNotificationsPermission : Json.Decode.Value -> Cmd msg
 
 
-sendRequestNotificationPermission : RequestNotificationPermission -> Cmd msg
-sendRequestNotificationPermission =
-    encodeRequestNotificationPermission >> requestNotificationPermission
+sendRequestNotificationsPermission : RequestNotificationsPermission -> Cmd msg
+sendRequestNotificationsPermission =
+    encodeRequestNotificationsPermission >> requestNotificationsPermission
