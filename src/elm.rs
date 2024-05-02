@@ -635,6 +635,7 @@ impl Decl {
                     }
 
                     out.push_str(&constructor_prefix.to_pascal_case()?);
+                    out.push_str(&name.to_pascal_case()?);
                     out.push_str(&case_name.to_pascal_case()?);
 
                     if let Some(case_type) = case_type_opt {
@@ -710,6 +711,7 @@ impl Decl {
 
                             out.push_str("Json.Decode.map ");
                             out.push_str(&constructor_prefix.to_pascal_case()?);
+                            out.push_str(&name.to_pascal_case()?);
                             out.push_str(&case.to_pascal_case()?);
                             if sub_decoder.contains('\n') {
                                 out.push_str("\n                        ");
@@ -724,6 +726,7 @@ impl Decl {
                         None => {
                             out.push_str("Json.Decode.succeed ");
                             out.push_str(&constructor_prefix.to_pascal_case()?);
+                            out.push_str(&name.to_pascal_case()?);
                             out.push_str(&case.to_pascal_case()?);
                         }
                     }
@@ -782,8 +785,9 @@ impl Decl {
                     }
 
                     let case_name = InflectedString::from(format!(
-                        "{}{}",
+                        "{}{}{}",
                         constructor_prefix.to_pascal_case()?,
+                        name.to_pascal_case()?,
                         case.to_pascal_case()?
                     ));
 
