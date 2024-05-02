@@ -575,12 +575,12 @@ impl Type {
                 }
 
                 if any_optional {
-                    out.push_str("List.filterMap identity\n    [")
+                    out.push_str("List.filterMap identity\n    [ ")
                 } else {
-                    out.push_str("Json.Encode.object\n    [")
+                    out.push_str("Json.Encode.object\n    [ ")
                 }
 
-                out.push_str(&field_encoders.join("\n    ,"));
+                out.push_str(&field_encoders.join("\n    , "));
 
                 out.push_str("\n    ]");
 
