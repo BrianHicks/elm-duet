@@ -172,7 +172,7 @@ connectDecoder =
 encodeConnect : Connect -> Json.Encode.Value
 encodeConnect connect_ =
     List.filterMap identity
-        [ Maybe.map (\protocols -> Json.Encode.list (\value -> Json.Encode.string value) protocols) connect_.protocols
+        [ Maybe.map (\protocols -> ( "protocols", Json.Encode.list (\value -> Json.Encode.string value) protocols )) connect_.protocols
         , Just ( "url", Json.Encode.string connect_.url )
         , Just ( "tag", Json.Encode.string "connect" )
         ]
