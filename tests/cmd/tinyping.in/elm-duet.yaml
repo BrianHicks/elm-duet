@@ -1,0 +1,121 @@
+definitions:
+  notificationPermission:
+    enum:
+      - default
+      - denied
+      - granted
+
+  # name/prefix policy: all versioned objects have a `versioned` constructor
+  # prefix to avoid conflicts. Current versions of types don't have a version
+  # suffix, but previous versions do.
+
+  doc:
+    metadata:
+      constructorPrefix: versioned
+    discriminator: version
+    mapping:
+      v1:
+        metadata:
+          name: DocV1
+        properties:
+          pings:
+            elements:
+              ref: ping
+          settings:
+            ref: settings
+
+  settings:
+    metadata:
+      constructorPrefix: versioned
+    discriminator: version
+    mapping:
+      v1:
+        metadata:
+          name: SettingsV1
+        properties:
+          minutesPerPing:
+            type: int32
+
+  ping:
+    metadata:
+      constructorPrefix: versioned
+    discriminator: version
+    mapping:
+      v1:
+        metadata:
+          name: PingV1
+        properties:
+          time:
+            type: int32
+          tag:
+            type: string
+            nullable: true
+          custom:
+            values:
+              type: string
+
+modules:
+  Main:
+    flags:
+      properties:
+        currentTimeMillis:
+          type: float64
+        notificationPermission:
+          ref: notificationPermission
+    ports:
+      docFromAutomerge:
+        metadata:
+          direction: JsToElm
+        ref: doc
+      changeDocument:
+        metadata:
+          direction: ElmToJs
+        elements:
+          discriminator: tag
+          mapping:
+            SetMinutesPerPing:
+              properties:
+                value:
+                  type: float64
+            AddNewPingAt:
+              properties:
+                value:
+                  type: float64
+            SetTagForPing:
+              properties:
+                index:
+                  type: float64
+                value:
+                  type: string
+                  nullable: true
+
+      # notifications
+      requestNotificationsPermission:
+        metadata:
+          direction: ElmToJs
+      gotNewNotificationsPermission:
+        metadata:
+          direction: JsToElm
+        ref: notificationPermission
+      notify:
+        metadata:
+          direction: ElmToJs
+        properties:
+          title:
+            type: string
+          options:
+            optionalProperties:
+              badge:
+                type: string
+              body:
+                type: string
+              icon:
+                type: string
+              lang:
+                type: string
+              requireInteraction:
+                type: boolean
+              silent:
+                type: boolean
+              tag:
+                type: string

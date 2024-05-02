@@ -14,252 +14,13 @@ pub enum Type {
     DictWithStringKeys(Box<Type>),
     List(Box<Type>),
     Ref(InflectedString),
-    Record(BTreeMap<InflectedString, Type>),
+    Record(BTreeMap<InflectedString, (Type, RecordPresence)>),
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-pub enum Decl {
-    CustomTypeEnum {
-        name: InflectedString,
-        discriminator: Option<String>,
-        constructor_prefix: InflectedString,
-        cases: BTreeMap<InflectedString, Option<Type>>,
-    },
-    TypeAlias {
-        name: InflectedString,
-        type_: Type,
-
-        // a bit of a hack, but we need to add disciminators specifically to records in order to
-        // make the decoders and encoders round-trip properly.
-        discriminator: Option<(String, String)>,
-    },
-}
-
-impl Decl {
-    fn to_source(&self) -> Result<String> {
-        let mut out = String::new();
-
-        match self {
-            Decl::CustomTypeEnum {
-                name,
-                constructor_prefix,
-                cases,
-                ..
-            } => {
-                out.push_str("type ");
-                out.push_str(&name.to_pascal_case()?);
-                out.push('\n');
-
-                for (i, (case_name, case_type_opt)) in cases.iter().enumerate() {
-                    if i == 0 {
-                        out.push_str("    = ");
-                    } else {
-                        out.push_str("    | ");
-                    }
-
-                    out.push_str(&constructor_prefix.to_pascal_case()?);
-                    out.push_str(&case_name.to_pascal_case()?);
-
-                    if let Some(case_type) = case_type_opt {
-                        out.push(' ');
-                        out.push_str(&case_type.to_source()?.replace('\n', "\n    "));
-                    }
-
-                    out.push('\n')
-                }
-            }
-            Decl::TypeAlias { name, type_, .. } => {
-                out.push_str("type alias ");
-                out.push_str(&name.to_pascal_case()?);
-                out.push_str(" =\n    ");
-                out.push_str(&type_.to_source()?.replace('\n', "\n    "));
-            }
-        }
-
-        Ok(out)
-    }
-
-    fn name(&self) -> &InflectedString {
-        match self {
-            Decl::CustomTypeEnum { name, .. } => name,
-            Decl::TypeAlias { name, .. } => name,
-        }
-    }
-
-    fn decoder_name(&self) -> Result<String> {
-        Ok(format!("{}Decoder", self.name().to_camel_case()?))
-    }
-
-    fn encoder_name(&self) -> Result<String> {
-        Ok(format!("encode{}", self.name().to_pascal_case()?))
-    }
-
-    fn to_decoder_source(&self) -> Result<String> {
-        let mut out = String::new();
-
-        let name = self.name();
-        let decoder_name = self.decoder_name()?;
-        let type_name = name.to_pascal_case()?;
-        out.push_str(&decoder_name);
-        out.push_str(" : Decoder ");
-        out.push_str(&type_name);
-        out.push('\n');
-        out.push_str(&decoder_name);
-        out.push_str(" =\n");
-
-        match &self {
-            Decl::CustomTypeEnum {
-                constructor_prefix,
-                discriminator,
-                cases,
-                ..
-            } => {
-                out.push_str(
-                    "    Json.Decode.andThen\n        (\\tag ->\n            case tag of\n",
-                );
-
-                for (i, (case, case_type_opt)) in cases.iter().enumerate() {
-                    if i > 0 {
-                        out.push('\n');
-                    }
-
-                    out.push_str("                \"");
-                    out.push_str(case.orig());
-                    out.push_str("\" ->\n                    ");
-
-                    match case_type_opt {
-                        Some(type_) => {
-                            let sub_decoder = type_.to_decoder_source(&type_name)?;
-
-                            out.push_str("Json.Decode.map ");
-                            out.push_str(&constructor_prefix.to_pascal_case()?);
-                            out.push_str(&case.to_pascal_case()?);
-                            if sub_decoder.contains('\n') {
-                                out.push_str("\n                        ");
-                                out.push_str(
-                                    &sub_decoder.replace('\n', "\n                        "),
-                                );
-                            } else {
-                                out.push(' ');
-                                out.push_str(&sub_decoder);
-                            }
-                        }
-                        None => {
-                            out.push_str("Json.Decode.succeed ");
-                            out.push_str(&constructor_prefix.to_pascal_case()?);
-                            out.push_str(&case.to_pascal_case()?);
-                        }
-                    }
-                    out.push('\n');
-                }
-
-                out.push_str("        )\n        ");
-                match discriminator {
-                    None => out.push_str("Json.Decode.string"),
-                    Some(name) => {
-                        out.push_str("(Json.Decode.field \"");
-                        out.push_str(name);
-                        out.push_str("\" Json.Decode.string)");
-                    }
-                }
-            }
-            Decl::TypeAlias { type_, .. } => {
-                out.push_str("    ");
-                out.push_str(&type_.to_decoder_source(&type_name)?.replace('\n', "\n    "));
-            }
-        }
-
-        Ok(out)
-    }
-
-    fn to_encoder_source(&self) -> Result<String> {
-        let mut out = String::new();
-
-        let name = self.name();
-        let decoder_name = self.encoder_name()?;
-        let type_name = name.to_pascal_case()?;
-        let variable_name = name.to_camel_case()?;
-
-        out.push_str(&decoder_name);
-        out.push_str(" : ");
-        out.push_str(&type_name);
-        out.push_str(" -> Json.Encode.Value\n");
-        out.push_str(&decoder_name);
-        out.push(' ');
-        out.push_str(&variable_name);
-        out.push_str(" =\n");
-
-        match &self {
-            Decl::CustomTypeEnum {
-                constructor_prefix,
-                cases,
-                ..
-            } => {
-                out.push_str("    case ");
-                out.push_str(&variable_name);
-                out.push_str(" of\n");
-
-                for (i, (case, case_type_opt)) in cases.iter().enumerate() {
-                    if i > 0 {
-                        out.push_str("\n\n")
-                    }
-
-                    let case_name = InflectedString::from(format!(
-                        "{}{}",
-                        constructor_prefix.to_pascal_case()?,
-                        case.to_pascal_case()?
-                    ));
-
-                    out.push_str("        ");
-                    out.push_str(&case_name.to_pascal_case()?);
-
-                    if case_type_opt.is_some() {
-                        out.push(' ');
-                        out.push_str(&case_name.to_camel_case()?);
-                    }
-
-                    out.push_str(" ->\n            ");
-
-                    match case_type_opt {
-                        Some(case_type) => out.push_str(
-                            &case_type
-                                .to_encoder_source(&case_name.to_camel_case()?, &None)?
-                                .replace('\n', "\n            "),
-                        ),
-                        None => {
-                            out.push_str("Json.Encode.string \"");
-                            out.push_str(case.orig());
-                            out.push('"');
-                        }
-                    }
-                }
-            }
-            Decl::TypeAlias {
-                type_,
-                discriminator,
-                ..
-            } => {
-                out.push_str("    ");
-                out.push_str(
-                    &type_
-                        .to_encoder_source(&variable_name, discriminator)?
-                        .replace('\n', "\n    "),
-                );
-            }
-        }
-
-        Ok(out)
-    }
-
-    fn add_discriminator(&mut self, name: String, value: String) -> Result<()> {
-        match self {
-            Decl::CustomTypeEnum { .. } => bail!("cannot add a discriminator to a custom type"),
-            Decl::TypeAlias { discriminator, .. } => {
-                *discriminator = Some((name, value));
-                Ok(())
-            }
-        }
-    }
+pub enum RecordPresence {
+    Required,
+    Optional,
 }
 
 impl Type {
@@ -367,6 +128,7 @@ impl Type {
                 metadata,
                 nullable,
                 properties,
+                optional_properties,
                 ..
             } => match metadata
                 .get("name")
@@ -389,7 +151,26 @@ impl Type {
                         })?;
 
                         decls.extend(field_decls);
-                        fields.insert(field_name.into(), field_type);
+                        fields.insert(field_name.into(), (field_type, RecordPresence::Required));
+                    }
+
+                    for (field_name, field_schema) in optional_properties {
+                        let (field_type, field_decls) = Self::from_schema(
+                            field_schema,
+                            Some(field_name.clone()),
+                            globals,
+                            None, // We'll actually use this in the unified handler below!
+                        )
+                        .wrap_err_with(|| {
+                            format!("could not convert the type of `{field_name}`")
+                        })?;
+
+                        decls.extend(field_decls);
+
+                        fields.insert(
+                            field_name.into(),
+                            (Self::Maybe(Box::new(field_type)), RecordPresence::Optional),
+                        );
                     }
 
                     decls.push(Decl::TypeAlias {
@@ -568,7 +349,7 @@ impl Type {
                 if fields.is_empty() {
                     out.push_str("{}");
                 } else {
-                    for (i, (name, value)) in fields.iter().enumerate() {
+                    for (i, (name, (value, _))) in fields.iter().enumerate() {
                         if i == 0 {
                             out.push_str("{ ");
                         } else {
@@ -640,11 +421,18 @@ impl Type {
                 out.push_str("Json.Decode.succeed ");
                 out.push_str(dest_type);
 
-                for (name, field_type) in fields {
+                for (name, (field_type, presence)) in fields {
                     let sub_decoder = field_type.to_decoder_source(dest_type)?;
 
                     out.push_str("\n    ");
-                    out.push_str("|> Json.Decode.Pipeline.required \"");
+                    match presence {
+                        RecordPresence::Required => {
+                            out.push_str("|> Json.Decode.Pipeline.required \"")
+                        }
+                        RecordPresence::Optional => {
+                            out.push_str("|> Json.Decode.Pipeline.optional \"")
+                        }
+                    }
                     out.push_str(name.orig());
                     out.push_str("\" ");
 
@@ -654,6 +442,10 @@ impl Type {
                         out.push(')');
                     } else {
                         out.push_str(&sub_decoder);
+                    }
+
+                    if *presence == RecordPresence::Optional {
+                        out.push_str(" Nothing");
                     }
                 }
             }
@@ -717,51 +509,343 @@ impl Type {
                 out.push_str(source_var);
             }
             Type::Record(fields) => {
-                out.push_str("Json.Encode.object\n");
-                for (i, (name, field_type)) in fields.iter().enumerate() {
-                    if i == 0 {
-                        out.push_str("    [ ( \"");
-                    } else {
-                        out.push_str("    , ( \"");
-                    }
+                let mut field_encoders = Vec::with_capacity(fields.len() + 1);
+                let any_optional = fields
+                    .values()
+                    .any(|(_, presence)| *presence == RecordPresence::Optional);
 
-                    out.push_str(name.orig());
-                    out.push('"');
+                for (name, (field_type, presence)) in fields {
+                    let accessor = format!("{}.{}", source_var, name.to_camel_case()?);
 
-                    let field_encoder = field_type.to_encoder_source(
-                        &format!("{}.{}", source_var, name.to_camel_case()?),
-                        discriminator_field_opt,
-                    )?;
+                    let mut encoder = String::new();
 
-                    if field_encoder.contains('\n') {
-                        out.push_str("\n      , ");
-                        out.push_str(&field_encoder.replace('\n', "\n        "));
-                        out.push_str("\n     ");
-                    } else {
-                        out.push_str(", ");
-                        out.push_str(&field_encoder);
-                    }
+                    match presence {
+                        RecordPresence::Required => {
+                            if any_optional {
+                                encoder.push_str("Just ");
+                            }
+                            encoder.push_str("( \"");
+                            encoder.push_str(name.orig());
+                            encoder.push_str("\", ");
+                            encoder.push_str(
+                                &field_type
+                                    .to_encoder_source(&accessor, discriminator_field_opt)?
+                                    .replace('\n', "\n    "),
+                            );
+                            encoder.push_str(" )");
+                        }
+                        RecordPresence::Optional => {
+                            let local_var = format!("{}_", name.to_camel_case()?);
 
-                    out.push_str(" )\n");
+                            let maybe_inner = match field_type {
+                                Type::Maybe(inner) => inner,
+                                _ => bail!(
+                                    "Optional fields must be `Maybe x`, but I got a {field_type:?}"
+                                ),
+                            };
+
+                            encoder.push_str("Maybe.map (\\");
+                            encoder.push_str(&local_var);
+                            encoder.push_str(" -> ( \"");
+                            encoder.push_str(name.orig());
+                            encoder.push_str("\", ");
+                            encoder.push_str(
+                                &maybe_inner
+                                    .to_encoder_source(&local_var, discriminator_field_opt)?
+                                    .replace('\n', "\n    "),
+                            );
+                            encoder.push_str(")) ");
+                            encoder.push_str(&accessor);
+                        }
+                    };
+
+                    field_encoders.push(encoder)
                 }
 
                 if let Some((discriminator_name, discriminator_value)) = discriminator_field_opt {
-                    if fields.is_empty() {
-                        out.push_str("    [ ( \"");
-                    } else {
-                        out.push_str("    , ( \"");
+                    let mut encoder = String::new();
+                    if any_optional {
+                        encoder.push_str("Just ");
                     }
-                    out.push_str(discriminator_name);
-                    out.push_str("\", Json.Encode.string \"");
-                    out.push_str(discriminator_value);
-                    out.push_str("\" )\n");
+                    encoder.push_str("( \"");
+                    encoder.push_str(discriminator_name);
+                    encoder.push_str("\", Json.Encode.string \"");
+                    encoder.push_str(discriminator_value);
+                    encoder.push_str("\" )\n");
+
+                    field_encoders.push(encoder)
                 }
 
-                out.push_str("    ]");
+                if any_optional {
+                    out.push_str("List.filterMap identity\n    [ ")
+                } else {
+                    out.push_str("Json.Encode.object\n    [ ")
+                }
+
+                out.push_str(&field_encoders.join("\n    , "));
+
+                out.push_str("\n    ]");
+
+                if any_optional {
+                    out.push_str("\n    |> Json.Encode.object")
+                }
             }
         }
 
         Ok(out)
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub enum Decl {
+    CustomTypeEnum {
+        name: InflectedString,
+        discriminator: Option<String>,
+        constructor_prefix: InflectedString,
+        cases: BTreeMap<InflectedString, Option<Type>>,
+    },
+    TypeAlias {
+        name: InflectedString,
+        type_: Type,
+
+        // a bit of a hack, but we need to add disciminators specifically to records in order to
+        // make the decoders and encoders round-trip properly.
+        discriminator: Option<(String, String)>,
+    },
+}
+
+impl Decl {
+    fn to_source(&self) -> Result<String> {
+        let mut out = String::new();
+
+        match self {
+            Decl::CustomTypeEnum {
+                name,
+                constructor_prefix,
+                cases,
+                ..
+            } => {
+                out.push_str("type ");
+                out.push_str(&name.to_pascal_case()?);
+                out.push('\n');
+
+                for (i, (case_name, case_type_opt)) in cases.iter().enumerate() {
+                    if i == 0 {
+                        out.push_str("    = ");
+                    } else {
+                        out.push_str("    | ");
+                    }
+
+                    out.push_str(&constructor_prefix.to_pascal_case()?);
+                    out.push_str(&name.to_pascal_case()?);
+                    out.push_str(&case_name.to_pascal_case()?);
+
+                    if let Some(case_type) = case_type_opt {
+                        out.push(' ');
+                        out.push_str(&case_type.to_source()?.replace('\n', "\n    "));
+                    }
+
+                    out.push('\n')
+                }
+            }
+            Decl::TypeAlias { name, type_, .. } => {
+                out.push_str("type alias ");
+                out.push_str(&name.to_pascal_case()?);
+                out.push_str(" =\n    ");
+                out.push_str(&type_.to_source()?.replace('\n', "\n    "));
+            }
+        }
+
+        Ok(out)
+    }
+
+    fn name(&self) -> &InflectedString {
+        match self {
+            Decl::CustomTypeEnum { name, .. } => name,
+            Decl::TypeAlias { name, .. } => name,
+        }
+    }
+
+    fn decoder_name(&self) -> Result<String> {
+        Ok(format!("{}Decoder", self.name().to_camel_case()?))
+    }
+
+    fn encoder_name(&self) -> Result<String> {
+        Ok(format!("encode{}", self.name().to_pascal_case()?))
+    }
+
+    fn to_decoder_source(&self) -> Result<String> {
+        let mut out = String::new();
+
+        let name = self.name();
+        let decoder_name = self.decoder_name()?;
+        let type_name = name.to_pascal_case()?;
+        out.push_str(&decoder_name);
+        out.push_str(" : Json.Decode.Decoder ");
+        out.push_str(&type_name);
+        out.push('\n');
+        out.push_str(&decoder_name);
+        out.push_str(" =\n");
+
+        match &self {
+            Decl::CustomTypeEnum {
+                constructor_prefix,
+                discriminator,
+                cases,
+                ..
+            } => {
+                out.push_str(
+                    "    Json.Decode.andThen\n        (\\tag ->\n            case tag of\n",
+                );
+
+                for (i, (case, case_type_opt)) in cases.iter().enumerate() {
+                    if i > 0 {
+                        out.push('\n');
+                    }
+
+                    out.push_str("                \"");
+                    out.push_str(case.orig());
+                    out.push_str("\" ->\n                    ");
+
+                    match case_type_opt {
+                        Some(type_) => {
+                            let sub_decoder = type_.to_decoder_source(&type_name)?;
+
+                            out.push_str("Json.Decode.map ");
+                            out.push_str(&constructor_prefix.to_pascal_case()?);
+                            out.push_str(&name.to_pascal_case()?);
+                            out.push_str(&case.to_pascal_case()?);
+                            if sub_decoder.contains('\n') {
+                                out.push_str("\n                        ");
+                                out.push_str(
+                                    &sub_decoder.replace('\n', "\n                        "),
+                                );
+                            } else {
+                                out.push(' ');
+                                out.push_str(&sub_decoder);
+                            }
+                        }
+                        None => {
+                            out.push_str("Json.Decode.succeed ");
+                            out.push_str(&constructor_prefix.to_pascal_case()?);
+                            out.push_str(&name.to_pascal_case()?);
+                            out.push_str(&case.to_pascal_case()?);
+                        }
+                    }
+                    out.push('\n');
+                }
+
+                out.push_str(
+                    "                unknown ->\n                    Json.Decode.fail (\"Unknown value `\" ++ unknown ++ \"`\")\n        )\n        ");
+                match discriminator {
+                    None => out.push_str("Json.Decode.string"),
+                    Some(name) => {
+                        out.push_str("(Json.Decode.field \"");
+                        out.push_str(name);
+                        out.push_str("\" Json.Decode.string)");
+                    }
+                }
+            }
+            Decl::TypeAlias { type_, .. } => {
+                out.push_str("    ");
+                out.push_str(&type_.to_decoder_source(&type_name)?.replace('\n', "\n    "));
+            }
+        }
+
+        Ok(out)
+    }
+
+    fn to_encoder_source(&self) -> Result<String> {
+        let mut out = String::new();
+
+        let name = self.name();
+        let decoder_name = self.encoder_name()?;
+        let type_name = name.to_pascal_case()?;
+
+        // We have an underscore after this because we commonly generate a port with the same name
+        // and that needs to take precedence.
+        let variable_name = format!("{}_", name.to_camel_case()?);
+
+        out.push_str(&decoder_name);
+        out.push_str(" : ");
+        out.push_str(&type_name);
+        out.push_str(" -> Json.Encode.Value\n");
+        out.push_str(&decoder_name);
+        out.push(' ');
+        out.push_str(&variable_name);
+        out.push_str(" =\n");
+
+        match &self {
+            Decl::CustomTypeEnum {
+                constructor_prefix,
+                cases,
+                ..
+            } => {
+                out.push_str("    case ");
+                out.push_str(&variable_name);
+                out.push_str(" of\n");
+
+                for (i, (case, case_type_opt)) in cases.iter().enumerate() {
+                    if i > 0 {
+                        out.push_str("\n\n")
+                    }
+
+                    let case_name = InflectedString::from(format!(
+                        "{}{}{}",
+                        constructor_prefix.to_pascal_case()?,
+                        name.to_pascal_case()?,
+                        case.to_pascal_case()?
+                    ));
+
+                    out.push_str("        ");
+                    out.push_str(&case_name.to_pascal_case()?);
+
+                    if case_type_opt.is_some() {
+                        out.push(' ');
+                        out.push_str(&case_name.to_camel_case()?);
+                    }
+
+                    out.push_str(" ->\n            ");
+
+                    match case_type_opt {
+                        Some(case_type) => out.push_str(
+                            &case_type
+                                .to_encoder_source(&case_name.to_camel_case()?, &None)?
+                                .replace('\n', "\n            "),
+                        ),
+                        None => {
+                            out.push_str("Json.Encode.string \"");
+                            out.push_str(case.orig());
+                            out.push('"');
+                        }
+                    }
+                }
+            }
+            Decl::TypeAlias {
+                type_,
+                discriminator,
+                ..
+            } => {
+                out.push_str("    ");
+                out.push_str(
+                    &type_
+                        .to_encoder_source(&variable_name, discriminator)?
+                        .replace('\n', "\n    "),
+                );
+            }
+        }
+
+        Ok(out)
+    }
+
+    fn add_discriminator(&mut self, name: String, value: String) -> Result<()> {
+        match self {
+            Decl::CustomTypeEnum { .. } => bail!("cannot add a discriminator to a custom type"),
+            Decl::TypeAlias { discriminator, .. } => {
+                *discriminator = Some((name, value));
+                Ok(())
+            }
+        }
     }
 }
 
@@ -793,8 +877,8 @@ impl Port {
         out.push_str(" : ");
 
         match self.direction {
-            PortDirection::Send => out.push_str("Value -> Cmd msg\n\n\n"),
-            PortDirection::Subscribe => out.push_str("(Value -> msg) -> Sub msg\n\n\n"),
+            PortDirection::Send => out.push_str("Json.Decode.Value -> Cmd msg\n\n\n"),
+            PortDirection::Subscribe => out.push_str("(Json.Decode.Value -> msg) -> Sub msg\n\n\n"),
         }
 
         let type_ref = self.type_.name();
@@ -838,20 +922,21 @@ impl Port {
         out.push_str(&type_safe_name);
         out.push(' ');
 
+        // I don't normally like to write things point-free, but in this case it lets us
+        // avoid assigning names that may cause a collisions with things from schemas
         match self.direction {
             PortDirection::Send => {
-                out.push_str("value =\n    ");
-                out.push_str(&self.name);
-                out.push_str(" (");
+                out.push_str(" =\n    ");
                 out.push_str(&self.type_.encoder_name()?);
-                out.push_str(" value)");
+                out.push_str(" >> ");
+                out.push_str(&self.name);
             }
             PortDirection::Subscribe => {
                 out.push_str("toMsg =\n    ");
                 out.push_str(&self.name);
-                out.push_str(" (\\value -> toMsg (Json.Decode.decodeValue value ");
+                out.push_str(" (Json.Decode.decodeValue ");
                 out.push_str(&self.type_.decoder_name()?);
-                out.push_str("))");
+                out.push_str(" >> toMsg)");
             }
         }
 
@@ -930,7 +1015,7 @@ impl Module {
 
         out.push_str("module ");
         out.push_str(&self.name.join("."));
-        out.push_str(" exposing (..)\n\n{-| Warning: this file is automatically generated. Don't edit by hand!\n-}\n\nimport Json.Decode\nimport Json.Decode.Pipeline\nimport Json.Encode\n");
+        out.push_str(" exposing (..)\n\n{-| Warning: this file is automatically generated. Don't edit by hand!\n-}\n\nimport Dict exposing (Dict)\nimport Json.Decode\nimport Json.Decode.Pipeline\nimport Json.Encode\n");
 
         for decl in &self.decls {
             out.push_str("\n\n");
@@ -1199,9 +1284,35 @@ mod tests {
                     name: "Foo".into(),
                     discriminator: None,
                     type_: Type::Record(BTreeMap::from([
-                        ("a".into(), Type::Unit),
-                        ("b".into(), Type::Unit),
+                        ("a".into(), (Type::Unit, RecordPresence::Required)),
+                        ("b".into(), (Type::Unit, RecordPresence::Required)),
                     ])),
+                }])
+            );
+        }
+
+        #[test]
+        fn interprets_optional_properties() {
+            let (type_, decls) = from_schema(json!({
+                "metadata": {
+                    "name": "Foo",
+                },
+                "optionalProperties": {
+                    "a": {},
+                },
+            }));
+
+            assert_eq!(type_, Type::Ref("Foo".into()));
+
+            assert_eq!(
+                decls,
+                Vec::from([Decl::TypeAlias {
+                    name: "Foo".into(),
+                    discriminator: None,
+                    type_: Type::Record(BTreeMap::from([(
+                        "a".into(),
+                        (Type::Maybe(Box::new(Type::Unit)), RecordPresence::Optional)
+                    ),])),
                 }])
             );
         }
@@ -1239,12 +1350,18 @@ mod tests {
                     Decl::TypeAlias {
                         name: "a".into(),
                         discriminator: Some(("tag".to_string(), "a".to_string())),
-                        type_: Type::Record(BTreeMap::from([("value".into(), Type::String)]))
+                        type_: Type::Record(BTreeMap::from([(
+                            "value".into(),
+                            (Type::String, RecordPresence::Required)
+                        )]))
                     },
                     Decl::TypeAlias {
                         name: "b".into(),
                         discriminator: Some(("tag".to_string(), "b".to_string())),
-                        type_: Type::Record(BTreeMap::from([("value".into(), Type::Float)]))
+                        type_: Type::Record(BTreeMap::from([(
+                            "value".into(),
+                            (Type::Float, RecordPresence::Required)
+                        )]))
                     },
                     Decl::CustomTypeEnum {
                         name: "Foo".into(),
@@ -1351,7 +1468,10 @@ mod tests {
                 Vec::from([Decl::TypeAlias {
                     name: "Flags".into(),
                     discriminator: None,
-                    type_: Type::Record(BTreeMap::from([("a".into(), Type::String)]))
+                    type_: Type::Record(BTreeMap::from([(
+                        "a".into(),
+                        (Type::String, RecordPresence::Required)
+                    )]))
                 }])
             );
         }

@@ -1,3 +1,3 @@
 bin.name = "elm-duet"
-args = ["schema.json"]
+args = ["elm-duet.yaml"]
 binary = true
