@@ -16,7 +16,7 @@ definitions:
     mapping:
       v1:
         metadata:
-          name: DocV1
+          name: Doc
         properties:
           pings:
             elements:
@@ -26,12 +26,13 @@ definitions:
 
   settings:
     metadata:
+      name: DocumentSettings
       constructorPrefix: versioned
     discriminator: version
     mapping:
       v1:
         metadata:
-          name: SettingsV1
+          name: Settings
         properties:
           minutesPerPing:
             type: int32
@@ -43,7 +44,7 @@ definitions:
     mapping:
       v1:
         metadata:
-          name: PingV1
+          name: Ping
         properties:
           time:
             type: int32
