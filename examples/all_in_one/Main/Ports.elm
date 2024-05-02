@@ -111,6 +111,9 @@ fromWorldDecoder =
 
                 "open" ->
                     Json.Decode.map FromWorldOpen tagOpenDecoder
+
+                unknown ->
+                    Json.Decode.fail ("Unknown value `" ++ unknown ++ "`")
         )
         (Json.Decode.field "tag" Json.Decode.string)
 
@@ -214,6 +217,9 @@ toWorldDecoder =
 
                 "send" ->
                     Json.Decode.map ToWorldSend sendDecoder
+
+                unknown ->
+                    Json.Decode.fail ("Unknown value `" ++ unknown ++ "`")
         )
         (Json.Decode.field "tag" Json.Decode.string)
 

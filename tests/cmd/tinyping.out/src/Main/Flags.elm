@@ -28,6 +28,9 @@ notificationPermissionDecoder =
 
                 "granted" ->
                     Json.Decode.succeed NotificationPermissionGranted
+
+                unknown ->
+                    Json.Decode.fail ("Unknown value `" ++ unknown ++ "`")
         )
         Json.Decode.string
 

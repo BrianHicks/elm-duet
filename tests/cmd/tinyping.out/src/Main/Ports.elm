@@ -95,6 +95,9 @@ changeDocumentDecoder =
 
                 "SetTagForPing" ->
                     Json.Decode.map ChangeDocumentSetTagForPing setTagForPingDecoder
+
+                unknown ->
+                    Json.Decode.fail ("Unknown value `" ++ unknown ++ "`")
         )
         (Json.Decode.field "tag" Json.Decode.string)
 
@@ -155,6 +158,9 @@ pingsElementsDecoder =
             case tag of
                 "v1" ->
                     Json.Decode.map PingPingsElementsV1 pingV1Decoder
+
+                unknown ->
+                    Json.Decode.fail ("Unknown value `" ++ unknown ++ "`")
         )
         (Json.Decode.field "version" Json.Decode.string)
 
@@ -196,6 +202,9 @@ settingsDecoder =
             case tag of
                 "v1" ->
                     Json.Decode.map SettingsSettingsV1 settingsV1Decoder
+
+                unknown ->
+                    Json.Decode.fail ("Unknown value `" ++ unknown ++ "`")
         )
         (Json.Decode.field "version" Json.Decode.string)
 
@@ -240,6 +249,9 @@ docFromAutomergeDecoder =
             case tag of
                 "v1" ->
                     Json.Decode.map DocDocFromAutomergeV1 docV1Decoder
+
+                unknown ->
+                    Json.Decode.fail ("Unknown value `" ++ unknown ++ "`")
         )
         (Json.Decode.field "version" Json.Decode.string)
 
@@ -376,6 +388,9 @@ notificationPermissionDecoder =
 
                 "granted" ->
                     Json.Decode.succeed NotificationPermissionGranted
+
+                unknown ->
+                    Json.Decode.fail ("Unknown value `" ++ unknown ++ "`")
         )
         Json.Decode.string
 
