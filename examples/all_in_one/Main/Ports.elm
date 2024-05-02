@@ -89,10 +89,10 @@ encodeTagOpen tagOpen =
 
 
 type FromWorld
-    = Close Close
-    | Error TagError
-    | Message Message
-    | Open TagOpen
+    = FromWorldClose Close
+    | FromWorldError TagError
+    | FromWorldMessage Message
+    | FromWorldOpen TagOpen
 
 
 fromWorldDecoder : Json.Decode.Decoder FromWorld
@@ -101,16 +101,16 @@ fromWorldDecoder =
         (\tag ->
             case tag of
                 "close" ->
-                    Json.Decode.map Close closeDecoder
+                    Json.Decode.map FromWorldClose closeDecoder
 
                 "error" ->
-                    Json.Decode.map Error tagErrorDecoder
+                    Json.Decode.map FromWorldError tagErrorDecoder
 
                 "message" ->
-                    Json.Decode.map Message messageDecoder
+                    Json.Decode.map FromWorldMessage messageDecoder
 
                 "open" ->
-                    Json.Decode.map Open tagOpenDecoder
+                    Json.Decode.map FromWorldOpen tagOpenDecoder
         )
         (Json.Decode.field "tag" Json.Decode.string)
 
@@ -118,17 +118,17 @@ fromWorldDecoder =
 encodeFromWorld : FromWorld -> Json.Encode.Value
 encodeFromWorld fromWorld =
     case fromWorld of
-        Close close ->
-            encodeClose close
+        FromWorldClose fromWorldClose ->
+            encodeClose fromWorldClose
 
-        Error error ->
-            encodeTagError error
+        FromWorldError fromWorldError ->
+            encodeTagError fromWorldError
 
-        Message message ->
-            encodeMessage message
+        FromWorldMessage fromWorldMessage ->
+            encodeMessage fromWorldMessage
 
-        Open open ->
-            encodeTagOpen open
+        FromWorldOpen fromWorldOpen ->
+            encodeTagOpen fromWorldOpen
 
 
 type alias Close =
@@ -196,9 +196,9 @@ encodeSend send =
 
 
 type ToWorld
-    = Close Close
-    | Connect Connect
-    | Send Send
+    = ToWorldClose Close
+    | ToWorldConnect Connect
+    | ToWorldSend Send
 
 
 toWorldDecoder : Json.Decode.Decoder ToWorld
@@ -207,13 +207,13 @@ toWorldDecoder =
         (\tag ->
             case tag of
                 "close" ->
-                    Json.Decode.map Close closeDecoder
+                    Json.Decode.map ToWorldClose closeDecoder
 
                 "connect" ->
-                    Json.Decode.map Connect connectDecoder
+                    Json.Decode.map ToWorldConnect connectDecoder
 
                 "send" ->
-                    Json.Decode.map Send sendDecoder
+                    Json.Decode.map ToWorldSend sendDecoder
         )
         (Json.Decode.field "tag" Json.Decode.string)
 
@@ -221,14 +221,14 @@ toWorldDecoder =
 encodeToWorld : ToWorld -> Json.Encode.Value
 encodeToWorld toWorld =
     case toWorld of
-        Close close ->
-            encodeClose close
+        ToWorldClose toWorldClose ->
+            encodeClose toWorldClose
 
-        Connect connect ->
-            encodeConnect connect
+        ToWorldConnect toWorldConnect ->
+            encodeConnect toWorldConnect
 
-        Send send ->
-            encodeSend send
+        ToWorldSend toWorldSend ->
+            encodeSend toWorldSend
 
 
 port fromWorld : (Json.Decode.Value -> msg) -> Sub msg

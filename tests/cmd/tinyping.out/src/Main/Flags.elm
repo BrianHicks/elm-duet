@@ -10,9 +10,9 @@ import Json.Encode
 
 
 type NotificationPermission
-    = Default
-    | Denied
-    | Granted
+    = NotificationPermissionDefault
+    | NotificationPermissionDenied
+    | NotificationPermissionGranted
 
 
 notificationPermissionDecoder : Json.Decode.Decoder NotificationPermission
@@ -21,13 +21,13 @@ notificationPermissionDecoder =
         (/tag ->
             case tag of
                 "default" ->
-                    Json.Decode.succeed Default
+                    Json.Decode.succeed NotificationPermissionDefault
 
                 "denied" ->
-                    Json.Decode.succeed Denied
+                    Json.Decode.succeed NotificationPermissionDenied
 
                 "granted" ->
-                    Json.Decode.succeed Granted
+                    Json.Decode.succeed NotificationPermissionGranted
         )
         Json.Decode.string
 
@@ -35,13 +35,13 @@ notificationPermissionDecoder =
 encodeNotificationPermission : NotificationPermission -> Json.Encode.Value
 encodeNotificationPermission notificationPermission =
     case notificationPermission of
-        Default ->
+        NotificationPermissionDefault ->
             Json.Encode.string "default"
 
-        Denied ->
+        NotificationPermissionDenied ->
             Json.Encode.string "denied"
 
-        Granted ->
+        NotificationPermissionGranted ->
             Json.Encode.string "granted"
 
 

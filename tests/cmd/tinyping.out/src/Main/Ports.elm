@@ -77,9 +77,9 @@ encodeSetTagForPing setTagForPing =
 
 
 type ChangeDocument
-    = AddNewPingAt AddNewPingAt
-    | SetMinutesPerPing SetMinutesPerPing
-    | SetTagForPing SetTagForPing
+    = ChangeDocumentAddNewPingAt AddNewPingAt
+    | ChangeDocumentSetMinutesPerPing SetMinutesPerPing
+    | ChangeDocumentSetTagForPing SetTagForPing
 
 
 changeDocumentDecoder : Json.Decode.Decoder ChangeDocument
@@ -88,13 +88,13 @@ changeDocumentDecoder =
         (/tag ->
             case tag of
                 "AddNewPingAt" ->
-                    Json.Decode.map AddNewPingAt addNewPingAtDecoder
+                    Json.Decode.map ChangeDocumentAddNewPingAt addNewPingAtDecoder
 
                 "SetMinutesPerPing" ->
-                    Json.Decode.map SetMinutesPerPing setMinutesPerPingDecoder
+                    Json.Decode.map ChangeDocumentSetMinutesPerPing setMinutesPerPingDecoder
 
                 "SetTagForPing" ->
-                    Json.Decode.map SetTagForPing setTagForPingDecoder
+                    Json.Decode.map ChangeDocumentSetTagForPing setTagForPingDecoder
         )
         (Json.Decode.field "tag" Json.Decode.string)
 
@@ -102,14 +102,14 @@ changeDocumentDecoder =
 encodeChangeDocument : ChangeDocument -> Json.Encode.Value
 encodeChangeDocument changeDocument =
     case changeDocument of
-        AddNewPingAt addNewPingAt ->
-            encodeAddNewPingAt addNewPingAt
+        ChangeDocumentAddNewPingAt changeDocumentAddNewPingAt ->
+            encodeAddNewPingAt changeDocumentAddNewPingAt
 
-        SetMinutesPerPing setMinutesPerPing ->
-            encodeSetMinutesPerPing setMinutesPerPing
+        ChangeDocumentSetMinutesPerPing changeDocumentSetMinutesPerPing ->
+            encodeSetMinutesPerPing changeDocumentSetMinutesPerPing
 
-        SetTagForPing setTagForPing ->
-            encodeSetTagForPing setTagForPing
+        ChangeDocumentSetTagForPing changeDocumentSetTagForPing ->
+            encodeSetTagForPing changeDocumentSetTagForPing
 
 
 type alias PingV1 =
@@ -145,7 +145,7 @@ encodePingV1 pingV1 =
 
 
 type PingsElements
-    = PingV1 PingV1
+    = PingPingsElementsV1 PingV1
 
 
 pingsElementsDecoder : Json.Decode.Decoder PingsElements
@@ -154,7 +154,7 @@ pingsElementsDecoder =
         (/tag ->
             case tag of
                 "v1" ->
-                    Json.Decode.map PingV1 pingV1Decoder
+                    Json.Decode.map PingPingsElementsV1 pingV1Decoder
         )
         (Json.Decode.field "version" Json.Decode.string)
 
@@ -162,8 +162,8 @@ pingsElementsDecoder =
 encodePingsElements : PingsElements -> Json.Encode.Value
 encodePingsElements pingsElements =
     case pingsElements of
-        PingV1 pingV1 ->
-            encodePingV1 pingV1
+        PingPingsElementsV1 pingPingsElementsV1 ->
+            encodePingV1 pingPingsElementsV1
 
 
 type alias SettingsV1 =
@@ -186,7 +186,7 @@ encodeSettingsV1 settingsV1 =
 
 
 type Settings
-    = SettingsV1 SettingsV1
+    = SettingsSettingsV1 SettingsV1
 
 
 settingsDecoder : Json.Decode.Decoder Settings
@@ -195,7 +195,7 @@ settingsDecoder =
         (/tag ->
             case tag of
                 "v1" ->
-                    Json.Decode.map SettingsV1 settingsV1Decoder
+                    Json.Decode.map SettingsSettingsV1 settingsV1Decoder
         )
         (Json.Decode.field "version" Json.Decode.string)
 
@@ -203,8 +203,8 @@ settingsDecoder =
 encodeSettings : Settings -> Json.Encode.Value
 encodeSettings settings =
     case settings of
-        SettingsV1 settingsV1 ->
-            encodeSettingsV1 settingsV1
+        SettingsSettingsV1 settingsSettingsV1 ->
+            encodeSettingsV1 settingsSettingsV1
 
 
 type alias DocV1 =
@@ -230,7 +230,7 @@ encodeDocV1 docV1 =
 
 
 type DocFromAutomerge
-    = DocV1 DocV1
+    = DocDocFromAutomergeV1 DocV1
 
 
 docFromAutomergeDecoder : Json.Decode.Decoder DocFromAutomerge
@@ -239,7 +239,7 @@ docFromAutomergeDecoder =
         (/tag ->
             case tag of
                 "v1" ->
-                    Json.Decode.map DocV1 docV1Decoder
+                    Json.Decode.map DocDocFromAutomergeV1 docV1Decoder
         )
         (Json.Decode.field "version" Json.Decode.string)
 
@@ -247,8 +247,8 @@ docFromAutomergeDecoder =
 encodeDocFromAutomerge : DocFromAutomerge -> Json.Encode.Value
 encodeDocFromAutomerge docFromAutomerge =
     case docFromAutomerge of
-        DocV1 docV1 ->
-            encodeDocV1 docV1
+        DocDocFromAutomergeV1 docDocFromAutomergeV1 ->
+            encodeDocV1 docDocFromAutomergeV1
 
 
 type alias NotificationOptions =
@@ -358,9 +358,9 @@ encodeNewNotification newNotification =
 
 
 type NotificationPermission
-    = Default
-    | Denied
-    | Granted
+    = NotificationPermissionDefault
+    | NotificationPermissionDenied
+    | NotificationPermissionGranted
 
 
 notificationPermissionDecoder : Json.Decode.Decoder NotificationPermission
@@ -369,13 +369,13 @@ notificationPermissionDecoder =
         (/tag ->
             case tag of
                 "default" ->
-                    Json.Decode.succeed Default
+                    Json.Decode.succeed NotificationPermissionDefault
 
                 "denied" ->
-                    Json.Decode.succeed Denied
+                    Json.Decode.succeed NotificationPermissionDenied
 
                 "granted" ->
-                    Json.Decode.succeed Granted
+                    Json.Decode.succeed NotificationPermissionGranted
         )
         Json.Decode.string
 
@@ -383,13 +383,13 @@ notificationPermissionDecoder =
 encodeNotificationPermission : NotificationPermission -> Json.Encode.Value
 encodeNotificationPermission notificationPermission =
     case notificationPermission of
-        Default ->
+        NotificationPermissionDefault ->
             Json.Encode.string "default"
 
-        Denied ->
+        NotificationPermissionDenied ->
             Json.Encode.string "denied"
 
-        Granted ->
+        NotificationPermissionGranted ->
             Json.Encode.string "granted"
 
 
