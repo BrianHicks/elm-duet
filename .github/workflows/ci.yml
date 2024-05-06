@@ -16,7 +16,7 @@ jobs:
 
       # Set up Rust
       - name: Setup Rust and Cargo
-        uses: moonrepo/setup-rust@v1.1.0
+        uses: moonrepo/setup-rust@v1.2.0
 
       # Set up formatters
       - uses: actions/setup-node@v4
@@ -42,7 +42,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Setup Rust and Cargo
-        uses: moonrepo/setup-rust@v1.1.0
+        uses: moonrepo/setup-rust@v1.2.0
       - name: Format
         run: cargo fmt --check
 
@@ -51,7 +51,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Setup Rust and Cargo
-        uses: moonrepo/setup-rust@v1.1.0
+        uses: moonrepo/setup-rust@v1.2.0
       - name: Lint
         run: cargo clippy -- --deny warnings
 
