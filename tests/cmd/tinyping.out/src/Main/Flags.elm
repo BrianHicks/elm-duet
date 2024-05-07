@@ -49,7 +49,7 @@ encodeNotificationPermission notificationPermission_ =
 
 
 type alias Flags =
-    { currentTimeMillis : Float
+    { currentTimeMillis : Int
     , notificationPermission : NotificationPermission
     }
 
@@ -57,13 +57,13 @@ type alias Flags =
 flagsDecoder : Json.Decode.Decoder Flags
 flagsDecoder =
     Json.Decode.succeed Flags
-        |> Json.Decode.Pipeline.required "currentTimeMillis" Json.Decode.float
+        |> Json.Decode.Pipeline.required "currentTimeMillis" Json.Decode.int
         |> Json.Decode.Pipeline.required "notificationPermission" notificationPermissionDecoder
 
 
 encodeFlags : Flags -> Json.Encode.Value
 encodeFlags flags_ =
     Json.Encode.object
-        [ ( "currentTimeMillis", Json.Encode.float flags_.currentTimeMillis )
+        [ ( "currentTimeMillis", Json.Encode.int flags_.currentTimeMillis )
         , ( "notificationPermission", encodeNotificationPermission flags_.notificationPermission )
         ]
