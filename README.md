@@ -1,18 +1,29 @@
 # elm-duet
 
-I like Elm and TypeScript for building apps, but I find it annoying to make the boundary between them type-safe.
+`elm-duet` provides interop types between Elm and TypeScript by creating a single source of truth using [JSON Type Definitions](https://jsontypedef.com/) (JTD, [five-minute tutorial](https://jsontypedef.com/docs/jtd-in-5-minutes/).)
+This allows us say precisely what we want and generate ergonomic types on both sides (plus helpers like encoders to make testing easy!)
 
-I can get around this in various ways, of course, either by maintaining a definitions by hand or generating one side from the other.
-In general, though, you run into a couple different issues:
+## JTDs? What's that?
 
-- It's easy for one side or the other to get out of date and errors to slip through CI and code review into production.
-- Definitions in one language may not be translatable to the other (despite the two type systems having a high degree of overlap.)
+A JTD is similar to a JSON Schema, except it leaves out features that you can't express in a typical type system.
+For example, a JSON Schema lets you express as a regex validation on a string, but JTD just allows you to specify the string.
+This takes away a little bit of the expressive power, but it provides a direct mapping onto the type system.
 
-`elm-duet` tries to get around this by creating a single source of truth to generate both TypeScript definitions and Elm types with decoders.
-We use [JSON Type Definitions](https://jsontypedef.com/) (JTD, [five-minute tutorial](https://jsontypedef.com/docs/jtd-in-5-minutes/)) to say precisely what we want and generate ergonomic types on both sides (plus helpers like encoders to make testing easy!)
+There are 6 typical things you do with JTDs:
 
-In addition, `elm-duet` produces files that make following good practices around interop easier!
-I'll call those out as we get to them.
+- `{ "type": "string" }` (or `float64`, or `boolean`, etc) refers to that type directly.
+- `{ "properties": { "foo": { "type": "string" } } }` gives you an object.
+- `{ "discriminator": "foo", "mapping": { "bar": { "properties": { "baz": { "type": "string" } } } } }` gives you a discriminated union.
+  In TypeScript, for example, this would produce the type `{ foo: "bar", baz: string }`.
+- `{ "elements": { "type": "string" } }` gives you a list of values (of whatever shape you like, `string` here)
+- `{ "values": { "type": "float64" } }` gives you an object with unknown keys, but values of the type you specify (`float64` here)
+- `{ "enum": ["a", "b"] }` only allows a closed set of values.
+  In Elm, this becomes a custom type.
+
+In addition to these, you can define global types and refer to them with `{ "ref": "someName" }`.
+You can also specify nothing at all by saying `{}`, which is a `()` in Elm and a `Record<string, never>` in TypeScript.
+
+Let's see how we can use these to build up the interop for some sample apps.
 
 ## Example 1: JWTs
 
@@ -28,35 +39,29 @@ Here's an example for an app that stores [JWTs](https://jwt.io/) in `localStorag
 # 2. Elm is responsible for authentication and for telling JS when it gets a
 #    new JWT (for example, when the user logs in)
 
-# For elm-duet, we start by defining our data types. In this case, we're just
-# going to keep things simple and define a "jwt" that will just be an alias to
-# a string.
+# To start, we'll define a "jwt" that will just be an alias to a string.
 definitions:
   jwt:
     type: string
 
-# Now we say how to use it. Each key in this object is a module in your Elm
-# application, in which we can define our flags and ports.
 modules:
+  # Now we say how to use it. Each key inside `modules` is the name of an
+  # entrypoint within your Elm app. Here we're saying that this module is named
+  # `Main`, which means we'll be able to access it in TypeScript at `Elm.Main`.
   Main:
-    # First we'll define flags. As we mentioned above, that's either a JWT or
-    # null. We'll define it by referring to `jwt` from above.
-    #
-    # If your app doesn't use flags, you can omit this key.
+    # Inside the app, we specify that you have to start the app by providing
+    # the current value. We say that it's nullable because we don't know if the
+    # user is logged in at this point.
     flags:
       properties:
         currentJwt:
           ref: jwt
           nullable: true
 
-    # Next we'll do ports. As with flags, if your app doesn't use ports, you
-    # can omit this key.
+    # Next, we set up the port for Elm to tell JavaScript that it should store
+    # a new JWT. Unlike flags, ports have a direction. We specify that we're
+    # passing a message from Elm to JavaScript with `metadata.direction`.
     ports:
-      # Like flags, ports are specified with a JTD schema. In this case, we
-      # want a non-nullable version of the same JWT as earlier.
-      #
-      # Ports also have a direction. We specify this in the
-      # `metadata.direction` key, either `ElmToJs` or `JsToElm`.
       newJwt:
         metadata:
           direction: ElmToJs
@@ -152,7 +157,7 @@ In your `init`, you can accept a `Json.Decode.Value` and call `Decode.decodeValu
 It also lets you custom types in your flags, since you're specifying the decoder.
 
 Note that `elm-duet` creates both decoders and encoders for all the types it generates.
-This is to make your life easier during testing: you can hook up tools like [elm-program-test](https://package.elm-lang.org/packages/avh4/elm-program-test/latest/) without having to redo your data encoding.
+This is to make your life easier during testing: you can hook up tools like [elm-program-test](https://package.elm-lang.org/packages/avh4/elm-program-test/latest/) without having to write separate encoders just to test.
 
 Finally, we have the ports:
 
@@ -192,7 +197,7 @@ sendNewJwt =
 ```
 
 You'll notice that in addition to decoders and encoders, `elm-duet` generates type-safe wrappers around the ports.
-This is, again, to let you send custom types through the ports in a way we control: if you specify an `enum`, for example, we ensure that both Elm and TypeScript have enough information to take advantage of the best parts of their respective type systems without falling back to plain strings.
+This is to let you send custom types through the ports in a way we control: if you specify an `enum`, for example, we ensure that both Elm and TypeScript have enough information to take advantage of the best parts of their respective type systems without falling back to plain strings.
 
 Other than those helpers, we don't try to generate any particular helpers for constructing values.
 Every app is going to have different needs there, and we expose everything you need to construct your own.
@@ -282,7 +287,7 @@ modules:
 
 ```
 
-Again, we generate everything in `examples`:
+Like the other example, we'll store all our output in `examples`:
 
 ```console
 $ elm-duet examples/all_in_one.yaml --typescript-dest examples/all_in_one.ts --elm-dest examples/all_in_one
