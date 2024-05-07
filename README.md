@@ -365,6 +365,22 @@ The Elm for this example is too long to reasonably include in a README.
 See it at `examples/all_in_one/Main/Ports.elm`.
 Like the previous example, you get all the data types and ports you need, plus some wrappers around the ports that will do the decoding for you.
 
+## Is it any good?
+
+I mean, the answer is supposed to be just an unqualified "Yes" right?
+But this is pre-1.0 software.
+It's not gonna steal your lunch money or eat your toaster, but it's not perfect.
+In particular:
+
+- Types are generated independently for ports and flags.
+  This is mostly fine, but if you share an `enum` or `discriminator`/`mapping` between the two halves, you'll have two distinct custom types.
+  It's easy enough to get around since there's a 1:1 mapping, but it's a little more code you have to write for now.
+- Ports are generated all in one file.
+  This makes it very easy to track what's where, but sometimes means having long or conflicting names.
+  You can get around this with `metadata.name` or `metadata.constructorPrefix`, but a better future solution would be to generate in different files.
+- Records in Elm are always generated as type aliases.
+  This makes the error message quality a bit worse.
+
 ## The Full Help
 
 Here's the full help to give you an idea of what you can do with the tool:
