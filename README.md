@@ -3,7 +3,7 @@
 `elm-duet` provides interop types between Elm and TypeScript by creating a single source of truth using [JSON Type Definitions](https://jsontypedef.com/) (JTD, [five-minute tutorial](https://jsontypedef.com/docs/jtd-in-5-minutes/).)
 This allows us say precisely what we want and generate ergonomic types on both sides (plus helpers like encoders to make testing easy!)
 
-## JTDs? What's that?
+## JTD? What's that?
 
 A JTD is similar to a JSON Schema, except it leaves out features that you can't express in a typical type system.
 For example, a JSON Schema lets you express as a regex validation on a string, but JTD just allows you to specify the string.
