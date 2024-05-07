@@ -30,7 +30,7 @@ jobs:
             os: ubuntu-latest
           - target: x86_64-apple-darwin
             os: macos-13
-          - target: arm64e-apple-darwin
+          - target: aarch64-apple-darwin
             os: macos-14
           - target: x86_64-pc-windows-msvc
             os: windows-latest
