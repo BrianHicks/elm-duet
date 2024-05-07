@@ -372,6 +372,8 @@ But this is pre-1.0 software.
 It's not gonna steal your lunch money or eat your toaster, but it's not perfect.
 In particular:
 
+- It has only been used for one fairly small app so far.
+  There are probably combinations in the JTD spec that it does not handle well.
 - Types are generated independently for ports and flags.
   This is mostly fine, but if you share an `enum` or `discriminator`/`mapping` between the two halves, you'll have two distinct custom types.
   It's easy enough to get around since there's a 1:1 mapping, but it's a little more code you have to write for now.
