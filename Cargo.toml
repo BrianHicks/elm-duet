@@ -21,4 +21,4 @@ tracing = "0.1.40"
 opt-level = 3
 
 [dev-dependencies]
-trycmd = { version = "0.15.1", features = ["color"] }
+trycmd = { version = "0.15.2", features = ["color"] }
