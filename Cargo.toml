@@ -12,7 +12,7 @@ clap = { version = "4.5.4", features = ["derive", "cargo"] }
 color-eyre = { version = "0.6.3", default_features = false }
 eyre = "0.6.12"
 jtd = "0.3.1"
-serde = { version = "1.0.202", features = ["derive"] }
+serde = { version = "1.0.203", features = ["derive"] }
 serde_json = "1.0.117"
 serde_yaml = "0.9.34"
 tracing = "0.1.40"
