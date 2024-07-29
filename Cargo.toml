@@ -8,7 +8,7 @@ description = "Generate Elm and TypeScript types from a single shared definition
 
 [dependencies]
 Inflector = "0.11.4"
-clap = { version = "4.5.9", features = ["derive", "cargo"] }
+clap = { version = "4.5.11", features = ["derive", "cargo"] }
 color-eyre = { version = "0.6.3", default_features = false }
 eyre = "0.6.12"
 jtd = "0.3.1"
